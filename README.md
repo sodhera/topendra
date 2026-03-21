@@ -42,10 +42,22 @@ If not, install an official Node LTS release from [nodejs.org](https://nodejs.or
 npm install
 ```
 
+On this machine specifically, Node was bootstrapped into `~/.local/node-v24.14.0-darwin-arm64/` because no system Node was installed. If your shell still cannot find `node` or `npm`, use the wrapper script from the repo root:
+
+```bash
+./scripts/with-local-node.sh npm install
+```
+
 ### 3. Run the app
 
 ```bash
 npm run start
+```
+
+If `npm` is not on your shell path:
+
+```bash
+./scripts/with-local-node.sh npm run start
 ```
 
 Then choose one of:
@@ -58,6 +70,12 @@ Then choose one of:
 
 ```bash
 npm run test
+```
+
+Or, on this machine:
+
+```bash
+./scripts/with-local-node.sh npm run test
 ```
 
 ## Demo Flow
