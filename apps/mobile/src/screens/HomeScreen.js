@@ -32,7 +32,6 @@ export function HomeScreen({ navigation }) {
     isEmailAuthLoading,
     authNoticeMessage,
     errorMessage,
-    requestEmailAccess,
     signUpWithPassword,
     signInWithPassword,
     signInWithGoogle,
@@ -110,15 +109,6 @@ export function HomeScreen({ navigation }) {
       setIsAccountModalVisible(false);
     } catch (error) {
       Alert.alert('Apple Sign-in failed', error.message);
-    }
-  }
-
-  async function handleMagicLink({ email, username }) {
-    try {
-      await requestEmailAccess({ email, username });
-      Alert.alert('Check your email', 'We sent you a sign-in link. Open it on this device to unlock posting, voting, and threads.');
-    } catch (error) {
-      Alert.alert('Sign-in failed', error.message);
     }
   }
 
@@ -347,7 +337,6 @@ export function HomeScreen({ navigation }) {
                   <EmailAuthCard
                     onSignUp={handleSignUp}
                     onSignIn={handleSignIn}
-                    onMagicLink={handleMagicLink}
                     onGoogleSignIn={handleGoogleSignIn}
                     onAppleSignIn={handleAppleSignIn}
                     authBusy={isEmailAuthLoading}

@@ -8,7 +8,6 @@ import { ShadButton } from './ShadButton';
 export function EmailAuthCard({
   onSignUp,
   onSignIn,
-  onMagicLink,
   onGoogleSignIn,
   onAppleSignIn,
   authBusy,
@@ -27,10 +26,6 @@ export function EmailAuthCard({
     } else {
       onSignIn({ email, password });
     }
-  }
-
-  function handleMagicLink() {
-    onMagicLink({ email, username });
   }
 
   function toggleMode() {
@@ -117,13 +112,6 @@ export function EmailAuthCard({
           <Text style={styles.toggleLink}>{isSignUp ? 'Sign in' : 'Sign up'}</Text>
         </Text>
       </Pressable>
-      {isSignUp ? (
-        <Pressable onPress={handleMagicLink} disabled={authBusy} style={styles.toggleRow}>
-          <Text style={styles.toggleText}>
-            Or <Text style={styles.toggleLink}>send me a sign-in link</Text> instead
-          </Text>
-        </Pressable>
-      ) : null}
       {helperText ? <Text style={styles.helper}>{helperText}</Text> : null}
     </View>
   );
