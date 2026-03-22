@@ -122,6 +122,7 @@ describe('HomeScreen', () => {
   test('opens the place modal when a map marker is tapped from home', () => {
     const screen = render(<HomeScreen navigation={navigation} />);
     const firstPlace = buildSeedState().places[0];
+    const firstPlaceComments = buildSeedState().comments.filter((comment) => comment.placeId === firstPlace.id);
 
     fireEvent.press(screen.getAllByTestId('map-marker')[0]);
 
@@ -129,9 +130,16 @@ describe('HomeScreen', () => {
     expect(screen.getByTestId('home-open-location-button')).toBeTruthy();
     expect(screen.getByTestId('home-vote-up-button')).toBeTruthy();
     expect(screen.getByTestId('home-vote-down-button')).toBeTruthy();
+    expect(screen.getByTestId('home-comment-compose-button')).toBeTruthy();
+    expect(screen.getByText(firstPlaceComments[0].body)).toBeTruthy();
     expect(trackPlaceOpen).toHaveBeenCalledWith({
       placeId: firstPlace.id,
       sourceScreen: 'home_pin_modal',
     });
+
+    fireEvent.press(screen.getByTestId('home-discussion-open-button'));
+
+    expect(screen.getByText('Discussion')).toBeTruthy();
+    expect(screen.getAllByText('Reply').length).toBeGreaterThan(0);
   });
 });

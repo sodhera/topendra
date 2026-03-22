@@ -5,10 +5,8 @@ import {
   Modal,
   Platform,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import MapView from 'react-native-maps';
@@ -17,6 +15,7 @@ import { AuthButtons } from '../components/AuthButtons';
 import { CompactVoteControls } from '../components/CompactVoteControls';
 import { EmailAuthCard } from '../components/EmailAuthCard';
 import { MapPlaceMarker } from '../components/MapPlaceMarker';
+import { PlaceConversationSection } from '../components/PlaceConversationSection';
 import { ShadButton } from '../components/ShadButton';
 import { useAppContext } from '../context/AppContext';
 import { isLoggedIn } from '../lib/auth';
@@ -52,7 +51,6 @@ export function BrowseScreen({ navigation, route }) {
   const [selectedPlaceId, setSelectedPlaceId] = useState(initialPlaceId);
   const [isDetailsModalVisible, setIsDetailsModalVisible] = useState(false);
   const [isAuthModalVisible, setIsAuthModalVisible] = useState(false);
-  const [commentDraft, setCommentDraft] = useState('');
   const [email, setEmail] = useState('testuser@topey.app');
   const [password, setPassword] = useState('TopeyTest123!');
 
@@ -138,7 +136,7 @@ export function BrowseScreen({ navigation, route }) {
     }
   }
 
-  async function handleComment() {
+  async function handleComment({ body }) {
     if (!isAuthenticated || !selectedPlace) {
       setIsAuthModalVisible(true);
       return;
@@ -147,9 +145,8 @@ export function BrowseScreen({ navigation, route }) {
     try {
       await addComment({
         placeId: selectedPlace.id,
-        body: commentDraft,
+        body,
       });
-      setCommentDraft('');
     } catch (error) {
       Alert.alert('Comment failed', error.message);
     }
@@ -252,78 +249,43 @@ export function BrowseScreen({ navigation, route }) {
                   <PreviewStat
                     label="Rating"
                     value={`${voteBreakdown.score >= 0 ? '+' : ''}${voteBreakdown.score}`}
+                    align="left"
                   />
-                  <PreviewStat label="Votes" value={voteBreakdown.ratioLabel} />
-                  <PreviewStat label="Threads" value={`${threadCount}`} />
+                  <PreviewStat label="Votes" value={voteBreakdown.ratioLabel} align="center" />
+                  <PreviewStat label="Threads" value={`${threadCount}`} align="right" />
                 </View>
 
-                <View style={styles.actionRow}>
-                  <ShadButton
-                    label="Open location"
-                    size="default"
-                    shape="pill"
-                    onPress={handleOpenLocation}
-                    style={styles.locationButton}
-                    labelStyle={styles.locationButtonLabel}
-                    testID="browse-open-location-button"
-                  />
+                <ShadButton
+                  label="Open location"
+                  size="default"
+                  shape="pill"
+                  onPress={handleOpenLocation}
+                  style={styles.locationButton}
+                  labelStyle={styles.locationButtonLabel}
+                  testID="browse-open-location-button"
+                />
 
-                  <CompactVoteControls
-                    currentVote={currentVote}
-                    onDownvote={() => handleVote(-1)}
-                    onUpvote={() => handleVote(1)}
-                    score={voteBreakdown.score}
-                    style={styles.voteControls}
-                    testIDPrefix="browse-vote"
-                  />
-                </View>
+                <CompactVoteControls
+                  currentVote={currentVote}
+                  onDownvote={() => handleVote(-1)}
+                  onUpvote={() => handleVote(1)}
+                  score={voteBreakdown.score}
+                  style={styles.voteControls}
+                  testIDPrefix="browse-vote"
+                />
 
-                {isAuthenticated ? (
-                  <>
-                    <View style={styles.commentComposer}>
-                      <TextInput
-                        placeholder="Add a comment"
-                        placeholderTextColor={colors.mutedText}
-                        value={commentDraft}
-                        onChangeText={setCommentDraft}
-                        style={styles.input}
-                      />
-                      <ShadButton
-                        label="Send"
-                        size="compact"
-                        shape="pill"
-                        onPress={handleComment}
-                        style={styles.sendButton}
-                        labelStyle={styles.sendButtonLabel}
-                      />
-                    </View>
-
-                    <ScrollView style={styles.commentsList} showsVerticalScrollIndicator={false}>
-                      {comments.map((comment) => (
-                        <View key={comment.id} style={styles.commentCard}>
-                          <Text style={styles.commentAuthor}>{comment.authorName || 'Topey user'}</Text>
-                          <Text style={styles.commentBody}>{comment.body}</Text>
-                        </View>
-                      ))}
-                    </ScrollView>
-                  </>
-                ) : (
-                  <View style={styles.lockedCard}>
-                    <Text style={styles.lockedTitle}>Log in to read threads.</Text>
-                    <Text style={styles.lockedCopy}>
-                      View more opens the conversation only for signed-in users right now.
-                    </Text>
-                    <ShadButton
-                      label="Log in"
-                      size="compact"
-                      shape="pill"
-                      onPress={() => {
-                        setIsDetailsModalVisible(false);
-                        setIsAuthModalVisible(true);
-                      }}
-                    />
-                  </View>
-                )}
+                <PlaceConversationSection
+                  comments={comments}
+                  isAuthenticated={isAuthenticated}
+                  lockedCopy="View more opens the conversation only for signed-in users right now."
+                  onAddComment={handleComment}
+                  onRequireAuth={() => {
+                    setIsDetailsModalVisible(false);
+                    setIsAuthModalVisible(true);
+                  }}
+                  placeName={selectedPlace.name}
+                  testIDPrefix="browse"
+                />
               </>
             ) : null}
           </View>
@@ -365,11 +327,33 @@ export function BrowseScreen({ navigation, route }) {
   );
 }
 
-function PreviewStat({ label, value }) {
+function PreviewStat({ align, label, value }) {
   return (
-    <View style={styles.previewStat}>
-      <Text style={styles.previewStatLabel}>{label}</Text>
-      <Text style={styles.previewStatValue}>{value}</Text>
+    <View
+      style={[
+        styles.previewStat,
+        align === 'center' && styles.previewStatCenter,
+        align === 'right' && styles.previewStatRight,
+      ]}
+    >
+      <Text
+        style={[
+          styles.previewStatLabel,
+          align === 'center' && styles.previewStatLabelCenter,
+          align === 'right' && styles.previewStatLabelRight,
+        ]}
+      >
+        {label}
+      </Text>
+      <Text
+        style={[
+          styles.previewStatValue,
+          align === 'center' && styles.previewStatValueCenter,
+          align === 'right' && styles.previewStatValueRight,
+        ]}
+      >
+        {value}
+      </Text>
     </View>
   );
 }
@@ -417,31 +401,45 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
   },
   previewStats: {
+    alignItems: 'flex-start',
     flexDirection: 'row',
-    gap: spacing.sm,
+    justifyContent: 'space-between',
     marginTop: spacing.md,
   },
   previewStat: {
     flex: 1,
-    backgroundColor: colors.secondary,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    borderWidth: 0.75,
-    padding: spacing.sm,
+  },
+  previewStatCenter: {
+    alignItems: 'center',
+  },
+  previewStatRight: {
+    alignItems: 'flex-end',
   },
   previewStatLabel: {
     color: colors.mutedText,
     fontFamily: typography.medium,
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '500',
+  },
+  previewStatLabelCenter: {
+    textAlign: 'center',
+  },
+  previewStatLabelRight: {
+    textAlign: 'right',
   },
   previewStatValue: {
     color: colors.text,
     fontFamily: typography.semibold,
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '600',
-    letterSpacing: -0.18,
+    letterSpacing: -0.24,
     marginTop: spacing.xxs,
+  },
+  previewStatValueCenter: {
+    textAlign: 'center',
+  },
+  previewStatValueRight: {
+    textAlign: 'right',
   },
   previewButton: {
     marginTop: spacing.md,
@@ -497,18 +495,13 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
   },
   detailStats: {
+    alignItems: 'flex-start',
     flexDirection: 'row',
-    gap: spacing.sm,
-    marginTop: spacing.md,
-  },
-  actionRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: spacing.sm,
+    justifyContent: 'space-between',
     marginTop: spacing.md,
   },
   locationButton: {
-    flex: 1,
+    marginTop: spacing.md,
     minHeight: 50,
   },
   locationButtonLabel: {
@@ -517,82 +510,7 @@ const styles = StyleSheet.create({
     letterSpacing: -0.35,
   },
   voteControls: {
-    marginTop: 0,
-  },
-  commentComposer: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: spacing.sm,
-    marginTop: 14,
-  },
-  input: {
-    backgroundColor: colors.elevatedCard,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    borderWidth: 0.75,
-    color: colors.text,
-    flex: 1,
-    fontFamily: typography.body,
-    minHeight: 44,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-  },
-  sendButton: {
-    minHeight: 40,
-    minWidth: 78,
-    paddingHorizontal: 16,
-  },
-  sendButtonLabel: {
-    fontSize: 17,
-    fontWeight: '600',
-    letterSpacing: -0.35,
-  },
-  commentsList: {
-    marginTop: spacing.md,
-  },
-  commentCard: {
-    backgroundColor: colors.elevatedCard,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    borderWidth: 0.75,
-    marginBottom: spacing.sm,
-    padding: spacing.md,
-  },
-  commentAuthor: {
-    color: colors.text,
-    fontFamily: typography.semibold,
-    fontSize: 13,
-    fontWeight: '600',
-    letterSpacing: -0.16,
-  },
-  commentBody: {
-    color: colors.mutedText,
-    fontFamily: typography.body,
-    fontSize: 14,
-    lineHeight: 20,
-    marginTop: spacing.xs,
-  },
-  lockedCard: {
-    backgroundColor: colors.secondary,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    borderWidth: 0.75,
-    marginTop: spacing.md,
-    padding: spacing.md,
-  },
-  lockedTitle: {
-    color: colors.text,
-    fontFamily: typography.semibold,
-    fontSize: 16,
-    fontWeight: '600',
-    letterSpacing: -0.18,
-  },
-  lockedCopy: {
-    color: colors.mutedText,
-    fontFamily: typography.body,
-    fontSize: 14,
-    lineHeight: 20,
-    marginBottom: spacing.md,
+    alignSelf: 'flex-start',
     marginTop: spacing.sm,
   },
 });

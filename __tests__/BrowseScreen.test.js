@@ -150,7 +150,13 @@ describe('BrowseScreen', () => {
     expect(screen.getByTestId('browse-open-location-button')).toBeTruthy();
     expect(screen.getByTestId('browse-vote-up-button')).toBeTruthy();
     expect(screen.getByTestId('browse-vote-down-button')).toBeTruthy();
+    expect(screen.getByTestId('browse-comment-compose-button')).toBeTruthy();
     expect(screen.getByText(firstPlaceComments[0].body)).toBeTruthy();
+
+    fireEvent.press(screen.getByTestId('browse-discussion-open-button'));
+
+    expect(screen.getByText('Discussion')).toBeTruthy();
+    expect(screen.getAllByText('Reply').length).toBeGreaterThan(0);
   });
 
   test('shows the login gate when the viewer is not signed in', () => {
