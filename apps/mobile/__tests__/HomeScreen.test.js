@@ -4,6 +4,7 @@ import { fireEvent, render } from '@testing-library/react-native';
 import { HomeScreen } from '../src/screens/HomeScreen';
 import { buildSeedState } from '@topey/shared/data/seed';
 import { useAppContext } from '../src/context/AppContext';
+import { useLiveLocation } from '../src/hooks/useLiveLocation';
 
 jest.mock('react-native-maps', () => {
   const React = require('react');
@@ -69,6 +70,10 @@ jest.mock('../src/context/AppContext', () => ({
   useAppContext: jest.fn(),
 }));
 
+jest.mock('../src/hooks/useLiveLocation', () => ({
+  useLiveLocation: jest.fn(),
+}));
+
 jest.mock('react-native-safe-area-context', () => {
   const React = require('react');
   const { View } = require('react-native');
@@ -123,6 +128,18 @@ describe('HomeScreen', () => {
       votePlace: jest.fn(),
       trackPlaceOpen,
     });
+
+    useLiveLocation.mockReturnValue({
+      region: {
+        latitude: 40.7128,
+        longitude: -74.006,
+        latitudeDelta: 0.06,
+        longitudeDelta: 0.06,
+      },
+      permissionStatus: 'granted',
+      errorMessage: '',
+      hasResolvedInitialRegion: true,
+    });
   });
 
   test('shows the simplified home layout and opens add-place from the bottom plus button', () => {
@@ -132,6 +149,7 @@ describe('HomeScreen', () => {
     expect(screen.getByTestId('home-plus-button')).toBeTruthy();
     expect(screen.getByTestId('home-map-config').props.children).toContain('"showsPointsOfInterest":false');
     expect(screen.getByTestId('home-map-config').props.children).toContain('"showsBuildings":false');
+    expect(screen.getByTestId('home-map-region').props.children).toContain('40.7128');
 
     fireEvent.press(screen.getByTestId('home-plus-button'));
 

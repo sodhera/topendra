@@ -23,6 +23,7 @@ import { getCommentsForPlace, getVoteBreakdown } from '@topey/shared/lib/geo';
 import { CLEAN_MOBILE_MAP_PROPS } from '@topey/shared/lib/mobileMap';
 import { openPlaceInMaps } from '../lib/locationLinks';
 import { colors, radius, shadows, spacing, typography } from '@topey/shared/lib/theme';
+import { useLiveLocation } from '../hooks/useLiveLocation';
 
 function buildPlaceRegion(place) {
   return {
@@ -45,13 +46,25 @@ export function BrowseScreen({ navigation, route }) {
     trackPlaceOpen,
   } = useAppContext();
   const mapRef = useRef(null);
+  const { region: userRegion, hasResolvedInitialRegion } = useLiveLocation({ watch: false });
   const initialPlaceId = route?.params?.placeId ?? '';
   const isAuthenticated = isLoggedIn(state.session);
+  const [mapKey, setMapKey] = useState(0);
+  const [mapRegion, setMapRegion] = useState(KATHMANDU_EXPLORE_REGION);
+  const [hasCenteredMap, setHasCenteredMap] = useState(false);
   const [selectedPlaceId, setSelectedPlaceId] = useState(initialPlaceId);
   const [isDetailsModalVisible, setIsDetailsModalVisible] = useState(false);
   const [isAuthModalVisible, setIsAuthModalVisible] = useState(false);
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
+
+  useEffect(() => {
+    if (!hasCenteredMap && hasResolvedInitialRegion && !initialPlaceId) {
+      setMapRegion(userRegion);
+      setHasCenteredMap(true);
+      setMapKey((value) => value + 1);
+    }
+  }, [hasCenteredMap, hasResolvedInitialRegion, initialPlaceId, userRegion]);
 
   const selectedPlace = useMemo(
     () => state.places.find((place) => place.id === selectedPlaceId) || null,
@@ -159,8 +172,10 @@ export function BrowseScreen({ navigation, route }) {
       <MapView
         {...CLEAN_MOBILE_MAP_PROPS}
         ref={mapRef}
-        initialRegion={KATHMANDU_EXPLORE_REGION}
+        key={`browse-map-${mapKey}`}
+        initialRegion={mapRegion}
         onPress={() => setSelectedPlaceId('')}
+        showsUserLocation
         style={StyleSheet.absoluteFill}
         testID="browse-map"
       >

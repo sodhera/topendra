@@ -13,8 +13,8 @@ import {
 } from 'react-native';
 import MapView from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { CenteredMapPin } from '../components/CenteredMapPin';
 import { EmailAuthCard } from '../components/EmailAuthCard';
-import { MapPlaceMarker } from '../components/MapPlaceMarker';
 import { ShadButton } from '../components/ShadButton';
 import { useAppContext } from '../context/AppContext';
 import { isLoggedIn } from '@topey/shared/lib/auth';
@@ -134,12 +134,8 @@ export function AddPlaceScreen({ navigation }) {
           setIsMapMoving(false);
         }}
         showsUserLocation
-      >
-        <MapPlaceMarker
-          coordinate={pin}
-          moving={isMapMoving}
-        />
-      </MapView>
+      />
+      <CenteredMapPin moving={isMapMoving} testID="add-place-center-pin" />
       <SafeAreaView style={styles.safeArea} pointerEvents="box-none">
         <View style={styles.topBar} pointerEvents="box-none">
           <ShadButton

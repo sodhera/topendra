@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -23,6 +23,7 @@ import { getCommentsForPlace, getVoteBreakdown } from '@topey/shared/lib/geo';
 import { CLEAN_MOBILE_MAP_PROPS } from '@topey/shared/lib/mobileMap';
 import { openPlaceInMaps } from '../lib/locationLinks';
 import { colors, radius, spacing, typography } from '@topey/shared/lib/theme';
+import { useLiveLocation } from '../hooks/useLiveLocation';
 
 export function HomeScreen({ navigation }) {
   const {
@@ -38,11 +39,23 @@ export function HomeScreen({ navigation }) {
   } = useAppContext();
   const currentUser = getUserIdentity(state.session?.user);
   const isAuthenticated = isLoggedIn(state.session);
+  const { region: userRegion, hasResolvedInitialRegion } = useLiveLocation({ watch: false });
+  const [mapKey, setMapKey] = useState(0);
+  const [mapRegion, setMapRegion] = useState(KATHMANDU_EXPLORE_REGION);
+  const [hasCenteredMap, setHasCenteredMap] = useState(false);
   const [isAccountModalVisible, setIsAccountModalVisible] = useState(false);
   const [isPlaceModalVisible, setIsPlaceModalVisible] = useState(false);
   const [selectedPlaceId, setSelectedPlaceId] = useState('');
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
+
+  useEffect(() => {
+    if (!hasCenteredMap && hasResolvedInitialRegion) {
+      setMapRegion(userRegion);
+      setHasCenteredMap(true);
+      setMapKey((value) => value + 1);
+    }
+  }, [hasCenteredMap, hasResolvedInitialRegion, userRegion]);
 
   const selectedPlace = useMemo(
     () => state.places.find((place) => place.id === selectedPlaceId) || null,
@@ -153,7 +166,9 @@ export function HomeScreen({ navigation }) {
     <View style={styles.container}>
       <MapView
         {...CLEAN_MOBILE_MAP_PROPS}
-        initialRegion={KATHMANDU_EXPLORE_REGION}
+        key={`home-map-${mapKey}`}
+        initialRegion={mapRegion}
+        showsUserLocation
         style={StyleSheet.absoluteFill}
         testID="home-map"
       >

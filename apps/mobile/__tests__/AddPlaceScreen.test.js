@@ -146,6 +146,7 @@ describe('AddPlaceScreen', () => {
     });
     expect(screen.getByTestId('map-config').props.children).toContain('"showsPointsOfInterest":false');
     expect(screen.getByTestId('map-config').props.children).toContain('"showsBuildings":false');
+    expect(screen.getByTestId('add-place-center-pin')).toBeTruthy();
 
     fireEvent.press(screen.getByText('Add here'));
 
