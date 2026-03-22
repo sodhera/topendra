@@ -344,10 +344,6 @@ export function HomeScreen({ navigation }) {
                 </>
               ) : (
                 <>
-                  <Text style={styles.sheetTitle}>Sign in</Text>
-                  <Text style={styles.sheetCopy}>
-                    Use email access to post places, join threads, and vote on the Kathmandu map. Choose an anonymous public username.
-                  </Text>
                   <EmailAuthCard
                     onSignUp={handleSignUp}
                     onSignIn={handleSignIn}

@@ -13,7 +13,7 @@ export function EmailAuthCard({
   authBusy,
   helperText,
 }) {
-  const [mode, setMode] = useState('signup');
+  const [mode, setMode] = useState('signin');
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -127,9 +127,11 @@ export function EmailAuthCard({
         </Pressable>
       ) : null}
       {helperText ? <Text style={styles.helper}>{helperText}</Text> : null}
-      <Text style={styles.note}>
-        Keep the username anonymous. {LOCATION_DISCLOSURE_COPY}
-      </Text>
+      {isSignUp ? (
+        <Text style={styles.note}>
+          Keep the username anonymous. {LOCATION_DISCLOSURE_COPY}
+        </Text>
+      ) : null}
     </View>
   );
 }
