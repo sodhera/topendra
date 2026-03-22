@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
   Modal,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from 'react-native';
 import MapView from 'react-native-maps';
@@ -18,6 +20,7 @@ import { ShadButton } from '../components/ShadButton';
 import { useAppContext } from '../context/AppContext';
 import { getUserIdentity, isLoggedIn } from '../lib/auth';
 import { KATHMANDU_EXPLORE_REGION } from '../lib/constants';
+import { getCommentsForPlace, getVoteBreakdown } from '../lib/geo';
 import { colors, radius, shadows, spacing, typography } from '../lib/theme';
 
 export function HomeScreen({ navigation }) {
@@ -29,12 +32,26 @@ export function HomeScreen({ navigation }) {
     signInWithOAuth,
     signInWithPassword,
     signOut,
+    addComment,
+    votePlace,
+    trackPlaceOpen,
   } = useAppContext();
   const currentUser = getUserIdentity(state.session?.user);
   const isAuthenticated = isLoggedIn(state.session);
   const [isAccountModalVisible, setIsAccountModalVisible] = useState(false);
+  const [isPlaceModalVisible, setIsPlaceModalVisible] = useState(false);
+  const [selectedPlaceId, setSelectedPlaceId] = useState('');
+  const [commentDraft, setCommentDraft] = useState('');
   const [email, setEmail] = useState('testuser@topey.app');
   const [password, setPassword] = useState('TopeyTest123!');
+
+  const selectedPlace = useMemo(
+    () => state.places.find((place) => place.id === selectedPlaceId) || null,
+    [selectedPlaceId, state.places]
+  );
+  const voteBreakdown = getVoteBreakdown(state.votes, selectedPlace?.id);
+  const comments = getCommentsForPlace(state.comments, selectedPlace?.id);
+  const threadCount = selectedPlace?.threadCount ?? comments.length;
 
   async function handleProviderPress(provider) {
     try {
@@ -64,7 +81,62 @@ export function HomeScreen({ navigation }) {
   }
 
   function handleMarkerPress(placeId) {
-    navigation.navigate('Browse', { placeId });
+    const place = state.places.find((entry) => entry.id === placeId);
+
+    if (!place) {
+      return;
+    }
+
+    setSelectedPlaceId(place.id);
+    setIsPlaceModalVisible(true);
+    trackPlaceOpen({
+      placeId: place.id,
+      sourceScreen: 'home_pin_modal',
+    });
+  }
+
+  async function handleVote(value) {
+    if (!isAuthenticated || !selectedPlace) {
+      setIsPlaceModalVisible(false);
+      setIsAccountModalVisible(true);
+      return;
+    }
+
+    try {
+      await votePlace({
+        placeId: selectedPlace.id,
+        value,
+      });
+    } catch (error) {
+      Alert.alert('Vote failed', error.message);
+    }
+  }
+
+  async function handleComment() {
+    if (!isAuthenticated || !selectedPlace) {
+      setIsPlaceModalVisible(false);
+      setIsAccountModalVisible(true);
+      return;
+    }
+
+    try {
+      await addComment({
+        placeId: selectedPlace.id,
+        body: commentDraft,
+      });
+      setCommentDraft('');
+    } catch (error) {
+      Alert.alert('Comment failed', error.message);
+    }
+  }
+
+  function openAccountFromPlace() {
+    setIsPlaceModalVisible(false);
+    setIsAccountModalVisible(true);
+  }
+
+  function closePlaceModal() {
+    setIsPlaceModalVisible(false);
   }
 
   return (
@@ -74,6 +146,7 @@ export function HomeScreen({ navigation }) {
           <MapPlaceMarker
             key={place.id}
             coordinate={{ latitude: place.latitude, longitude: place.longitude }}
+            selected={place.id === selectedPlaceId}
             onPress={() => handleMarkerPress(place.id)}
           />
         ))}
@@ -81,14 +154,6 @@ export function HomeScreen({ navigation }) {
 
       <SafeAreaView pointerEvents="box-none" style={styles.overlayRoot}>
         <View pointerEvents="box-none" style={styles.topRow}>
-          <ShadButton
-            label="Add a place"
-            size="compact"
-            shape="pill"
-            variant="secondary"
-            onPress={() => navigation.navigate('AddPlace')}
-            testID="home-add-button"
-          />
           <ShadButton
             label={isAuthenticated ? 'Profile' : 'Sign in'}
             size="compact"
@@ -101,15 +166,97 @@ export function HomeScreen({ navigation }) {
 
         <View pointerEvents="box-none" style={styles.bottomDock}>
           <ShadButton
-            label="Find a place"
+            label="+"
             size="large"
             shape="pill"
-            onPress={() => navigation.navigate('Browse')}
-            style={styles.findButton}
-            testID="home-find-button"
+            onPress={() => navigation.navigate('AddPlace')}
+            style={styles.addButton}
+            labelStyle={styles.addButtonLabel}
+            testID="home-plus-button"
           />
         </View>
       </SafeAreaView>
+
+      <Modal
+        animationType="slide"
+        transparent
+        visible={isPlaceModalVisible}
+        onRequestClose={closePlaceModal}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.select({ ios: 'padding', default: undefined })}
+          style={styles.modalRoot}
+        >
+          <Pressable style={styles.modalBackdrop} onPress={closePlaceModal} />
+          <View style={styles.sheet}>
+            {selectedPlace ? (
+              <>
+                <Text style={styles.sheetTitle}>{selectedPlace.name}</Text>
+                <Text style={styles.sheetCopy}>{selectedPlace.description}</Text>
+
+                <View style={styles.detailStats}>
+                  <PreviewStat
+                    label="Rating"
+                    value={`${voteBreakdown.score >= 0 ? '+' : ''}${voteBreakdown.score}`}
+                  />
+                  <PreviewStat label="Votes" value={voteBreakdown.ratioLabel} />
+                  <PreviewStat label="Threads" value={`${threadCount}`} />
+                </View>
+
+                {isAuthenticated ? (
+                  <>
+                    <View style={styles.voteRow}>
+                      <ShadButton
+                        label="Upvote"
+                        size="compact"
+                        shape="pill"
+                        onPress={() => handleVote(1)}
+                        style={styles.voteButton}
+                      />
+                      <ShadButton
+                        label="Downvote"
+                        size="compact"
+                        shape="pill"
+                        variant="secondary"
+                        onPress={() => handleVote(-1)}
+                        style={styles.voteButton}
+                      />
+                    </View>
+
+                    <View style={styles.commentComposer}>
+                      <TextInput
+                        placeholder="Add a comment"
+                        placeholderTextColor={colors.mutedText}
+                        value={commentDraft}
+                        onChangeText={setCommentDraft}
+                        style={styles.input}
+                      />
+                      <ShadButton label="Send" size="compact" shape="pill" onPress={handleComment} />
+                    </View>
+
+                    <ScrollView style={styles.commentsList} showsVerticalScrollIndicator={false}>
+                      {comments.map((comment) => (
+                        <View key={comment.id} style={styles.commentCard}>
+                          <Text style={styles.commentAuthor}>{comment.authorName || 'Topey user'}</Text>
+                          <Text style={styles.commentBody}>{comment.body}</Text>
+                        </View>
+                      ))}
+                    </ScrollView>
+                  </>
+                ) : (
+                  <View style={styles.lockedCard}>
+                    <Text style={styles.lockedTitle}>Log in to read threads.</Text>
+                    <Text style={styles.lockedCopy}>
+                      Pin taps open the place modal here on home, and login unlocks the threads and comments.
+                    </Text>
+                    <ShadButton label="Log in" size="compact" shape="pill" onPress={openAccountFromPlace} />
+                  </View>
+                )}
+              </>
+            ) : null}
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
 
       <Modal
         animationType="slide"
@@ -161,6 +308,15 @@ export function HomeScreen({ navigation }) {
   );
 }
 
+function PreviewStat({ label, value }) {
+  return (
+    <View style={styles.previewStat}>
+      <Text style={styles.previewStatLabel}>{label}</Text>
+      <Text style={styles.previewStatValue}>{value}</Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -174,14 +330,24 @@ const styles = StyleSheet.create({
     paddingTop: spacing.sm,
   },
   topRow: {
+    alignItems: 'flex-end',
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
   },
   bottomDock: {
+    alignItems: 'center',
     paddingBottom: spacing.sm,
   },
-  findButton: {
-    width: '100%',
+  addButton: {
+    alignItems: 'center',
+    borderRadius: radius.pill,
+    height: 88,
+    justifyContent: 'center',
+    width: 88,
+  },
+  addButtonLabel: {
+    fontSize: 34,
+    lineHeight: 34,
   },
   modalRoot: {
     flex: 1,
@@ -198,6 +364,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: radius.lg,
     borderWidth: 1,
     borderBottomWidth: 0,
+    maxHeight: '80%',
     padding: spacing.md,
     ...shadows.floating,
   },
@@ -213,6 +380,13 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     marginTop: spacing.sm,
   },
+  sheetMeta: {
+    color: colors.mutedText,
+    fontFamily: typography.body,
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: spacing.sm,
+  },
   profileName: {
     color: colors.text,
     fontFamily: typography.semibold,
@@ -225,14 +399,95 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: spacing.xs,
   },
-  sheetMeta: {
-    color: colors.mutedText,
-    fontFamily: typography.body,
-    fontSize: 12,
-    lineHeight: 18,
-    marginTop: spacing.sm,
-  },
   sheetButton: {
     marginTop: spacing.lg,
+  },
+  detailStats: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginTop: spacing.md,
+  },
+  previewStat: {
+    flex: 1,
+  },
+  previewStatLabel: {
+    color: colors.mutedText,
+    fontFamily: typography.medium,
+    fontSize: 12,
+  },
+  previewStatValue: {
+    color: colors.text,
+    fontFamily: typography.semibold,
+    fontSize: 15,
+    marginTop: spacing.xxs,
+  },
+  voteRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginTop: spacing.md,
+  },
+  voteButton: {
+    flex: 1,
+  },
+  commentComposer: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginTop: spacing.md,
+  },
+  input: {
+    backgroundColor: colors.secondary,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    color: colors.text,
+    flex: 1,
+    fontFamily: typography.body,
+    minHeight: 46,
+    paddingHorizontal: spacing.md,
+  },
+  commentsList: {
+    marginTop: spacing.md,
+  },
+  commentCard: {
+    backgroundColor: colors.elevatedCard,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    marginBottom: spacing.sm,
+    padding: spacing.md,
+  },
+  commentAuthor: {
+    color: colors.text,
+    fontFamily: typography.semibold,
+    fontSize: 13,
+  },
+  commentBody: {
+    color: colors.mutedText,
+    fontFamily: typography.body,
+    fontSize: 14,
+    lineHeight: 20,
+    marginTop: spacing.xs,
+  },
+  lockedCard: {
+    backgroundColor: colors.secondary,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    marginTop: spacing.md,
+    padding: spacing.md,
+  },
+  lockedTitle: {
+    color: colors.text,
+    fontFamily: typography.semibold,
+    fontSize: 16,
+  },
+  lockedCopy: {
+    color: colors.mutedText,
+    fontFamily: typography.body,
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: spacing.md,
+    marginTop: spacing.sm,
   },
 });

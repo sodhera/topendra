@@ -81,6 +81,7 @@ describe('HomeScreen', () => {
   const navigation = {
     navigate: jest.fn(),
   };
+  const trackPlaceOpen = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -101,27 +102,33 @@ describe('HomeScreen', () => {
       signInWithOAuth: jest.fn(),
       signInWithPassword: jest.fn(),
       signOut: jest.fn(),
+      addComment: jest.fn(),
+      votePlace: jest.fn(),
+      trackPlaceOpen,
     });
   });
 
-  test('shows the requested home button layout and opens browse from the bottom CTA', () => {
+  test('shows the simplified home layout and opens add-place from the bottom plus button', () => {
     const screen = render(<HomeScreen navigation={navigation} />);
 
-    expect(screen.getByTestId('home-add-button')).toBeTruthy();
     expect(screen.getByTestId('home-account-button')).toBeTruthy();
-    expect(screen.getByTestId('home-find-button')).toBeTruthy();
+    expect(screen.getByTestId('home-plus-button')).toBeTruthy();
 
-    fireEvent.press(screen.getByTestId('home-find-button'));
+    fireEvent.press(screen.getByTestId('home-plus-button'));
 
-    expect(navigation.navigate).toHaveBeenCalledWith('Browse');
+    expect(navigation.navigate).toHaveBeenCalledWith('AddPlace');
   });
 
-  test('opens browse when a map marker is tapped from home', () => {
+  test('opens the place modal when a map marker is tapped from home', () => {
     const screen = render(<HomeScreen navigation={navigation} />);
     const firstPlace = buildSeedState().places[0];
 
     fireEvent.press(screen.getAllByTestId('map-marker')[0]);
 
-    expect(navigation.navigate).toHaveBeenCalledWith('Browse', { placeId: firstPlace.id });
+    expect(screen.getByText(firstPlace.name)).toBeTruthy();
+    expect(trackPlaceOpen).toHaveBeenCalledWith({
+      placeId: firstPlace.id,
+      sourceScreen: 'home_pin_modal',
+    });
   });
 });

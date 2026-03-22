@@ -9,6 +9,7 @@ export function ShadButton({
   size = 'default',
   shape = 'rounded',
   style,
+  labelStyle,
   disabled = false,
   testID,
 }) {
@@ -33,7 +34,13 @@ export function ShadButton({
       testID={testID}
     >
       <Animated.View style={[styles.inner, { transform: [{ scale }] }]}>
-        <Text style={[styles.label, variant === 'primary' ? styles.primaryLabel : styles.secondaryLabel]}>
+        <Text
+          style={[
+            styles.label,
+            variant === 'primary' ? styles.primaryLabel : styles.secondaryLabel,
+            labelStyle,
+          ]}
+        >
           {label}
         </Text>
       </Animated.View>
