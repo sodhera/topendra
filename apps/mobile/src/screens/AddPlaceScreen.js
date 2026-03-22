@@ -153,7 +153,7 @@ export function AddPlaceScreen({ navigation }) {
 
         <View style={styles.actionCard}>
           <Text style={styles.eyebrow}>Add a place</Text>
-          <Text style={styles.title}>Move the map, then pin here</Text>
+          <Text style={styles.title}>Move the map and Add the pin</Text>
           <Text style={styles.copy}>{locationStatusCopy}</Text>
 
           <View style={styles.coordsCard}>

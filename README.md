@@ -51,7 +51,7 @@ cd topey
   - guests still see the latest two preview comments, but `See More` and comment actions route into email auth
 - Add-place screen:
   - opens on the user’s current location once foreground location resolves
-  - movable map with a fixed red pin overlay that sits in the upper half of the viewport and still marks the exact add target
+  - movable map with a fixed maps-style location bubble pin in the upper half of the viewport that still marks the exact add target
   - `Add here` action that opens a details modal
   - modal form with name, description, and final `Add` submit for logged-in users
   - guest add attempts expose the same email-link auth path used by voting and comments
