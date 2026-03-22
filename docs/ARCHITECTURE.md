@@ -124,6 +124,7 @@ Defined in [AddPlaceScreen.js](/Users/sirishjoshi/Desktop/Topey/apps/mobile/src/
 Responsibilities:
 
 - center on the resolved live location before enabling submission
+- inherit the current home or browse viewport on entry so existing place pins disappear without a hard map jump
 - keep the base map decluttered while still showing the user location and current pin target
 - let the user move the pin by moving the map instead of dragging a controlled region prop
 - render a fixed maps-style location bubble pin in the upper half of the viewport so the add target stays visible while the map moves underneath it
@@ -278,10 +279,11 @@ Mechanism:
 
 1. Each map screen mounts the map with `initialRegion`.
 2. `Home`, `Browse`, and `AddPlace` all recenter once from foreground location when permission is granted.
-3. `AddPlace` keeps the target coordinates synced to the point under the fixed upper-half overlay pin instead of the literal screen center.
-4. `Home` and `Browse` derive a visible marker subset from the current viewport, bucket nearby places together, ease the marker cap down as the map zooms out, and return to full visible-pin rendering once the user is zoomed in past the density threshold.
-5. User drags happen directly inside the native map view because only the actual buttons intercept touches.
-6. `Home` modals and `Browse` previews both come from explicit marker taps instead of automatic map-center selection.
+3. `AddPlace` starts from the current source viewport, hides place pins, then animates to the resolved live location for a smoother transition into placement mode.
+4. `AddPlace` keeps the target coordinates synced to the point under the fixed upper-half overlay pin instead of the literal screen center.
+5. `Home` and `Browse` derive a visible marker subset from the current viewport, bucket nearby places together, ease the marker cap down as the map zooms out, and return to full visible-pin rendering once the user is zoomed in past the density threshold.
+6. User drags happen directly inside the native map view because only the actual buttons intercept touches.
+7. `Home` modals and `Browse` previews both come from explicit marker taps instead of automatic map-center selection.
 
 This keeps the interaction simple and avoids the earlier bug where the map felt locked and only tiny untouched areas seemed draggable.
 

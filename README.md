@@ -50,7 +50,7 @@ cd topey
   - `View more` opens a details modal with inline metadata, a participation row that combines stemmed arrow voting with creator attribution, a stacked thread preview, and a separate discussion modal
   - guests still see the latest two preview comments, but `See More` and comment actions route into email auth
 - Add-place screen:
-  - opens on the user’s current location once foreground location resolves
+  - opens from the current home or browse viewport so the transition feels continuous, then auto-scrolls to the user’s current location once foreground location resolves
   - movable map with a fixed maps-style location bubble pin in the upper half of the viewport that still marks the exact add target
   - the live overlay stays minimal: just `Back` at the top and `Add here` at the bottom
   - modal form with name, description, and final `Add` submit for logged-in users
