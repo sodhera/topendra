@@ -130,6 +130,8 @@ describe('HomeScreen', () => {
     expect(screen.getByTestId('home-open-location-button')).toBeTruthy();
     expect(screen.getByTestId('home-vote-up-button')).toBeTruthy();
     expect(screen.getByTestId('home-vote-down-button')).toBeTruthy();
+    expect(screen.getByTestId('home-added-by-label')).toBeTruthy();
+    expect(screen.getByText(firstPlace.authorName)).toBeTruthy();
     expect(screen.getByTestId('home-comment-compose-button')).toBeTruthy();
     expect(screen.getByText(firstPlaceComments[0].body)).toBeTruthy();
     expect(trackPlaceOpen).toHaveBeenCalledWith({

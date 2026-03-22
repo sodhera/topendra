@@ -235,14 +235,19 @@ export function HomeScreen({ navigation }) {
                   testID="home-open-location-button"
                 />
 
-                <CompactVoteControls
-                  currentVote={currentVote}
-                  onDownvote={() => handleVote(-1)}
-                  onUpvote={() => handleVote(1)}
-                  score={voteBreakdown.score}
-                  style={styles.voteControls}
-                  testIDPrefix="home-vote"
-                />
+                <View style={styles.participationRow}>
+                  <CompactVoteControls
+                    currentVote={currentVote}
+                    onDownvote={() => handleVote(-1)}
+                    onUpvote={() => handleVote(1)}
+                    score={voteBreakdown.score}
+                    style={styles.voteControls}
+                    testIDPrefix="home-vote"
+                  />
+                  <Text style={styles.addedByLabel} testID="home-added-by-label">
+                    Added by: <Text style={styles.addedByValue}>{selectedPlace.authorName || 'Topey user'}</Text>
+                  </Text>
+                </View>
 
                 <PlaceConversationSection
                   comments={comments}
@@ -462,8 +467,27 @@ const styles = StyleSheet.create({
     letterSpacing: -0.35,
   },
   voteControls: {
-    alignSelf: 'flex-start',
+    marginTop: 0,
+  },
+  participationRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     marginTop: spacing.sm,
+  },
+  addedByLabel: {
+    color: colors.mutedText,
+    flex: 1,
+    fontFamily: typography.body,
+    fontSize: 12,
+    lineHeight: 16,
+    marginLeft: spacing.md,
+    textAlign: 'right',
+  },
+  addedByValue: {
+    color: colors.mutedText,
+    fontFamily: typography.medium,
+    fontWeight: '600',
   },
   previewStat: {
     flex: 1,

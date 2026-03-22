@@ -150,6 +150,8 @@ describe('BrowseScreen', () => {
     expect(screen.getByTestId('browse-open-location-button')).toBeTruthy();
     expect(screen.getByTestId('browse-vote-up-button')).toBeTruthy();
     expect(screen.getByTestId('browse-vote-down-button')).toBeTruthy();
+    expect(screen.getByTestId('browse-added-by-label')).toBeTruthy();
+    expect(screen.getByText(firstPlace.authorName)).toBeTruthy();
     expect(screen.getByTestId('browse-comment-compose-button')).toBeTruthy();
     expect(screen.getByText(firstPlaceComments[0].body)).toBeTruthy();
 
