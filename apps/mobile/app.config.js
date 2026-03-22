@@ -44,7 +44,7 @@ module.exports = () => ({
           'Topey uses your location to center the map around you, show nearby place drops, and save the coordinates of places you add.',
       },
     ],
-    'expo-apple-authentication',
+    // 'expo-apple-authentication', // Temporarily disabled to skip strict Xcode capabilities
   ],
   extra: {
     supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL ?? null,
