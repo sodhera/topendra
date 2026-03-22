@@ -93,7 +93,7 @@ Responsibilities:
 - open the full discussion in a second modal with per-comment vote/reply affordances
 - use a floating add-comment action instead of an inline composer in the place modal
 - expose `See More` as the large preview affordance inside the faded comment tail
-- route guests into the email-link auth path instead of exposing thread content
+- keep the top two preview comments visible for guests, but route `See More` and comment actions into the email-link auth path
 
 The large center hero card, test-user widget, and center-floating action row are intentionally gone.
 
@@ -112,7 +112,7 @@ Responsibilities:
 - open an explicit details modal from `View more`
 - expose `Open location`, simple arrow voting, and the same Reddit-style thread preview inside the details modal
 - open the full conversation in a second modal from the preview stack
-- gate thread content behind login and auth-gate voting/comment actions for guests
+- keep the two-comment preview visible for guests while auth-gating the full discussion and participation actions
 - expose the same email-plus-anonymous-username auth card when a guest tries to participate
 
 ### AddPlace

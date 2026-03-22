@@ -46,6 +46,7 @@ cd topey
   - `Back` button at the top left and `Add a place` at the top right
   - tapping a dot opens a native-feeling light preview card with rating, votes, and thread count
   - `View more` opens a details modal with inline metadata, a participation row that combines stemmed arrow voting with creator attribution, a stacked thread preview, and a separate discussion modal
+  - guests still see the latest two preview comments, but `See More` and comment actions route into email auth
 - Add-place screen:
   - opens on the user’s current location once foreground location resolves
   - movable map with a centered pin that follows the visible location
@@ -166,7 +167,8 @@ npm run web:preview
 - can read place metadata
 - can open the place modal from any demo dot
 - can open the pinned coordinates in the native maps app
-- cannot read comments
+- can preview the latest two seeded comments in the place sheet
+- still hits email auth before opening the full discussion or posting
 - cannot vote
 - cannot save new places
 

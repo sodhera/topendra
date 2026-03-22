@@ -70,6 +70,7 @@ Important rules:
 - select is authenticated-only
 - insert is authenticated-only
 - guests do not receive comment rows from the backend
+- guest thread previews come from the deterministic Kathmandu demo dataset merged client-side, so unauthenticated users still see a seeded top-of-thread preview
 
 ### `public.place_open_events`
 
