@@ -1,5 +1,11 @@
 import { DEFAULT_REGION } from './constants';
 
+const FULL_PIN_DENSITY_DELTA = 0.12;
+const MAX_PIN_THINNING_DELTA = 8;
+const MIN_PIN_COUNT = 6;
+const MAX_BUCKETS_PER_AXIS = 18;
+const MIN_BUCKETS_PER_AXIS = 6;
+
 export function getPlaceScore(votes, placeId) {
   return votes
     .filter((vote) => vote.placeId === placeId)
@@ -67,6 +73,146 @@ export function getNearestPlace(places, region) {
 
     return distanceInKm(region, place) < distanceInKm(region, nearestPlace) ? place : nearestPlace;
   }, null);
+}
+
+export function getMapPlacesForRegion(places, region, votes = [], selectedPlaceId = '') {
+  if (!places?.length) {
+    return [];
+  }
+
+  if (!region) {
+    return places;
+  }
+
+  const normalizedRegion = {
+    latitude: region.latitude ?? DEFAULT_REGION.latitude,
+    longitude: region.longitude ?? DEFAULT_REGION.longitude,
+    latitudeDelta: Math.max(region.latitudeDelta ?? DEFAULT_REGION.latitudeDelta, 0.0005),
+    longitudeDelta: Math.max(region.longitudeDelta ?? DEFAULT_REGION.longitudeDelta, 0.0005),
+  };
+  const bounds = getPaddedRegionBounds(normalizedRegion, 0.18);
+  const visiblePlaces = places.filter((place) => isPlaceInsideBounds(place, bounds));
+  const scoreByPlaceId = buildVoteScoreMap(votes);
+  const prioritizedPlaces = visiblePlaces
+    .slice()
+    .sort((left, right) => compareMapPlacePriority(left, right, scoreByPlaceId, selectedPlaceId));
+  const zoomOutProgress = getZoomOutProgress(normalizedRegion);
+
+  if (zoomOutProgress <= 0) {
+    return prioritizedPlaces;
+  }
+
+  const cellsPerAxis = getBucketCountPerAxis(zoomOutProgress);
+  const latitudeStep = Math.max(normalizedRegion.latitudeDelta / cellsPerAxis, 0.0015);
+  const longitudeStep = Math.max(normalizedRegion.longitudeDelta / cellsPerAxis, 0.0015);
+  const placesByCell = new Map();
+
+  for (const place of prioritizedPlaces) {
+    const bucketKey = [
+      Math.floor((place.latitude - bounds.minLatitude) / latitudeStep),
+      Math.floor((place.longitude - bounds.minLongitude) / longitudeStep),
+    ].join(':');
+
+    if (!placesByCell.has(bucketKey)) {
+      placesByCell.set(bucketKey, place);
+    }
+  }
+
+  const maxMarkers = getMaxMarkerCount(zoomOutProgress, visiblePlaces.length);
+  const sampledPlaces = Array.from(placesByCell.values())
+    .sort((left, right) => compareMapPlacePriority(left, right, scoreByPlaceId, selectedPlaceId))
+    .slice(0, maxMarkers);
+
+  if (selectedPlaceId) {
+    const selectedPlace = visiblePlaces.find((place) => place.id === selectedPlaceId);
+
+    if (selectedPlace && !sampledPlaces.some((place) => place.id === selectedPlaceId)) {
+      sampledPlaces.pop();
+      sampledPlaces.unshift(selectedPlace);
+    }
+  }
+
+  return sampledPlaces;
+}
+
+function buildVoteScoreMap(votes) {
+  const scoreByPlaceId = new Map();
+
+  for (const vote of votes) {
+    scoreByPlaceId.set(vote.placeId, (scoreByPlaceId.get(vote.placeId) ?? 0) + vote.value);
+  }
+
+  return scoreByPlaceId;
+}
+
+function getPaddedRegionBounds(region, paddingRatio) {
+  const latitudePadding = region.latitudeDelta * paddingRatio;
+  const longitudePadding = region.longitudeDelta * paddingRatio;
+
+  return {
+    minLatitude: region.latitude - region.latitudeDelta / 2 - latitudePadding,
+    maxLatitude: region.latitude + region.latitudeDelta / 2 + latitudePadding,
+    minLongitude: region.longitude - region.longitudeDelta / 2 - longitudePadding,
+    maxLongitude: region.longitude + region.longitudeDelta / 2 + longitudePadding,
+  };
+}
+
+function isPlaceInsideBounds(place, bounds) {
+  return (
+    place.latitude >= bounds.minLatitude &&
+    place.latitude <= bounds.maxLatitude &&
+    place.longitude >= bounds.minLongitude &&
+    place.longitude <= bounds.maxLongitude
+  );
+}
+
+function getZoomOutProgress(region) {
+  const widestDelta = Math.max(region.latitudeDelta, region.longitudeDelta);
+  const normalizedProgress = clamp(
+    (widestDelta - FULL_PIN_DENSITY_DELTA) / (MAX_PIN_THINNING_DELTA - FULL_PIN_DENSITY_DELTA),
+    0,
+    1
+  );
+
+  return smoothstep(normalizedProgress);
+}
+
+function getBucketCountPerAxis(zoomOutProgress) {
+  return Math.round(lerp(MAX_BUCKETS_PER_AXIS, MIN_BUCKETS_PER_AXIS, zoomOutProgress));
+}
+
+function getMaxMarkerCount(zoomOutProgress, visiblePlaceCount) {
+  return Math.max(
+    MIN_PIN_COUNT,
+    Math.round(lerp(visiblePlaceCount, MIN_PIN_COUNT, zoomOutProgress))
+  );
+}
+
+function compareMapPlacePriority(left, right, scoreByPlaceId, selectedPlaceId) {
+  return getMapPlacePriority(right, scoreByPlaceId, selectedPlaceId) - getMapPlacePriority(left, scoreByPlaceId, selectedPlaceId);
+}
+
+function getMapPlacePriority(place, scoreByPlaceId, selectedPlaceId) {
+  const createdAtScore = place.createdAt ? new Date(place.createdAt).getTime() / 1e12 : 0;
+
+  return (
+    (place.id === selectedPlaceId ? 1000000 : 0) +
+    ((place.threadCount ?? 0) * 100) +
+    ((scoreByPlaceId.get(place.id) ?? 0) * 10) +
+    createdAtScore
+  );
+}
+
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function lerp(start, end, progress) {
+  return start + (end - start) * progress;
+}
+
+function smoothstep(value) {
+  return value * value * (3 - 2 * value);
 }
 
 function toRadians(value) {

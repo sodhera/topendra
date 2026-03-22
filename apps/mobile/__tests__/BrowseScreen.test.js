@@ -3,6 +3,7 @@ import { Pressable, Text, View } from 'react-native';
 import { fireEvent, render } from '@testing-library/react-native';
 import { BrowseScreen } from '../src/screens/BrowseScreen';
 import { buildSeedState } from '@topey/shared/data/seed';
+import { getMapPlacesForRegion } from '@topey/shared/lib/geo';
 import { useAppContext } from '../src/context/AppContext';
 import { useLiveLocation } from '../src/hooks/useLiveLocation';
 
@@ -51,9 +52,9 @@ jest.mock('react-native-maps', () => {
     );
   });
 
-  function Marker({ children, onPress }) {
+  function Marker({ children, onPress, testID }) {
     return (
-      <Pressable testID="map-marker" onPress={onPress}>
+      <Pressable testID={testID ?? 'map-marker'} onPress={onPress}>
         {children}
       </Pressable>
     );
@@ -91,7 +92,7 @@ jest.mock('../src/components/EmailAuthCard', () => ({
 
     return (
       <View>
-        <Text>Email access</Text>
+        <Text>Email</Text>
         <Text>{email}</Text>
         <Text>{username}</Text>
       </View>
@@ -131,8 +132,8 @@ describe('BrowseScreen', () => {
 
     useLiveLocation.mockReturnValue({
       region: {
-        latitude: 40.7128,
-        longitude: -74.006,
+        latitude: 27.7172,
+        longitude: 85.324,
         latitudeDelta: 0.06,
         longitudeDelta: 0.06,
       },
@@ -144,8 +145,17 @@ describe('BrowseScreen', () => {
 
   test('shows the selected place preview and details flow from a marker tap', () => {
     const state = buildSeedState();
-    const firstPlace = state.places[0];
-    const firstPlaceComments = state.comments.filter((comment) => comment.placeId === firstPlace.id);
+    const visiblePlace = getMapPlacesForRegion(
+      state.places,
+      {
+        latitude: 27.7172,
+        longitude: 85.324,
+        latitudeDelta: 0.06,
+        longitudeDelta: 0.06,
+      },
+      state.votes
+    )[0];
+    const visiblePlaceComments = state.comments.filter((comment) => comment.placeId === visiblePlace.id);
 
     useAppContext.mockReturnValue({
       state: {
@@ -168,28 +178,28 @@ describe('BrowseScreen', () => {
 
     const screen = render(<BrowseScreen navigation={navigation} route={{ params: {} }} />);
 
-    fireEvent.press(screen.getAllByTestId('map-marker')[0]);
+    fireEvent.press(screen.getByTestId(`browse-marker-${visiblePlace.id}`));
 
     expect(screen.getByTestId('browse-map-config').props.children).toContain('"showsPointsOfInterest":false');
     expect(screen.getByTestId('browse-map-config').props.children).toContain('"showsBuildings":false');
-    expect(screen.getByTestId('browse-map-region').props.children).toContain('40.7128');
+    expect(screen.getByTestId('browse-map-region').props.children).toContain('27.7172');
     expect(screen.getByTestId('browse-preview-card')).toBeTruthy();
-    expect(screen.getByText(firstPlace.name)).toBeTruthy();
+    expect(screen.getByText(visiblePlace.name)).toBeTruthy();
     expect(trackPlaceOpen).toHaveBeenCalledWith({
-      placeId: firstPlace.id,
+      placeId: visiblePlace.id,
       sourceScreen: 'browse_preview',
     });
 
     fireEvent.press(screen.getByText('View more'));
 
-    expect(screen.getAllByText(firstPlace.description).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(visiblePlace.description).length).toBeGreaterThan(0);
     expect(screen.getByTestId('browse-open-location-button')).toBeTruthy();
     expect(screen.getByTestId('browse-vote-up-button')).toBeTruthy();
     expect(screen.getByTestId('browse-vote-down-button')).toBeTruthy();
     expect(screen.getByTestId('browse-added-by-label')).toBeTruthy();
-    expect(screen.getByText(firstPlace.authorName)).toBeTruthy();
+    expect(screen.getByText(visiblePlace.authorName)).toBeTruthy();
     expect(screen.getByTestId('browse-comment-compose-button')).toBeTruthy();
-    expect(screen.getByText(firstPlaceComments[0].body)).toBeTruthy();
+    expect(screen.getByText(visiblePlaceComments[0].body)).toBeTruthy();
 
     fireEvent.press(screen.getByTestId('browse-discussion-open-button'));
 
@@ -225,6 +235,6 @@ describe('BrowseScreen', () => {
 
     fireEvent.press(screen.getByTestId('browse-discussion-open-button'));
 
-    expect(screen.getByText('Email access')).toBeTruthy();
+    expect(screen.getByText('Email')).toBeTruthy();
   });
 });

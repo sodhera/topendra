@@ -82,6 +82,7 @@ Responsibilities:
 
 - center the initial map on the resolved live location when available, with Kathmandu as the fallback
 - suppress native POIs/buildings/traffic chrome so only Topey place drops compete for attention
+- thin marker density as the viewport widens so wide-area views stay readable
 - keep the map directly pannable without any full-screen overlay layer
 - render only `Profile` or `Sign in` at the top right
 - keep a single large `+` add-place button anchored at the bottom
@@ -105,6 +106,7 @@ Responsibilities:
 
 - render the same live-location-first map foundation as home
 - keep the same decluttered mobile map configuration so only Topey pins stand out against the base map
+- use the same viewport-based pin thinning as home so zoomed-out maps do not render every place at once
 - show only two top controls: `Back` and `Add a place`
 - display up to 50 place markers from Supabase plus the runtime demo fallback
 - open a compact place preview only when a dot is tapped
@@ -124,7 +126,8 @@ Responsibilities:
 - center on the resolved live location before enabling submission
 - keep the base map decluttered while still showing the user location and current pin target
 - let the user move the pin by moving the map instead of dragging a controlled region prop
-- render a fixed red pin overlay in the upper half of the viewport so the add target stays visible while the map moves underneath it
+- render a fixed maps-style location bubble pin in the upper half of the viewport so the add target stays visible while the map moves underneath it
+- keep the live overlay minimal with only `Back` and `Add here`
 - open a details modal from the map-first `Add here` action
 - capture the place name and description inside the modal
 - require login before save
@@ -276,8 +279,9 @@ Mechanism:
 1. Each map screen mounts the map with `initialRegion`.
 2. `Home`, `Browse`, and `AddPlace` all recenter once from foreground location when permission is granted.
 3. `AddPlace` keeps the target coordinates synced to the point under the fixed upper-half overlay pin instead of the literal screen center.
-4. User drags happen directly inside the native map view because only the actual buttons intercept touches.
-5. `Home` modals and `Browse` previews both come from explicit marker taps instead of automatic map-center selection.
+4. `Home` and `Browse` derive a visible marker subset from the current viewport, bucket nearby places together, ease the marker cap down as the map zooms out, and return to full visible-pin rendering once the user is zoomed in past the density threshold.
+5. User drags happen directly inside the native map view because only the actual buttons intercept touches.
+6. `Home` modals and `Browse` previews both come from explicit marker taps instead of automatic map-center selection.
 
 This keeps the interaction simple and avoids the earlier bug where the map felt locked and only tiny untouched areas seemed draggable.
 

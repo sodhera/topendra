@@ -19,7 +19,7 @@ import { ShadButton } from '../components/ShadButton';
 import { useAppContext } from '../context/AppContext';
 import { isLoggedIn } from '@topey/shared/lib/auth';
 import { DEFAULT_REGION, KATHMANDU_EXPLORE_REGION } from '@topey/shared/lib/constants';
-import { getCommentsForPlace, getVoteBreakdown } from '@topey/shared/lib/geo';
+import { getCommentsForPlace, getMapPlacesForRegion, getVoteBreakdown } from '@topey/shared/lib/geo';
 import { CLEAN_MOBILE_MAP_PROPS } from '@topey/shared/lib/mobileMap';
 import { openPlaceInMaps } from '../lib/locationLinks';
 import { colors, radius, shadows, spacing, typography } from '@topey/shared/lib/theme';
@@ -69,6 +69,10 @@ export function BrowseScreen({ navigation, route }) {
   const selectedPlace = useMemo(
     () => state.places.find((place) => place.id === selectedPlaceId) || null,
     [selectedPlaceId, state.places]
+  );
+  const visiblePlaces = useMemo(
+    () => getMapPlacesForRegion(state.places, mapRegion, state.votes, selectedPlaceId),
+    [mapRegion, selectedPlaceId, state.places, state.votes]
   );
   const voteBreakdown = getVoteBreakdown(state.votes, selectedPlace?.id);
   const comments = getCommentsForPlace(state.comments, selectedPlace?.id);
@@ -174,17 +178,19 @@ export function BrowseScreen({ navigation, route }) {
         ref={mapRef}
         key={`browse-map-${mapKey}`}
         initialRegion={mapRegion}
+        onRegionChangeComplete={setMapRegion}
         onPress={() => setSelectedPlaceId('')}
         showsUserLocation
         style={StyleSheet.absoluteFill}
         testID="browse-map"
       >
-        {state.places.map((place) => (
+        {visiblePlaces.map((place) => (
           <MapPlaceMarker
             key={place.id}
             coordinate={{ latitude: place.latitude, longitude: place.longitude }}
             selected={place.id === selectedPlaceId}
             onPress={() => handleMarkerPress(place.id)}
+            testID={`browse-marker-${place.id}`}
           />
         ))}
       </MapView>
@@ -317,7 +323,7 @@ export function BrowseScreen({ navigation, route }) {
             <View style={styles.sheetHandle} />
             <Text style={styles.sheetTitle}>Sign in</Text>
             <Text style={styles.sheetCopy}>
-              Use email access to read threads, vote, and post comments. Choose an anonymous public username.
+              Use email to vote and join threads.
             </Text>
             <EmailAuthCard
               email={email}

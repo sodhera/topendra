@@ -37,20 +37,22 @@ cd topey
   - `packages/shared` keeps cross-platform logic in one place
 - Home screen:
   - opens near the user’s current location when foreground location is available, with the Kathmandu seeded field as the fallback
+  - thins marker density as the map zooms out so wide views do not render every place pin at once
   - `Profile` or `Sign in` button at the top right
   - one large `+` button at the bottom that opens the add-place flow
   - tapping a dot opens the place modal directly on home instead of navigating away
   - the modal uses a single metadata line, `Open location`, a participation row with stemmed arrow voting plus `Added by: <Username>`, and a Reddit-style thread preview
 - Browse screen:
   - starts near the user’s current location when available, with up to 50 seeded demo dots still merged into the dataset
+  - uses the same zoom-aware marker thinning so wide map views stay readable
   - `Back` button at the top left and `Add a place` at the top right
   - tapping a dot opens a native-feeling light preview card with rating, votes, and thread count
   - `View more` opens a details modal with inline metadata, a participation row that combines stemmed arrow voting with creator attribution, a stacked thread preview, and a separate discussion modal
   - guests still see the latest two preview comments, but `See More` and comment actions route into email auth
 - Add-place screen:
   - opens on the user’s current location once foreground location resolves
-  - movable map with a fixed red pin overlay that sits in the upper half of the viewport and still marks the exact add target
-  - `Add here` action that opens a details modal
+  - movable map with a fixed maps-style location bubble pin in the upper half of the viewport that still marks the exact add target
+  - the live overlay stays minimal: just `Back` at the top and `Add here` at the bottom
   - modal form with name, description, and final `Add` submit for logged-in users
   - guest add attempts expose the same email-link auth path used by voting and comments
 - Buttons and sheets now use an Apple-like iOS treatment with a white/black/grey palette, larger sheet geometry, and clearer action hierarchy inside modals.
@@ -77,6 +79,7 @@ packages/
 - `Home`, `Browse`, and `AddPlace` all request foreground location so the app can open near the user anywhere, not only around the Kathmandu seed region.
 - Home and browse both stay directly draggable because only the actual buttons intercept touch events.
 - Mobile map views intentionally suppress native POIs, buildings, indoor labels, traffic, and toolbar chrome so Topey pins are the only location layer that stands out.
+- Home and browse derive a visible marker subset from the current viewport, ease marker density down as the map zooms out, and switch back to full visible-pin rendering once the user is zoomed in far enough.
 - Home place details open in a modal on dot tap, and browse previews also open only from explicit dot taps.
 - `AddPlace` updates the pending coordinates from map movement and uses a fixed center pin overlay so the target never disappears.
 
