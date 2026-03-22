@@ -46,12 +46,13 @@ Defined in [src/screens/HomeScreen.js](/Users/sirishjoshi/Desktop/Topey/src/scre
 
 Responsibilities:
 
-- show the live map background and keep it pannable
-- render compact liquid-glass home controls instead of a large status widget
+- show the live map background and keep it directly pannable
+- resolve the initial map viewport from foreground location without locking the map to React state during drag gestures
+- render only edge-mounted liquid-glass controls instead of a large status widget or center button row
 - switch into browse mode as soon as the map starts moving
 - expose a back path from browse mode back to the home chrome
 
-The large center hero card and test-user widget are intentionally gone.
+The large center hero card, test-user widget, and center-floating action row are intentionally gone.
 
 ### Browse
 
@@ -60,8 +61,9 @@ Defined in [src/screens/BrowseScreen.js](/Users/sirishjoshi/Desktop/Topey/src/sc
 Responsibilities:
 
 - reuse the same map foundation as home
-- keep the initial viewport on the Kathmandu demo region
+- keep the initial viewport on the resolved live location or Kathmandu fallback
 - display multiple place markers from Supabase
+- pick the nearest place to the visible map center as the active browse preview target
 - collapse markers into a smaller capsule while the map is moving, then expand them after 2 seconds of idle time
 - show a compact place preview and an explicit details modal
 - gate comments and votes behind login inside the modal
@@ -73,7 +75,7 @@ Defined in [src/screens/AddPlaceScreen.js](/Users/sirishjoshi/Desktop/Topey/src/
 Responsibilities:
 
 - center on the resolved live location before enabling submission
-- let the user move the pin by moving the map
+- let the user move the pin by moving the map instead of dragging a controlled region prop
 - open a details modal from the map-first `Add here` action
 - capture the place name and description inside the modal
 - require login before save
@@ -194,6 +196,20 @@ Behavior:
 5. Allow screens to opt out of live recentering so the browse map can be explored freely.
 
 The screens now use the live region for distance and add-place setup, but the browse and home maps are not locked to it. That keeps the Kathmandu demo markers visible and still lets the user move the map by hand.
+
+## Map Gesture Model
+
+The map screens intentionally avoid controlling `react-native-maps` with `region={...}` during ordinary drag gestures.
+
+Mechanism:
+
+1. The screen mounts the map with `initialRegion`.
+2. Once foreground location resolves, the screen recenters once for setup.
+3. User drags happen directly inside the native map view.
+4. `onRegionChangeStart` switches the chrome into browse mode and collapses markers.
+5. `onRegionChangeComplete` stores the new viewport, chooses the nearest place to the map center, and schedules the preview expansion after 2 seconds of idle.
+
+This is the key fix for the earlier bug where the map felt locked and only tiny untouched areas seemed draggable.
 
 ## Legacy Prototype Code
 

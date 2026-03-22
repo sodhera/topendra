@@ -25,15 +25,16 @@ cd topey
 ## Current Product Shape
 
 - Home screen:
-  - live Kathmandu map background that can be panned and zoomed immediately
-  - no large profile widget sitting over the map
-  - compact glass controls for sign-in, sign-out, and add-place
+  - live map that resolves to the user location once foreground location finishes loading
+  - edge-mounted liquid-glass controls only, so most of the map stays directly draggable
+  - no large profile widget, center button row, or permanent homepage card over the map
   - dragging the map enters `Find a place` mode automatically
 - Browse screen:
   - same map system as home, but starts in browse mode with a back button
   - multiple seeded place pins in Kathmandu
+  - the nearest place to the visible map center drives the browse preview
   - map pins stay minimized while the map is moving and expand after 2 seconds of idle time
-  - compact liquid-glass place preview with an explicit details modal
+  - compact liquid-glass place preview expands after 2 seconds of idle time, then opens a details modal on demand
 - Add-place screen:
   - opens on the user’s current location once foreground location resolves
   - movable map with a centered pin that follows the visible location
@@ -41,6 +42,13 @@ cd topey
   - modal form with name, description, and final `Add` submit for logged-in users
 - Buttons and overlays now use a translucent liquid-glass treatment and springy motion.
 - Place opens are tracked in Supabase so later area-notification work has usage history to build on.
+
+## Map Interaction Model
+
+- The map screens use `initialRegion` plus imperative recentering for setup. They do not keep `react-native-maps` locked to a controlled `region` prop during drag gestures.
+- `Home` and `Browse` switch into browse mode on `onRegionChangeStart`, collapse marker labels while the map is moving, then expand the preview card after 2 seconds of idle time.
+- The browse preview follows the nearest seeded place to the visible map center instead of a stale last-selected marker.
+- `AddPlace` updates the pending pin from map movement and keeps the details form behind an explicit modal instead of a permanent card.
 
 ## Tech Stack
 

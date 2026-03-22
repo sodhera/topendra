@@ -9,15 +9,17 @@
 ## Product Rules
 
 - The home screen must stay simple:
-  - small `Add a place` button near the top
-  - large `Find a place` button near the bottom
   - live map in the background
+  - edge-mounted controls only
+  - no center-floating action row or oversized homepage widget
 - Browsing happens inside the Topey app, not by kicking the user out to Apple Maps or Google Maps.
 - Logged-in users can upvote, downvote, and comment.
 - Guests can browse places, but adding a place remains login-gated.
 - The add-place flow should land on a live map first, then open a details modal from an explicit `Add here` action.
 - Home and browse maps must stay pannable; they should not lock to GPS after load.
+- Home and browse maps also must not be controlled with `region={...}` in a way that fights native drag gestures.
 - Dragging the home map should enter browse mode automatically, and browse mode must have a back path to home.
+- In browse mode, the nearest place to the visible map center should drive the compact bottom preview.
 - Demo Kathmandu pins should stay visible by default so the map behavior is easy to verify.
 - Button and overlay treatment should stay translucent/glassy with springy motion instead of flat rectangles.
 - Each place open should be tracked so later notification work has real event history.
