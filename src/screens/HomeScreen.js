@@ -177,7 +177,7 @@ export function HomeScreen({ navigation }) {
           <ShadButton
             label="+"
             size="large"
-            shape="pill"
+            shape="rounded"
             onPress={() => navigation.navigate('AddPlace')}
             style={styles.addButton}
             labelStyle={styles.addButtonLabel}
@@ -357,7 +357,9 @@ const styles = StyleSheet.create({
   },
   addButton: {
     alignItems: 'center',
-    borderRadius: radius.pill,
+    backgroundColor: colors.text,
+    borderColor: colors.text,
+    borderRadius: radius.md,
     height: 88,
     justifyContent: 'center',
     shadowColor: '#0F172A',
