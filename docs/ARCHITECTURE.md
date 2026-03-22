@@ -2,73 +2,113 @@
 
 ## Scope
 
-This repo currently implements a small Expo-native product:
+Topey is an Expo-native mobile app for:
 
-- show a live in-app map
-- center it on the user when location permission is granted
-- browse nearby places inside the app
-- let logged-in users upvote, downvote, and comment
-- let any user add a place by dropping a pin and entering a name and description
+- browsing nearby places on a map
+- selecting a pin and reading place details
+- viewing comment threads after login
+- upvoting and downvoting a place after login
+- adding new places after login
 
-There is no backend, no real auth system, and no server persistence.
+This repo is no longer a local-only prototype. Runtime data now comes from Supabase.
 
 ## Runtime Model
 
-The app is designed as a local-first prototype.
+### App shell
 
-- seed data is loaded on first boot
-- AsyncStorage becomes the source of truth after hydration
-- all writes happen locally in the reducer
-- the UI reads directly from reducer-backed context state
+The app shell is defined in [App.js](/Users/sirishjoshi/Desktop/Topey/App.js).
 
-This keeps the product small and fast to iterate on, but it also means data is device-local only.
-
-## Navigation
-
-The app uses a single native stack:
+The navigation stack is:
 
 - `Home`
 - `Browse`
 - `AddPlace`
 
-The home screen is only an entry surface. The browse and add screens contain the real working flows.
+### State container
+
+Shared app state lives in [src/context/AppContext.js](/Users/sirishjoshi/Desktop/Topey/src/context/AppContext.js).
+
+The context is responsible for:
+
+- restoring the Supabase session
+- loading places and votes
+- loading comments only for authenticated users
+- exposing auth actions
+- exposing place, vote, and comment write actions
+
+This replaced the old reducer-backed local runtime for the actual app flow.
 
 ## Screen Responsibilities
 
 ### Home
 
-- show the live background map
-- show the two primary actions
-- let the user flip between guest and demo-user mode
+Defined in [src/screens/HomeScreen.js](/Users/sirishjoshi/Desktop/Topey/src/screens/HomeScreen.js).
+
+Responsibilities:
+
+- show the live map background
+- show the current auth state
+- offer Google and Facebook sign-in to guests
+- send the user into the browse map
+
+The large center hero card from the earlier prototype is intentionally gone.
 
 ### Browse
 
-- render the interactive in-app map
-- show existing place markers
-- let the user focus a place
-- show vote score and comments for the selected place
+Defined in [src/screens/BrowseScreen.js](/Users/sirishjoshi/Desktop/Topey/src/screens/BrowseScreen.js).
+
+Responsibilities:
+
+- render the free-roam map
+- display multiple place markers from Supabase
+- focus the selected place
+- show the place widget:
+  - name
+  - description
+  - distance from user
+  - upvote/downvote ratio
+  - comments
+- gate comments behind login
 
 ### AddPlace
 
-- let the user place a marker on the map
-- collect a place name and description
-- dispatch a new place record into local state
+Defined in [src/screens/AddPlaceScreen.js](/Users/sirishjoshi/Desktop/Topey/src/screens/AddPlaceScreen.js).
 
-## State Model
+Responsibilities:
 
-Reducer-backed local state lives in [src/context/AppContext.js](/Users/sirishjoshi/Desktop/Topey/src/context/AppContext.js) and is persisted to AsyncStorage.
+- let the user move the pin
+- capture the place name and description
+- require login before save
+- insert the place into Supabase
 
-Stored records:
+## Auth Model
 
-- `currentUserId`
-- `users`
+Client auth helpers live in:
+
+- [src/lib/supabase.js](/Users/sirishjoshi/Desktop/Topey/src/lib/supabase.js)
+- [src/lib/auth.js](/Users/sirishjoshi/Desktop/Topey/src/lib/auth.js)
+
+Mechanism:
+
+1. The app asks Supabase for the saved session.
+2. Guests can browse without a session.
+3. Google and Facebook buttons call `signInWithOAuth`.
+4. The OAuth redirect returns to `topey://auth/callback`.
+5. The session is persisted in AsyncStorage through Supabase’s React Native storage integration.
+
+## Data Model
+
+Remote schema lives in [supabase/migrations/20260322114500_init_topey.sql](/Users/sirishjoshi/Desktop/Topey/supabase/migrations/20260322114500_init_topey.sql).
+
+Primary tables:
+
 - `places`
-- `comments`
-- `votes`
+- `place_votes`
+- `place_comments`
 
-### Place shape
+### Places
 
-Each place is intentionally simple:
+Each place contains:
 
 ```js
 {
@@ -78,137 +118,86 @@ Each place is intentionally simple:
   latitude,
   longitude,
   createdBy,
+  authorName,
   createdAt
 }
 ```
 
-### Comment shape
+### Votes
 
-```js
-{
-  id,
-  placeId,
-  authorId,
-  body,
-  createdAt
-}
-```
-
-### Vote shape
+Each vote contains:
 
 ```js
 {
   id,
   placeId,
   userId,
-  value // 1 or -1
+  value, // 1 or -1
+  createdAt
 }
 ```
 
-## Auth Model
+### Comments
 
-Auth is intentionally fake and local for now.
+Each comment contains:
 
-- `guest`: can browse and add places
-- `demo-user`: can browse, add places, vote, and comment
+```js
+{
+  id,
+  placeId,
+  authorId,
+  authorName,
+  body,
+  createdAt
+}
+```
 
-The login toggle on the home screen only switches `currentUserId` in local state.
+## Data Fetching And Writes
 
-This is a deliberate product shortcut, not a hidden auth system.
+Backend data helpers live in [src/lib/backend.js](/Users/sirishjoshi/Desktop/Topey/src/lib/backend.js).
 
-## Live Location
+### Reads
 
-The location mechanism lives in [src/hooks/useLiveLocation.js](/Users/sirishjoshi/Desktop/Topey/src/hooks/useLiveLocation.js).
+- all users fetch `places`
+- all users fetch `place_votes`
+- only authenticated users fetch `place_comments`
+
+### Writes
+
+- `createPlace`: inserts a new place
+- `voteForPlace`: upserts or removes the current user’s vote
+- `createComment`: inserts a comment
+
+## Location Handling
+
+Location logic lives in [src/hooks/useLiveLocation.js](/Users/sirishjoshi/Desktop/Topey/src/hooks/useLiveLocation.js).
 
 Behavior:
 
 1. Request foreground location permission.
-2. If granted, fetch the current position.
-3. Start a watcher to keep the region updated.
-4. If denied or failed, fall back to Kathmandu.
+2. Use the live position when permission is granted.
+3. Fall back to Kathmandu when location is unavailable.
+4. Allow screens to opt out of live recentering so the browse map can be explored freely.
 
-This hook is used by:
+## Legacy Prototype Code
 
-- the home map background
-- the browse map
-- the add-place map
+The repo still contains:
 
-## Map Rendering
+- [src/lib/reducer.js](/Users/sirishjoshi/Desktop/Topey/src/lib/reducer.js)
+- [src/data/seed.js](/Users/sirishjoshi/Desktop/Topey/src/data/seed.js)
 
-Map rendering uses `react-native-maps`.
+These are retained mainly for existing unit tests and historical reference. They are not the live runtime source of truth anymore.
 
-- iOS: Apple Maps
-- Android: Google Maps
+## Verification Surface
 
-The app uses:
+Current verification steps:
 
-- user location marker
-- normal map panning and zooming
-- place markers
-- tap-to-select behavior on browse
-- tap-to-drop / drag-to-adjust marker on add
+- Jest tests
+- `expo-doctor`
+- Supabase management API checks for schema and seed rows
 
-## Write Paths
+What is still not fully automated:
 
-### Add a place
-
-Defined in [src/screens/AddPlaceScreen.js](/Users/sirishjoshi/Desktop/Topey/src/screens/AddPlaceScreen.js).
-
-Flow:
-
-1. User taps the map or drags the marker.
-2. User enters a name and description.
-3. `add_place` action inserts a new place record into local state.
-
-### Vote on a place
-
-Defined by the `vote_place` reducer action.
-
-Rules:
-
-- guest votes are ignored
-- logged-in users can upvote or downvote
-- tapping the same vote again removes it
-- changing vote direction updates the existing record
-
-### Comment on a place
-
-Defined by the `add_comment` reducer action.
-
-Rules:
-
-- guest comments are ignored
-- empty comments are ignored
-- valid comments are prepended to the place’s comment list
-
-## Persistence
-
-- Storage key: `topey-mobile-state-v2`
-- Seed data comes from [src/data/seed.js](/Users/sirishjoshi/Desktop/Topey/src/data/seed.js)
-- Hydration happens once on app boot
-- Any state change after hydration is written back to AsyncStorage
-
-## Test Surface
-
-The repo’s current tests cover:
-
-- reducer behavior
-- auth helper behavior
-- geo helper behavior
-
-The repo does **not** currently have automated UI tests for:
-
-- native map rendering
-- device permission flows
-- full Expo Go interaction on a real phone
-
-## Main Source Files
-
-- [App.js](/Users/sirishjoshi/Desktop/Topey/App.js): app shell and navigation
-- [src/context/AppContext.js](/Users/sirishjoshi/Desktop/Topey/src/context/AppContext.js): reducer and persistence
-- [src/lib/reducer.js](/Users/sirishjoshi/Desktop/Topey/src/lib/reducer.js): state transitions
-- [src/lib/geo.js](/Users/sirishjoshi/Desktop/Topey/src/lib/geo.js): score, comment sorting, region helpers, distance
-- [src/hooks/useLiveLocation.js](/Users/sirishjoshi/Desktop/Topey/src/hooks/useLiveLocation.js): permission + live map region
-- [src/screens/HomeScreen.js](/Users/sirishjoshi/Desktop/Topey/src/screens/HomeScreen.js): map-backed landing screen
-- [src/screens/BrowseScreen.js](/Users/sirishjoshi/Desktop/Topey/src/screens/BrowseScreen.js): browsing, votes, comments
-- [src/screens/AddPlaceScreen.js](/Users/sirishjoshi/Desktop/Topey/src/screens/AddPlaceScreen.js): add-place flow
+- device-level OAuth success on both providers
+- native map interaction on a real phone
+- end-to-end comment gating smoke tests in a dev build

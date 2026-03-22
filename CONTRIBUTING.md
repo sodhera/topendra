@@ -2,13 +2,14 @@
 
 ## Working Style
 
-This repo is documented aggressively on purpose. If you change the product shape, developer flow, or architecture, update the docs in the same change.
+This repo is documented aggressively on purpose. If you change the product shape, developer flow, architecture, or backend wiring, update the docs in the same change.
 
 The current documentation spine is:
 
 - [README.md](/Users/sirishjoshi/Desktop/Topey/README.md)
 - [docs/README.md](/Users/sirishjoshi/Desktop/Topey/docs/README.md)
 - [docs/ARCHITECTURE.md](/Users/sirishjoshi/Desktop/Topey/docs/ARCHITECTURE.md)
+- [docs/SUPABASE.md](/Users/sirishjoshi/Desktop/Topey/docs/SUPABASE.md)
 - [DESIGN.md](/Users/sirishjoshi/Desktop/Topey/DESIGN.md)
 - [CLAUDE.md](/Users/sirishjoshi/Desktop/Topey/CLAUDE.md)
 - [TODOS.md](/Users/sirishjoshi/Desktop/Topey/TODOS.md)
@@ -39,6 +40,14 @@ Run tests:
 npm run test -- --runInBand
 ```
 
+Sync the backend project when auth or schema changes:
+
+```bash
+npm run supabase:auth
+npm run supabase:migrate
+npm run supabase:seed
+```
+
 ## Contribution Rules
 
 ### 1. Keep the app simple
@@ -48,7 +57,7 @@ The current product is intentionally minimal:
 - live map-backed home screen
 - browse flow
 - add-place flow
-- demo login gate for votes/comments
+- Supabase-backed login for comments, voting, and place submission
 
 Do not reintroduce old trust-heavy or moderation-heavy product machinery unless the product direction changes explicitly.
 
@@ -59,7 +68,7 @@ If you change:
 - navigation
 - state model
 - auth behavior
-- storage keys
+- Supabase schema or auth scripts
 - design direction
 - setup instructions
 
@@ -69,6 +78,7 @@ update the relevant docs before finishing.
 
 This repo wants frequent commits. Prefer:
 
+- one commit for backend and infrastructure wiring
 - one commit for product code
 - one commit for docs sync
 - one commit for runtime bug fixes
@@ -89,6 +99,8 @@ For Expo/runtime-sensitive changes, also run:
 npx expo-doctor
 ```
 
+When changing the backend contract, also verify the remote project state with the Supabase management API scripts.
+
 ### 5. Keep native assumptions explicit
 
 This is an Expo native app. If you add a dependency that needs:
@@ -97,12 +109,17 @@ This is an Expo native app. If you add a dependency that needs:
 - app config changes
 - platform-specific behavior
 
-document that clearly in [docs/ARCHITECTURE.md](/Users/sirishjoshi/Desktop/Topey/docs/ARCHITECTURE.md) and the root [README.md](/Users/sirishjoshi/Desktop/Topey/README.md).
+document that clearly in:
+
+- [README.md](/Users/sirishjoshi/Desktop/Topey/README.md)
+- [docs/ARCHITECTURE.md](/Users/sirishjoshi/Desktop/Topey/docs/ARCHITECTURE.md)
+- [docs/SUPABASE.md](/Users/sirishjoshi/Desktop/Topey/docs/SUPABASE.md) when the change touches backend or auth integration
 
 ## Current Quality Bar
 
 - clean README for GitHub visitors
 - developer docs for repo contributors
 - architecture docs that match the real code
+- backend docs that match the real schema and auth setup
 - passing tests
 - no stale product claims in docs
