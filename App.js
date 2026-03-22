@@ -1,5 +1,5 @@
 import React from 'react';
-import { DarkTheme, NavigationContainer } from '@react-navigation/native';
+import { DefaultTheme, NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -16,9 +16,9 @@ function LoadingScreen() {
   return (
     <View style={styles.loading}>
       <Text style={styles.loadingTitle}>Topey</Text>
-      <Text style={styles.loadingCopy}>Loading the local app state and getting the map ready.</Text>
+      <Text style={styles.loadingCopy}>Loading the Kathmandu map and preparing the latest place data.</Text>
       <ActivityIndicator color={colors.primary} style={styles.spinner} />
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
     </View>
   );
 }
@@ -31,9 +31,9 @@ function AppNavigator() {
   }
 
   const navigationTheme = {
-    ...DarkTheme,
+    ...DefaultTheme,
     colors: {
-      ...DarkTheme.colors,
+      ...DefaultTheme.colors,
       primary: colors.primary,
       background: colors.background,
       card: colors.card,
@@ -45,7 +45,7 @@ function AppNavigator() {
 
   return (
     <NavigationContainer theme={navigationTheme}>
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
       <Stack.Navigator
         screenOptions={{
           headerShown: false,

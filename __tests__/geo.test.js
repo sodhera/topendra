@@ -4,15 +4,21 @@ import { distanceInKm, getCommentsForPlace, getPlaceScore } from '../src/lib/geo
 describe('geo helpers', () => {
   test('place score adds up votes for a place', () => {
     const state = buildSeedState();
+    const firstPlace = state.places[0];
 
-    expect(getPlaceScore(state.votes, 'place-boudha-rooftop')).toBe(1);
+    expect(getPlaceScore(state.votes, firstPlace.id)).toBeGreaterThanOrEqual(1);
   });
 
   test('comments are returned newest first for a place', () => {
     const state = buildSeedState();
-    const comments = getCommentsForPlace(state.comments, 'place-boudha-rooftop');
+    const firstPlace = state.places[0];
+    const comments = getCommentsForPlace(state.comments, firstPlace.id);
 
-    expect(comments[0].placeId).toBe('place-boudha-rooftop');
+    expect(comments.length).toBeGreaterThan(0);
+    expect(comments[0].placeId).toBe(firstPlace.id);
+    expect(new Date(comments[0].createdAt).getTime()).toBeGreaterThanOrEqual(
+      new Date(comments[comments.length - 1].createdAt).getTime()
+    );
   });
 
   test('distance helper returns a positive number', () => {

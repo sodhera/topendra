@@ -258,8 +258,8 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
   },
   actionCard: {
-    backgroundColor: 'rgba(12, 18, 30, 0.44)',
-    borderColor: 'rgba(255, 255, 255, 0.18)',
+    backgroundColor: colors.card,
+    borderColor: colors.border,
     borderRadius: radius.lg,
     borderWidth: 1,
     padding: spacing.md,
@@ -354,7 +354,7 @@ const styles = StyleSheet.create({
   },
   modalBackdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.52)',
+    backgroundColor: 'rgba(9, 9, 11, 0.18)',
   },
   modalSheet: {
     backgroundColor: colors.card,

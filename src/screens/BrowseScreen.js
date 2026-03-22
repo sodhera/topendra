@@ -1,6 +1,515 @@
-import React from 'react';
-import { HomeScreen } from './HomeScreen';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  Alert,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
+import MapView from 'react-native-maps';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { AuthButtons } from '../components/AuthButtons';
+import { EmailAuthCard } from '../components/EmailAuthCard';
+import { MapPlaceMarker } from '../components/MapPlaceMarker';
+import { ShadButton } from '../components/ShadButton';
+import { useAppContext } from '../context/AppContext';
+import { isLoggedIn } from '../lib/auth';
+import { DEFAULT_REGION } from '../lib/constants';
+import { getCommentsForPlace, getVoteBreakdown } from '../lib/geo';
+import { colors, radius, shadows, spacing, typography } from '../lib/theme';
 
-export function BrowseScreen({ navigation }) {
-  return <HomeScreen navigation={navigation} initialMode="browse" />;
+function buildPlaceRegion(place) {
+  return {
+    latitude: place.latitude,
+    longitude: place.longitude,
+    latitudeDelta: DEFAULT_REGION.latitudeDelta,
+    longitudeDelta: DEFAULT_REGION.longitudeDelta,
+  };
 }
+
+export function BrowseScreen({ navigation, route }) {
+  const {
+    state,
+    authBusyProvider,
+    isPasswordAuthLoading,
+    errorMessage,
+    signInWithOAuth,
+    signInWithPassword,
+    addComment,
+    votePlace,
+    trackPlaceOpen,
+  } = useAppContext();
+  const mapRef = useRef(null);
+  const initialPlaceId = route?.params?.placeId ?? '';
+  const isAuthenticated = isLoggedIn(state.session);
+  const [selectedPlaceId, setSelectedPlaceId] = useState(initialPlaceId);
+  const [isDetailsModalVisible, setIsDetailsModalVisible] = useState(false);
+  const [isAuthModalVisible, setIsAuthModalVisible] = useState(false);
+  const [commentDraft, setCommentDraft] = useState('');
+  const [email, setEmail] = useState('testuser@topey.app');
+  const [password, setPassword] = useState('TopeyTest123!');
+
+  const selectedPlace = useMemo(
+    () => state.places.find((place) => place.id === selectedPlaceId) || null,
+    [selectedPlaceId, state.places]
+  );
+  const voteBreakdown = getVoteBreakdown(state.votes, selectedPlace?.id);
+  const comments = getCommentsForPlace(state.comments, selectedPlace?.id);
+  const threadCount = selectedPlace?.threadCount ?? comments.length;
+
+  useEffect(() => {
+    if (!initialPlaceId) {
+      return;
+    }
+
+    const nextPlace = state.places.find((place) => place.id === initialPlaceId);
+
+    if (!nextPlace) {
+      return;
+    }
+
+    setSelectedPlaceId(nextPlace.id);
+    mapRef.current?.animateToRegion?.(buildPlaceRegion(nextPlace), 220);
+  }, [initialPlaceId, state.places]);
+
+  function handleMarkerPress(placeId) {
+    const place = state.places.find((entry) => entry.id === placeId);
+
+    if (!place) {
+      return;
+    }
+
+    setSelectedPlaceId(place.id);
+    mapRef.current?.animateToRegion?.(buildPlaceRegion(place), 220);
+    trackPlaceOpen({
+      placeId: place.id,
+      sourceScreen: 'browse_preview',
+    });
+  }
+
+  async function handleProviderPress(provider) {
+    try {
+      await signInWithOAuth(provider);
+      setIsAuthModalVisible(false);
+    } catch (error) {
+      return;
+    }
+  }
+
+  async function handleEmailSignIn() {
+    try {
+      await signInWithPassword({ email, password });
+      setIsAuthModalVisible(false);
+    } catch (error) {
+      Alert.alert('Sign-in failed', error.message);
+    }
+  }
+
+  async function handleVote(value) {
+    if (!isAuthenticated || !selectedPlace) {
+      setIsAuthModalVisible(true);
+      return;
+    }
+
+    try {
+      await votePlace({
+        placeId: selectedPlace.id,
+        value,
+      });
+    } catch (error) {
+      Alert.alert('Vote failed', error.message);
+    }
+  }
+
+  async function handleComment() {
+    if (!isAuthenticated || !selectedPlace) {
+      setIsAuthModalVisible(true);
+      return;
+    }
+
+    try {
+      await addComment({
+        placeId: selectedPlace.id,
+        body: commentDraft,
+      });
+      setCommentDraft('');
+    } catch (error) {
+      Alert.alert('Comment failed', error.message);
+    }
+  }
+
+  return (
+    <View style={styles.container}>
+      <MapView
+        ref={mapRef}
+        initialRegion={DEFAULT_REGION}
+        onPress={() => setSelectedPlaceId('')}
+        style={StyleSheet.absoluteFill}
+        testID="browse-map"
+      >
+        {state.places.map((place) => (
+          <MapPlaceMarker
+            key={place.id}
+            coordinate={{ latitude: place.latitude, longitude: place.longitude }}
+            selected={place.id === selectedPlaceId}
+            onPress={() => handleMarkerPress(place.id)}
+          />
+        ))}
+      </MapView>
+
+      <SafeAreaView pointerEvents="box-none" style={styles.overlayRoot}>
+        <View pointerEvents="box-none" style={styles.topRow}>
+          <ShadButton
+            label="Back"
+            size="compact"
+            shape="pill"
+            variant="secondary"
+            onPress={() => navigation.goBack()}
+            testID="browse-back-button"
+          />
+          <ShadButton
+            label="Add a place"
+            size="compact"
+            shape="pill"
+            variant="secondary"
+            onPress={() => navigation.navigate('AddPlace')}
+            testID="browse-add-button"
+          />
+        </View>
+
+        <View pointerEvents="box-none" style={styles.bottomDock}>
+          {selectedPlace ? (
+            <View style={styles.previewCard} testID="browse-preview-card">
+              <Text style={styles.previewTitle}>{selectedPlace.name}</Text>
+              <Text numberOfLines={2} style={styles.previewCopy}>
+                {selectedPlace.description}
+              </Text>
+              <View style={styles.previewStats}>
+                <PreviewStat label="Rating" value={`${voteBreakdown.score >= 0 ? '+' : ''}${voteBreakdown.score}`} />
+                <PreviewStat label="Votes" value={voteBreakdown.ratioLabel} />
+                <PreviewStat label="Threads" value={`${threadCount}`} />
+              </View>
+              <ShadButton
+                label="View more"
+                size="compact"
+                shape="pill"
+                onPress={() => setIsDetailsModalVisible(true)}
+                style={styles.previewButton}
+              />
+            </View>
+          ) : null}
+        </View>
+      </SafeAreaView>
+
+      <Modal
+        animationType="slide"
+        transparent
+        visible={isDetailsModalVisible}
+        onRequestClose={() => setIsDetailsModalVisible(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.select({ ios: 'padding', default: undefined })}
+          style={styles.modalRoot}
+        >
+          <Pressable style={styles.modalBackdrop} onPress={() => setIsDetailsModalVisible(false)} />
+          <View style={styles.sheet}>
+            {selectedPlace ? (
+              <>
+                <Text style={styles.sheetTitle}>{selectedPlace.name}</Text>
+                <Text style={styles.sheetCopy}>{selectedPlace.description}</Text>
+
+                <View style={styles.detailStats}>
+                  <PreviewStat
+                    label="Rating"
+                    value={`${voteBreakdown.score >= 0 ? '+' : ''}${voteBreakdown.score}`}
+                  />
+                  <PreviewStat label="Votes" value={voteBreakdown.ratioLabel} />
+                  <PreviewStat label="Threads" value={`${threadCount}`} />
+                </View>
+
+                {isAuthenticated ? (
+                  <>
+                    <View style={styles.voteRow}>
+                      <ShadButton
+                        label="Upvote"
+                        size="compact"
+                        shape="pill"
+                        onPress={() => handleVote(1)}
+                        style={styles.voteButton}
+                      />
+                      <ShadButton
+                        label="Downvote"
+                        size="compact"
+                        shape="pill"
+                        variant="secondary"
+                        onPress={() => handleVote(-1)}
+                        style={styles.voteButton}
+                      />
+                    </View>
+
+                    <View style={styles.commentComposer}>
+                      <TextInput
+                        placeholder="Add a comment"
+                        placeholderTextColor={colors.mutedText}
+                        value={commentDraft}
+                        onChangeText={setCommentDraft}
+                        style={styles.input}
+                      />
+                      <ShadButton label="Send" size="compact" shape="pill" onPress={handleComment} />
+                    </View>
+
+                    <ScrollView style={styles.commentsList} showsVerticalScrollIndicator={false}>
+                      {comments.map((comment) => (
+                        <View key={comment.id} style={styles.commentCard}>
+                          <Text style={styles.commentAuthor}>{comment.authorName || 'Topey user'}</Text>
+                          <Text style={styles.commentBody}>{comment.body}</Text>
+                        </View>
+                      ))}
+                    </ScrollView>
+                  </>
+                ) : (
+                  <View style={styles.lockedCard}>
+                    <Text style={styles.lockedTitle}>Log in to read threads.</Text>
+                    <Text style={styles.lockedCopy}>
+                      View more opens the conversation only for signed-in users right now.
+                    </Text>
+                    <ShadButton
+                      label="Log in"
+                      size="compact"
+                      shape="pill"
+                      onPress={() => {
+                        setIsDetailsModalVisible(false);
+                        setIsAuthModalVisible(true);
+                      }}
+                    />
+                  </View>
+                )}
+              </>
+            ) : null}
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      <Modal
+        animationType="slide"
+        transparent
+        visible={isAuthModalVisible}
+        onRequestClose={() => setIsAuthModalVisible(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.select({ ios: 'padding', default: undefined })}
+          style={styles.modalRoot}
+        >
+          <Pressable style={styles.modalBackdrop} onPress={() => setIsAuthModalVisible(false)} />
+          <View style={styles.sheet}>
+            <Text style={styles.sheetTitle}>Sign in</Text>
+            <Text style={styles.sheetCopy}>
+              Sign in to see the place threads, vote, and post comments.
+            </Text>
+            <AuthButtons busyProvider={authBusyProvider} onProviderPress={handleProviderPress} />
+            <EmailAuthCard
+              email={email}
+              password={password}
+              onEmailChange={setEmail}
+              onPasswordChange={setPassword}
+              onSignIn={handleEmailSignIn}
+              authBusy={isPasswordAuthLoading}
+              helperText="Test account: testuser@topey.app / TopeyTest123!"
+            />
+            {errorMessage ? <Text style={styles.sheetMeta}>{errorMessage}</Text> : null}
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+    </View>
+  );
+}
+
+function PreviewStat({ label, value }) {
+  return (
+    <View style={styles.previewStat}>
+      <Text style={styles.previewStatLabel}>{label}</Text>
+      <Text style={styles.previewStatValue}>{value}</Text>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  overlayRoot: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.lg,
+    paddingTop: spacing.sm,
+  },
+  topRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  bottomDock: {
+    paddingBottom: spacing.sm,
+  },
+  previewCard: {
+    alignSelf: 'stretch',
+    backgroundColor: colors.card,
+    borderColor: colors.border,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    padding: spacing.md,
+    ...shadows.floating,
+  },
+  previewTitle: {
+    color: colors.text,
+    fontFamily: typography.semibold,
+    fontSize: 20,
+  },
+  previewCopy: {
+    color: colors.mutedText,
+    fontFamily: typography.body,
+    fontSize: 14,
+    lineHeight: 20,
+    marginTop: spacing.sm,
+  },
+  previewStats: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginTop: spacing.md,
+  },
+  previewStat: {
+    flex: 1,
+  },
+  previewStatLabel: {
+    color: colors.mutedText,
+    fontFamily: typography.medium,
+    fontSize: 12,
+  },
+  previewStatValue: {
+    color: colors.text,
+    fontFamily: typography.semibold,
+    fontSize: 15,
+    marginTop: spacing.xxs,
+  },
+  previewButton: {
+    marginTop: spacing.md,
+  },
+  modalRoot: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  modalBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(9, 9, 11, 0.18)',
+  },
+  sheet: {
+    backgroundColor: colors.card,
+    borderColor: colors.border,
+    borderTopLeftRadius: radius.lg,
+    borderTopRightRadius: radius.lg,
+    borderWidth: 1,
+    borderBottomWidth: 0,
+    maxHeight: '80%',
+    padding: spacing.md,
+    ...shadows.floating,
+  },
+  sheetTitle: {
+    color: colors.text,
+    fontFamily: typography.semibold,
+    fontSize: 22,
+  },
+  sheetCopy: {
+    color: colors.mutedText,
+    fontFamily: typography.body,
+    fontSize: 14,
+    lineHeight: 20,
+    marginTop: spacing.sm,
+  },
+  sheetMeta: {
+    color: colors.mutedText,
+    fontFamily: typography.body,
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: spacing.sm,
+  },
+  detailStats: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginTop: spacing.md,
+  },
+  voteRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginTop: spacing.md,
+  },
+  voteButton: {
+    flex: 1,
+  },
+  commentComposer: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginTop: spacing.md,
+  },
+  input: {
+    backgroundColor: colors.secondary,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    color: colors.text,
+    flex: 1,
+    fontFamily: typography.body,
+    minHeight: 46,
+    paddingHorizontal: spacing.md,
+  },
+  commentsList: {
+    marginTop: spacing.md,
+  },
+  commentCard: {
+    backgroundColor: colors.elevatedCard,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    marginBottom: spacing.sm,
+    padding: spacing.md,
+  },
+  commentAuthor: {
+    color: colors.text,
+    fontFamily: typography.semibold,
+    fontSize: 13,
+  },
+  commentBody: {
+    color: colors.mutedText,
+    fontFamily: typography.body,
+    fontSize: 14,
+    lineHeight: 20,
+    marginTop: spacing.xs,
+  },
+  lockedCard: {
+    backgroundColor: colors.secondary,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    marginTop: spacing.md,
+    padding: spacing.md,
+  },
+  lockedTitle: {
+    color: colors.text,
+    fontFamily: typography.semibold,
+    fontSize: 16,
+  },
+  lockedCopy: {
+    color: colors.mutedText,
+    fontFamily: typography.body,
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: spacing.md,
+    marginTop: spacing.sm,
+  },
+});

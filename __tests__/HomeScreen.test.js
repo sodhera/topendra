@@ -1,21 +1,15 @@
 import React from 'react';
 import { Pressable, Text, View } from 'react-native';
-import { act, fireEvent, render } from '@testing-library/react-native';
+import { fireEvent, render } from '@testing-library/react-native';
 import { HomeScreen } from '../src/screens/HomeScreen';
 import { buildSeedState } from '../src/data/seed';
 import { useAppContext } from '../src/context/AppContext';
-import { useLiveLocation } from '../src/hooks/useLiveLocation';
-
-jest.useFakeTimers();
 
 jest.mock('react-native-maps', () => {
   const React = require('react');
   const { Pressable, Text, View } = require('react-native');
 
-  const MockMapView = React.forwardRef(function MockMapView(
-    { children, initialRegion, onRegionChangeStart, onRegionChangeComplete },
-    ref
-  ) {
+  const MockMapView = React.forwardRef(function MockMapView({ children, initialRegion }, ref) {
     React.useImperativeHandle(ref, () => ({
       animateToRegion: jest.fn(),
     }));
@@ -23,29 +17,17 @@ jest.mock('react-native-maps', () => {
     return (
       <View testID="home-map">
         <Text testID="home-map-region">{JSON.stringify(initialRegion)}</Text>
-        <Pressable testID="map-drag-start" onPress={() => onRegionChangeStart?.()}>
-          <Text>drag-start</Text>
-        </Pressable>
-        <Pressable
-          testID="map-drag-end"
-          onPress={() =>
-            onRegionChangeComplete?.({
-              latitude: 27.7172,
-              longitude: 85.324,
-              latitudeDelta: 0.06,
-              longitudeDelta: 0.06,
-            })
-          }
-        >
-          <Text>drag-end</Text>
-        </Pressable>
         {children}
       </View>
     );
   });
 
-  function Marker({ children }) {
-    return <View>{children}</View>;
+  function Marker({ children, onPress }) {
+    return (
+      <Pressable testID="map-marker" onPress={onPress}>
+        {children}
+      </Pressable>
+    );
   }
 
   return {
@@ -57,10 +39,6 @@ jest.mock('react-native-maps', () => {
 
 jest.mock('../src/context/AppContext', () => ({
   useAppContext: jest.fn(),
-}));
-
-jest.mock('../src/hooks/useLiveLocation', () => ({
-  useLiveLocation: jest.fn(),
 }));
 
 jest.mock('react-native-safe-area-context', () => {
@@ -100,7 +78,9 @@ jest.mock('../src/components/EmailAuthCard', () => ({
 }));
 
 describe('HomeScreen', () => {
-  const trackPlaceOpen = jest.fn();
+  const navigation = {
+    navigate: jest.fn(),
+  };
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -121,55 +101,27 @@ describe('HomeScreen', () => {
       signInWithOAuth: jest.fn(),
       signInWithPassword: jest.fn(),
       signOut: jest.fn(),
-      votePlace: jest.fn(),
-      addComment: jest.fn(),
-      trackPlaceOpen,
-    });
-
-    useLiveLocation.mockReturnValue({
-      region: {
-        latitude: 27.7172,
-        longitude: 85.324,
-        latitudeDelta: 0.06,
-        longitudeDelta: 0.06,
-      },
-      errorMessage: '',
     });
   });
 
-  test('enters browse mode when the home map moves and expands preview after idle time', () => {
-    const screen = render(<HomeScreen navigation={{ navigate: jest.fn(), canGoBack: jest.fn(() => false) }} />);
+  test('shows the requested home button layout and opens browse from the bottom CTA', () => {
+    const screen = render(<HomeScreen navigation={navigation} />);
 
-    expect(screen.getByTestId('home-mode-chrome')).toBeTruthy();
-    expect(screen.queryByText('Open details')).toBeNull();
+    expect(screen.getByTestId('home-add-button')).toBeTruthy();
+    expect(screen.getByTestId('home-account-button')).toBeTruthy();
+    expect(screen.getByTestId('home-find-button')).toBeTruthy();
 
-    fireEvent.press(screen.getByTestId('map-drag-start'));
-    fireEvent.press(screen.getByTestId('map-drag-end'));
+    fireEvent.press(screen.getByTestId('home-find-button'));
 
-    expect(screen.getByText('Back')).toBeTruthy();
-    expect(screen.queryByText('Open details')).toBeNull();
-
-    act(() => {
-      jest.advanceTimersByTime(2000);
-    });
-
-    expect(screen.getByText('Open details')).toBeTruthy();
+    expect(navigation.navigate).toHaveBeenCalledWith('Browse');
   });
 
-  test('re-centers the initial map from the resolved live location before interaction', () => {
-    useLiveLocation.mockReturnValue({
-      region: {
-        latitude: 40.7128,
-        longitude: -74.006,
-        latitudeDelta: 0.06,
-        longitudeDelta: 0.06,
-      },
-      errorMessage: '',
-      hasResolvedInitialRegion: true,
-    });
+  test('opens browse when a map marker is tapped from home', () => {
+    const screen = render(<HomeScreen navigation={navigation} />);
+    const firstPlace = buildSeedState().places[0];
 
-    const screen = render(<HomeScreen navigation={{ navigate: jest.fn(), canGoBack: jest.fn(() => false) }} />);
+    fireEvent.press(screen.getAllByTestId('map-marker')[0]);
 
-    expect(screen.getByTestId('home-map-region').props.children).toContain('40.7128');
+    expect(navigation.navigate).toHaveBeenCalledWith('Browse', { placeId: firstPlace.id });
   });
 });

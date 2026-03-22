@@ -17,8 +17,8 @@ export function ShadButton({
   function animateTo(value) {
     Animated.spring(scale, {
       toValue: value,
-      friction: 7,
-      tension: 160,
+      friction: 8,
+      tension: 170,
       useNativeDriver: true,
     }).start();
   }
@@ -33,8 +33,6 @@ export function ShadButton({
       testID={testID}
     >
       <Animated.View style={[styles.inner, { transform: [{ scale }] }]}>
-        <View style={styles.sheen} pointerEvents="none" />
-        <View style={styles.shadowFill} pointerEvents="none" />
         <Text style={[styles.label, variant === 'primary' ? styles.primaryLabel : styles.secondaryLabel]}>
           {label}
         </Text>
@@ -47,21 +45,20 @@ const styles = StyleSheet.create({
   base: {
     alignItems: 'center',
     borderWidth: 1,
-    overflow: 'hidden',
     justifyContent: 'center',
     shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 14 },
-    shadowOpacity: 0.2,
-    shadowRadius: 18,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 2,
   },
   primary: {
-    backgroundColor: 'rgba(255, 255, 255, 0.14)',
-    borderColor: 'rgba(255, 255, 255, 0.28)',
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   secondary: {
-    backgroundColor: 'rgba(15, 23, 42, 0.28)',
-    borderColor: 'rgba(255, 255, 255, 0.22)',
+    backgroundColor: colors.card,
+    borderColor: colors.border,
   },
   default: {
     minHeight: 52,
@@ -69,9 +66,14 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
   },
   compact: {
-    minHeight: 40,
+    minHeight: 42,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
+  },
+  large: {
+    minHeight: 58,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
   },
   rounded: {
     borderRadius: radius.md,
@@ -84,28 +86,14 @@ const styles = StyleSheet.create({
   },
   inner: {
     alignItems: 'center',
-    alignSelf: 'stretch',
-    backgroundColor: 'rgba(255, 255, 255, 0.02)',
-    flex: 1,
     justifyContent: 'center',
-    width: '100%',
-  },
-  sheen: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    height: '42%',
-  },
-  shadowFill: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255, 255, 255, 0.02)',
-    top: '48%',
   },
   label: {
     fontFamily: typography.semibold,
     fontSize: 15,
   },
   primaryLabel: {
-    color: colors.text,
+    color: colors.primaryText,
   },
   secondaryLabel: {
     color: colors.text,
