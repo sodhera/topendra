@@ -147,6 +147,9 @@ describe('BrowseScreen', () => {
     fireEvent.press(screen.getByText('View more'));
 
     expect(screen.getAllByText(firstPlace.description).length).toBeGreaterThan(0);
+    expect(screen.getByTestId('browse-open-location-button')).toBeTruthy();
+    expect(screen.getByTestId('browse-vote-up-button')).toBeTruthy();
+    expect(screen.getByTestId('browse-vote-down-button')).toBeTruthy();
     expect(screen.getByText(firstPlaceComments[0].body)).toBeTruthy();
   });
 

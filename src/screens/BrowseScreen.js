@@ -14,6 +14,7 @@ import {
 import MapView from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AuthButtons } from '../components/AuthButtons';
+import { CompactVoteControls } from '../components/CompactVoteControls';
 import { EmailAuthCard } from '../components/EmailAuthCard';
 import { MapPlaceMarker } from '../components/MapPlaceMarker';
 import { ShadButton } from '../components/ShadButton';
@@ -21,6 +22,7 @@ import { useAppContext } from '../context/AppContext';
 import { isLoggedIn } from '../lib/auth';
 import { DEFAULT_REGION, KATHMANDU_EXPLORE_REGION } from '../lib/constants';
 import { getCommentsForPlace, getVoteBreakdown } from '../lib/geo';
+import { openPlaceInMaps } from '../lib/locationLinks';
 import { colors, radius, shadows, spacing, typography } from '../lib/theme';
 
 function buildPlaceRegion(place) {
@@ -61,6 +63,15 @@ export function BrowseScreen({ navigation, route }) {
   const voteBreakdown = getVoteBreakdown(state.votes, selectedPlace?.id);
   const comments = getCommentsForPlace(state.comments, selectedPlace?.id);
   const threadCount = selectedPlace?.threadCount ?? comments.length;
+  const currentVote = useMemo(() => {
+    if (!selectedPlace || !state.session?.user?.id) {
+      return 0;
+    }
+
+    return state.votes.find(
+      (vote) => vote.placeId === selectedPlace.id && vote.userId === state.session.user.id
+    )?.value ?? 0;
+  }, [selectedPlace, state.session?.user?.id, state.votes]);
 
   useEffect(() => {
     if (!initialPlaceId) {
@@ -112,6 +123,7 @@ export function BrowseScreen({ navigation, route }) {
 
   async function handleVote(value) {
     if (!isAuthenticated || !selectedPlace) {
+      setIsDetailsModalVisible(false);
       setIsAuthModalVisible(true);
       return;
     }
@@ -140,6 +152,18 @@ export function BrowseScreen({ navigation, route }) {
       setCommentDraft('');
     } catch (error) {
       Alert.alert('Comment failed', error.message);
+    }
+  }
+
+  async function handleOpenLocation() {
+    if (!selectedPlace) {
+      return;
+    }
+
+    try {
+      await openPlaceInMaps(selectedPlace);
+    } catch (error) {
+      Alert.alert('Unable to open location', 'Could not open this place in maps.');
     }
   }
 
@@ -232,26 +256,25 @@ export function BrowseScreen({ navigation, route }) {
                   <PreviewStat label="Threads" value={`${threadCount}`} />
                 </View>
 
+                <ShadButton
+                  label="Open location"
+                  size="compact"
+                  shape="pill"
+                  onPress={handleOpenLocation}
+                  style={styles.locationButton}
+                  testID="browse-open-location-button"
+                />
+
+                <CompactVoteControls
+                  currentVote={currentVote}
+                  onDownvote={() => handleVote(-1)}
+                  onUpvote={() => handleVote(1)}
+                  score={voteBreakdown.score}
+                  testIDPrefix="browse-vote"
+                />
+
                 {isAuthenticated ? (
                   <>
-                    <View style={styles.voteRow}>
-                      <ShadButton
-                        label="Upvote"
-                        size="compact"
-                        shape="pill"
-                        onPress={() => handleVote(1)}
-                        style={styles.voteButton}
-                      />
-                      <ShadButton
-                        label="Downvote"
-                        size="compact"
-                        shape="pill"
-                        variant="secondary"
-                        onPress={() => handleVote(-1)}
-                        style={styles.voteButton}
-                      />
-                    </View>
-
                     <View style={styles.commentComposer}>
                       <TextInput
                         placeholder="Add a comment"
@@ -443,13 +466,8 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     marginTop: spacing.md,
   },
-  voteRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
+  locationButton: {
     marginTop: spacing.md,
-  },
-  voteButton: {
-    flex: 1,
   },
   commentComposer: {
     alignItems: 'center',

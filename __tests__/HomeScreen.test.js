@@ -126,6 +126,9 @@ describe('HomeScreen', () => {
     fireEvent.press(screen.getAllByTestId('map-marker')[0]);
 
     expect(screen.getByText(firstPlace.name)).toBeTruthy();
+    expect(screen.getByTestId('home-open-location-button')).toBeTruthy();
+    expect(screen.getByTestId('home-vote-up-button')).toBeTruthy();
+    expect(screen.getByTestId('home-vote-down-button')).toBeTruthy();
     expect(trackPlaceOpen).toHaveBeenCalledWith({
       placeId: firstPlace.id,
       sourceScreen: 'home_pin_modal',
