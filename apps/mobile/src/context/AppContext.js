@@ -6,20 +6,7 @@ import { getUserIdentity, normalizeAnonymousUsername } from '@topey/shared/lib/a
 import { createComment, createPlace, createPlaceOpenEvent, fetchAppData, voteForPlace } from '../lib/backend';
 import { VIEWER_SESSION_KEY } from '@topey/shared/lib/constants';
 import Constants from 'expo-constants';
-import {
-  GoogleSignin,
-  isErrorWithCode,
-  isSuccessResponse,
-  statusCodes,
-} from '@react-native-google-signin/google-signin';
-import { getAuthRedirectUrl, getSafeSession, restoreSessionFromUrl, supabase } from '../lib/supabase';
-
-// Initialize Google Sign-In
-GoogleSignin.configure({
-  scopes: ['profile', 'email'],
-  webClientId: Constants.expoConfig?.extra?.googleWebClientId ?? '',
-  iosClientId: Constants.expoConfig?.extra?.googleIosClientId ?? '',
-});
+import * as WebBrowser from 'expo-web-browser';
 
 const AppContext = createContext(null);
 const demoData = buildKathmanduDemoData();
@@ -281,42 +268,36 @@ export function AppProvider({ children }) {
     setAuthNoticeMessage('');
 
     try {
-      await GoogleSignin.hasPlayServices();
-      const response = await GoogleSignin.signIn();
-      
-      if (isSuccessResponse(response)) {
-        if (!response.data.idToken) {
-          throw new Error('Google Sign-In failed: No ID token returned');
-        }
-        
-        const { error } = await supabase.auth.signInWithIdToken({
-          provider: 'google',
-          token: response.data.idToken,
-        });
+      const redirectUrl = getAuthRedirectUrl();
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: redirectUrl,
+          skipBrowserRedirect: true,
+        },
+      });
 
-        if (error) {
-          throw error;
+      if (error) {
+        throw error;
+      }
+
+      if (data?.url) {
+        const result = await WebBrowser.openAuthSessionAsync(data.url, redirectUrl);
+
+        if (result.type === 'success' && result.url) {
+          const params = Linking.parse(result.url);
+          if (params.queryParams?.error) {
+            throw new Error(params.queryParams.error_description || 'OAuth Error');
+          }
+          await restoreSessionFromUrl(result.url);
+        } else if (result.type === 'cancel') {
+          // Do nothing on cancel
+        } else {
+          throw new Error('Google Sign-In was not completed.');
         }
-      } else {
-        setIsEmailAuthLoading(false);
       }
     } catch (error) {
-      if (isErrorWithCode(error)) {
-        switch (error.code) {
-          case statusCodes.IN_PROGRESS:
-            setErrorMessage('Google Sign-In is already in progress.');
-            break;
-          case statusCodes.PLAY_SERVICES_NOT_AVAILABLE:
-            setErrorMessage('Google Play Services are not available.');
-            break;
-          case statusCodes.SIGN_IN_CANCELLED:
-            break;
-          default:
-            setErrorMessage(getReadableError(error, 'Google Sign-In failed.'));
-        }
-      } else {
-        setErrorMessage(getReadableError(error, 'Google Sign-In failed.'));
-      }
+      setErrorMessage(getReadableError(error, 'Google Sign-In failed.'));
     } finally {
       setIsEmailAuthLoading(false);
     }

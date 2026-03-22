@@ -198,6 +198,7 @@ export function HomeScreen({ navigation }) {
             coordinate={{ latitude: place.latitude, longitude: place.longitude }}
             selected={place.id === selectedPlaceId}
             onPress={() => handleMarkerPress(place.id)}
+            testID={`home-marker-${place.id}`}
           />
         ))}
       </MapView>

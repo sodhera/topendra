@@ -227,6 +227,6 @@ describe('HomeScreen', () => {
     fireEvent.press(screen.getByTestId(`home-marker-${visiblePlace.id}`));
     fireEvent.press(screen.getByTestId('home-vote-up-button'));
 
-    expect(screen.getByText('Email')).toBeTruthy();
+    expect(screen.getByText('Sign in')).toBeTruthy();
   });
 });
