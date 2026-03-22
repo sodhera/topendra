@@ -16,6 +16,7 @@ module.exports = () => ({
     backgroundColor: '#121711',
   },
   ios: {
+    bundleIdentifier: 'com.spicedupfremen.topey',
     supportsTablet: true,
     infoPlist: {
       NSLocationWhenInUseUsageDescription:
@@ -23,6 +24,7 @@ module.exports = () => ({
     },
   },
   android: {
+    package: 'com.spicedupfremen.topey',
     permissions: ['ACCESS_COARSE_LOCATION', 'ACCESS_FINE_LOCATION'],
     adaptiveIcon: {
       backgroundColor: '#E5E5EA',
