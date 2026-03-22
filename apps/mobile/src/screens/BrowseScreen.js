@@ -219,7 +219,7 @@ export function BrowseScreen({ navigation, route }) {
       </SafeAreaView>
 
       <Modal
-        animationType="slide"
+        animationType="fade"
         transparent
         visible={isDetailsModalVisible}
         onRequestClose={() => setIsDetailsModalVisible(false)}
@@ -273,7 +273,6 @@ export function BrowseScreen({ navigation, route }) {
                 <PlaceConversationSection
                   comments={comments}
                   isAuthenticated={isAuthenticated}
-                  lockedCopy="View more opens the conversation only for signed-in users right now."
                   onAddComment={handleComment}
                   onRequireAuth={() => {
                     setIsDetailsModalVisible(false);
@@ -289,7 +288,7 @@ export function BrowseScreen({ navigation, route }) {
       </Modal>
 
       <Modal
-        animationType="slide"
+        animationType="fade"
         transparent
         visible={isAuthModalVisible}
         onRequestClose={() => setIsAuthModalVisible(false)}

@@ -193,7 +193,7 @@ export function HomeScreen({ navigation }) {
       </SafeAreaView>
 
       <Modal
-        animationType="slide"
+        animationType="fade"
         transparent
         visible={isPlaceModalVisible}
         onRequestClose={closePlaceModal}
@@ -247,7 +247,6 @@ export function HomeScreen({ navigation }) {
                 <PlaceConversationSection
                   comments={comments}
                   isAuthenticated={isAuthenticated}
-                  lockedCopy="Pin taps open the place modal here on home, and login unlocks the threads and comments."
                   onAddComment={handleComment}
                   onRequireAuth={openAccountFromPlace}
                   placeName={selectedPlace.name}
@@ -260,7 +259,7 @@ export function HomeScreen({ navigation }) {
       </Modal>
 
       <Modal
-        animationType="slide"
+        animationType="fade"
         transparent
         visible={isAccountModalVisible}
         onRequestClose={() => setIsAccountModalVisible(false)}

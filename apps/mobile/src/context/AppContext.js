@@ -5,7 +5,7 @@ import { buildKathmanduDemoData } from '@topey/shared/data/demoCatalog';
 import { getUserIdentity, normalizeAnonymousUsername } from '@topey/shared/lib/auth';
 import { createComment, createPlace, createPlaceOpenEvent, fetchAppData, voteForPlace } from '../lib/backend';
 import { VIEWER_SESSION_KEY } from '@topey/shared/lib/constants';
-import { getAuthRedirectUrl, restoreSessionFromUrl, supabase } from '../lib/supabase';
+import { getAuthRedirectUrl, getSafeSession, restoreSessionFromUrl, supabase } from '../lib/supabase';
 
 const AppContext = createContext(null);
 const demoData = buildKathmanduDemoData();
@@ -57,7 +57,7 @@ export function AppProvider({ children }) {
     } catch (error) {
       setPlaces(demoData.places);
       setVotes(demoData.votes);
-      setComments(activeSession?.user ? demoData.comments : []);
+      setComments(demoData.comments);
       setErrorMessage(getReadableError(error, 'Topey could not reach Supabase right now.'));
     } finally {
       setIsRefreshing(false);
@@ -83,20 +83,16 @@ export function AppProvider({ children }) {
         const nextViewerSessionId = await getOrCreateViewerSessionId();
         const initialUrl = await Linking.getInitialURL();
         const restoredSession = initialUrl ? await restoreSessionFromUrl(initialUrl) : null;
-        const { data, error } = restoredSession
-          ? { data: { session: restoredSession }, error: null }
-          : await supabase.auth.getSession();
-
-        if (error) {
-          throw error;
-        }
+        const { session: safeSession } = restoredSession
+          ? { session: restoredSession }
+          : await getSafeSession();
 
         if (!active) {
           return;
         }
 
         setViewerSessionId(nextViewerSessionId);
-        await applySession(data.session ?? null);
+        await applySession(safeSession ?? null);
       } catch (error) {
         if (active) {
           setErrorMessage(getReadableError(error, 'Topey could not restore the saved session.'));

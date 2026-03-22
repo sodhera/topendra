@@ -20,7 +20,6 @@ function getAuthorName(comment) {
 export function PlaceConversationSection({
   comments,
   isAuthenticated,
-  lockedCopy,
   onAddComment,
   onRequireAuth,
   placeName,
@@ -106,23 +105,6 @@ export function PlaceConversationSection({
     });
   }
 
-  if (!isAuthenticated) {
-    return (
-      <View style={styles.lockedCard}>
-        <Text style={styles.lockedTitle}>Log in to read threads.</Text>
-        <Text style={styles.lockedCopy}>{lockedCopy}</Text>
-        <Pressable
-          accessibilityRole="button"
-          onPress={requireAuth}
-          style={styles.loginButton}
-          testID={`${testIDPrefix}-login-button`}
-        >
-          <Text style={styles.loginButtonLabel}>Log in</Text>
-        </Pressable>
-      </View>
-    );
-  }
-
   return (
     <>
       <View style={styles.previewShell}>
@@ -178,7 +160,7 @@ export function PlaceConversationSection({
       </View>
 
       <Modal
-        animationType="slide"
+        animationType="fade"
         transparent
         visible={isDiscussionModalVisible}
         onRequestClose={() => setIsDiscussionModalVisible(false)}
@@ -246,7 +228,7 @@ export function PlaceConversationSection({
       </Modal>
 
       <Modal
-        animationType="slide"
+        animationType="fade"
         transparent
         visible={isComposerModalVisible}
         onRequestClose={closeComposer}
@@ -582,42 +564,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     marginTop: spacing.xs,
-  },
-  lockedCard: {
-    backgroundColor: colors.secondary,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    borderWidth: 0.75,
-    marginTop: spacing.md,
-    padding: spacing.md,
-  },
-  lockedTitle: {
-    color: colors.text,
-    fontFamily: typography.semibold,
-    fontSize: 16,
-    fontWeight: '600',
-    letterSpacing: -0.18,
-  },
-  lockedCopy: {
-    color: colors.mutedText,
-    fontFamily: typography.body,
-    fontSize: 14,
-    lineHeight: 20,
-    marginBottom: spacing.md,
-    marginTop: spacing.sm,
-  },
-  loginButton: {
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    justifyContent: 'center',
-    minHeight: 44,
-    paddingRight: spacing.sm,
-  },
-  loginButtonLabel: {
-    color: colors.primary,
-    fontFamily: typography.semibold,
-    fontSize: 16,
-    fontWeight: '600',
-    letterSpacing: -0.2,
   },
 });

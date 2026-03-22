@@ -179,8 +179,10 @@ describe('BrowseScreen', () => {
     expect(screen.getAllByText('Reply').length).toBeGreaterThan(0);
   });
 
-  test('shows the login gate when the viewer is not signed in', () => {
+  test('shows preview comments for guests and routes see more into email access', () => {
     const state = buildSeedState();
+    const firstPlace = state.places[0];
+    const firstPlaceComments = state.comments.filter((comment) => comment.placeId === firstPlace.id);
 
     useAppContext.mockReturnValue({
       state: {
@@ -200,10 +202,10 @@ describe('BrowseScreen', () => {
 
     fireEvent.press(screen.getByText('View more'));
 
-    expect(screen.getByText('Log in to read threads.')).toBeTruthy();
-    expect(screen.getByText('Log in')).toBeTruthy();
+    expect(screen.getByText(firstPlaceComments[0].body)).toBeTruthy();
+    expect(screen.queryByText('Log in to read threads.')).toBeNull();
 
-    fireEvent.press(screen.getByText('Log in'));
+    fireEvent.press(screen.getByTestId('browse-discussion-open-button'));
 
     expect(screen.getByText('Email access')).toBeTruthy();
   });

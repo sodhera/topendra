@@ -177,7 +177,7 @@ export function AddPlaceScreen({ navigation }) {
       </SafeAreaView>
 
       <Modal
-        animationType="slide"
+        animationType="fade"
         transparent
         visible={isDetailsModalVisible}
         onRequestClose={() => setIsDetailsModalVisible(false)}

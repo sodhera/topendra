@@ -3,7 +3,7 @@ import { DefaultTheme, NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, LogBox, StyleSheet, Text, View } from 'react-native';
 import { AppProvider, useAppContext } from './src/context/AppContext';
 import { AddPlaceScreen } from './src/screens/AddPlaceScreen';
 import { BrowseScreen } from './src/screens/BrowseScreen';
@@ -11,6 +11,11 @@ import { HomeScreen } from './src/screens/HomeScreen';
 import { colors, typography } from '@topey/shared/lib/theme';
 
 const Stack = createNativeStackNavigator();
+
+LogBox.ignoreLogs([
+  'AuthApiError: Invalid Refresh Token',
+  'Invalid Refresh Token: Refresh Token Not Found',
+]);
 
 function LoadingScreen() {
   return (

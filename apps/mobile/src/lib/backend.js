@@ -63,17 +63,15 @@ function mergeById(primaryRecords, fallbackRecords) {
   return Array.from(records.values());
 }
 
-function attachDemoData(data, { includeComments }) {
+function attachDemoData(data) {
   const places = mergeById(data.places, demoData.places)
     .sort(sortByCreatedAtDescending)
     .slice(0, DEMO_PLACE_COUNT);
   const visiblePlaceIds = new Set(places.map((place) => place.id));
   const votes = mergeById(data.votes, demoData.votes).filter((vote) => visiblePlaceIds.has(vote.placeId));
-  const comments = includeComments
-    ? mergeById(data.comments, demoData.comments)
-        .filter((comment) => visiblePlaceIds.has(comment.placeId))
-        .sort(sortByCreatedAtDescending)
-    : [];
+  const comments = mergeById(data.comments, demoData.comments)
+    .filter((comment) => visiblePlaceIds.has(comment.placeId))
+    .sort(sortByCreatedAtDescending);
 
   return {
     places,
@@ -103,14 +101,11 @@ export async function fetchAppData({ includeComments }) {
     throw commentsResult.error;
   }
 
-  return attachDemoData(
-    {
-      places: placesResult.data.map(mapPlace),
-      votes: votesResult.data.map(mapVote),
-      comments: commentsResult.data.map(mapComment),
-    },
-    { includeComments }
-  );
+  return attachDemoData({
+    places: placesResult.data.map(mapPlace),
+    votes: votesResult.data.map(mapVote),
+    comments: commentsResult.data.map(mapComment),
+  });
 }
 
 export async function createPlace({ user, name, description, latitude, longitude }) {
