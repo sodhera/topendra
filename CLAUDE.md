@@ -25,18 +25,18 @@
 - Browse previews should open from explicit dot taps, not automatic map-center tracking.
 - Demo Kathmandu pins should stay visible by default so the map behavior is easy to verify.
 - The runtime demo dataset should include up to 50 Kathmandu places with multiple comment threads for testing.
-- Button and overlay treatment should stay simple black/white shadcn-style instead of glassy effects.
+- Button and overlay treatment should follow an Apple-like iOS direction: system-blue primary actions, light translucent surfaces, generous radii, and clear hierarchy without overdone glass effects.
 - Each place open should be tracked so later notification work has real event history.
 - The app is Expo native and written in JavaScript.
 
 ## Design Direction
 
-- Use a simple shadcn-style visual language:
-  - white cards and black primary actions
-  - clean borders
-  - rounded cards
-  - straightforward typography
-  - minimal ornament
+- Use an Apple-like iOS visual language:
+  - grouped light backgrounds
+  - translucent white map chrome
+  - system-blue primary controls
+  - larger rounded sheets and cards
+  - clean typography with stronger title hierarchy
 - Do not bring back the earlier fantasy or consultancy-heavy design directions unless the user explicitly asks.
 
 ## Key Docs To Read First

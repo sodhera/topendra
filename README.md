@@ -33,14 +33,14 @@ cd topey
 - Browse screen:
   - starts on the Kathmandu demo region with up to 50 demo location dots
   - `Back` button at the top left and `Add a place` at the top right
-  - tapping a dot opens a small black/white place preview card with rating, votes, and thread count
+  - tapping a dot opens a native-feeling light preview card with rating, votes, and thread count
   - `View more` opens a details modal with `Open location`, compact arrow voting, and the thread view
 - Add-place screen:
   - opens on the user’s current location once foreground location resolves
   - movable map with a centered pin that follows the visible location
   - `Add here` action that opens a details modal
   - modal form with name, description, and final `Add` submit for logged-in users
-- Buttons and sheets now use a simple black/white shadcn-style treatment.
+- Buttons and sheets now use an Apple-like iOS treatment with softer materials, system-blue actions, and larger sheet geometry.
 - Place opens are tracked in Supabase so later area-notification work has usage history to build on.
 - Demo mode now ships with 50 deterministic Kathmandu places plus multiple seeded comment threads per place.
 
