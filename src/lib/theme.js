@@ -1,6 +1,6 @@
 export const colors = {
   background: '#F2F2F7',
-  card: 'rgba(255, 255, 255, 0.92)',
+  card: '#FFFFFF',
   elevatedCard: '#FFFFFF',
   border: 'rgba(60, 60, 67, 0.14)',
   separator: 'rgba(60, 60, 67, 0.12)',
@@ -8,7 +8,7 @@ export const colors = {
   mutedText: '#6E6E73',
   primary: '#007AFF',
   primaryText: '#FFFFFF',
-  secondary: 'rgba(255, 255, 255, 0.74)',
+  secondary: '#FFFFFF',
   accent: '#007AFF',
   mapOverlay: 'rgba(255, 255, 255, 0.42)',
   sheetBackdrop: 'rgba(17, 17, 17, 0.22)',

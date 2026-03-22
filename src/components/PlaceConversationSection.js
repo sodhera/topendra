@@ -142,13 +142,16 @@ export function PlaceConversationSection({
                     </Text>
                     {shouldFadeOut ? (
                       <View pointerEvents="box-none" style={styles.previewFadeOverlay}>
+                        <View style={styles.previewFadeBandLight} />
+                        <View style={styles.previewFadeBandMid} />
+                        <View style={styles.previewFadeBandHeavy} />
                         <Pressable
                           accessibilityRole="button"
                           onPress={openDiscussion}
                           style={styles.discussionButton}
                           testID={`${testIDPrefix}-discussion-open-button`}
                         >
-                          <Text style={styles.discussionButtonLabel}>v</Text>
+                          <Text style={styles.discussionButtonLabel}>See More</Text>
                         </Pressable>
                       </View>
                     ) : null}
@@ -289,7 +292,7 @@ function CommentArrowButton({ direction, isActive, onPress, testID }) {
   return (
     <Pressable accessibilityRole="button" onPress={onPress} style={styles.commentArrowButton} testID={testID}>
       <Text style={[styles.commentArrowLabel, isActive && styles.commentArrowLabelActive]}>
-        {direction === 'up' ? '^' : 'v'}
+        {direction === 'up' ? '↑' : '↓'}
       </Text>
     </Pressable>
   );
@@ -330,28 +333,45 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   previewFadeOverlay: {
-    alignItems: 'center',
-    backgroundColor: 'rgba(242, 242, 247, 0.88)',
+    alignItems: 'stretch',
     bottom: 0,
     justifyContent: 'flex-end',
     left: 0,
-    paddingBottom: spacing.sm,
-    paddingTop: spacing.lg,
     position: 'absolute',
     right: 0,
+    top: 0,
+  },
+  previewFadeBandLight: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    bottom: '76%',
+  },
+  previewFadeBandMid: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255, 255, 255, 0.78)',
+    top: '16%',
+    bottom: '12%',
+  },
+  previewFadeBandHeavy: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255, 255, 255, 0.98)',
+    top: '24%',
   },
   discussionButton: {
     alignItems: 'center',
-    height: 30,
-    justifyContent: 'center',
-    width: 30,
+    flex: 1,
+    justifyContent: 'flex-end',
+    paddingBottom: spacing.sm,
+    paddingHorizontal: spacing.md,
   },
   discussionButtonLabel: {
     color: colors.primary,
     fontFamily: typography.semibold,
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: '700',
+    letterSpacing: -0.4,
     lineHeight: 22,
+    textAlign: 'center',
   },
   composeFab: {
     alignItems: 'center',

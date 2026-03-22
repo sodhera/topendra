@@ -20,7 +20,7 @@ export function CompactVoteControls({
         style={styles.arrowButton}
         testID={`${testIDPrefix}-up-button`}
       >
-        <Text style={[styles.arrowLabel, currentVote === 1 && styles.arrowLabelActive]}>^</Text>
+        <Text style={[styles.arrowLabel, currentVote === 1 && styles.arrowLabelActive]}>↑</Text>
       </Pressable>
       <Text style={styles.scoreLabel}>{scoreLabel}</Text>
       <Pressable
@@ -29,7 +29,7 @@ export function CompactVoteControls({
         style={styles.arrowButton}
         testID={`${testIDPrefix}-down-button`}
       >
-        <Text style={[styles.arrowLabel, currentVote === -1 && styles.arrowLabelActive]}>v</Text>
+        <Text style={[styles.arrowLabel, currentVote === -1 && styles.arrowLabelActive]}>↓</Text>
       </Pressable>
     </View>
   );
