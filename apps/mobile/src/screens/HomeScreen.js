@@ -5,6 +5,7 @@ import {
   Modal,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -324,36 +325,42 @@ export function HomeScreen({ navigation }) {
           <Pressable style={styles.modalBackdrop} onPress={() => setIsAccountModalVisible(false)} />
           <View style={styles.sheet}>
             <View style={styles.sheetHandle} />
-            {isAuthenticated ? (
-              <>
-                <Text style={styles.sheetTitle}>Profile</Text>
-                <Text style={styles.profileName}>{currentUser.name}</Text>
-                {currentUser.email ? <Text style={styles.profileMeta}>{currentUser.email}</Text> : null}
-                <ShadButton
-                  label="Sign out"
-                  shape="pill"
-                  onPress={handleSignOut}
-                  style={styles.sheetButton}
-                />
-              </>
-            ) : (
-              <>
-                <Text style={styles.sheetTitle}>Sign in</Text>
-                <Text style={styles.sheetCopy}>
-                  Use email access to post places, join threads, and vote on the Kathmandu map. Choose an anonymous public username.
-                </Text>
-                <EmailAuthCard
-                  onSignUp={handleSignUp}
-                  onSignIn={handleSignIn}
-                  onMagicLink={handleMagicLink}
-                  onGoogleSignIn={handleGoogleSignIn}
-                  onAppleSignIn={handleAppleSignIn}
-                  authBusy={isEmailAuthLoading}
-                  helperText={authNoticeMessage}
-                />
-                {errorMessage ? <Text style={styles.sheetMeta}>{errorMessage}</Text> : null}
-              </>
-            )}
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              bounces={false}
+              contentContainerStyle={styles.sheetScrollContent}
+            >
+              {isAuthenticated ? (
+                <>
+                  <Text style={styles.sheetTitle}>Profile</Text>
+                  <Text style={styles.profileName}>{currentUser.name}</Text>
+                  {currentUser.email ? <Text style={styles.profileMeta}>{currentUser.email}</Text> : null}
+                  <ShadButton
+                    label="Sign out"
+                    shape="pill"
+                    onPress={handleSignOut}
+                    style={styles.sheetButton}
+                  />
+                </>
+              ) : (
+                <>
+                  <Text style={styles.sheetTitle}>Sign in</Text>
+                  <Text style={styles.sheetCopy}>
+                    Use email access to post places, join threads, and vote on the Kathmandu map. Choose an anonymous public username.
+                  </Text>
+                  <EmailAuthCard
+                    onSignUp={handleSignUp}
+                    onSignIn={handleSignIn}
+                    onMagicLink={handleMagicLink}
+                    onGoogleSignIn={handleGoogleSignIn}
+                    onAppleSignIn={handleAppleSignIn}
+                    authBusy={isEmailAuthLoading}
+                    helperText={authNoticeMessage}
+                  />
+                  {errorMessage ? <Text style={styles.sheetMeta}>{errorMessage}</Text> : null}
+                </>
+              )}
+            </ScrollView>
           </View>
         </KeyboardAvoidingView>
       </Modal>
@@ -450,7 +457,6 @@ const styles = StyleSheet.create({
     maxHeight: '80%',
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm,
-    paddingBottom: spacing.xl,
   },
   sheetHandle: {
     alignSelf: 'center',
@@ -459,6 +465,9 @@ const styles = StyleSheet.create({
     height: 5,
     marginBottom: spacing.md,
     width: 38,
+  },
+  sheetScrollContent: {
+    paddingBottom: spacing.xxl,
   },
   sheetTitle: {
     color: colors.text,
