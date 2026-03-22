@@ -40,7 +40,7 @@ cd topey
   - movable map with a centered pin that follows the visible location
   - `Add here` action that opens a details modal
   - modal form with name, description, and final `Add` submit for logged-in users
-- Buttons and sheets now use an Apple-like iOS treatment with softer materials, system-blue actions, and larger sheet geometry.
+- Buttons and sheets now use an Apple-like iOS treatment with softer materials, system-blue actions, larger sheet geometry, and clearer action hierarchy inside modals.
 - Place opens are tracked in Supabase so later area-notification work has usage history to build on.
 - Demo mode now ships with 50 deterministic Kathmandu places plus multiple seeded comment threads per place.
 

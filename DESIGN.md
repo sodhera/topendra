@@ -22,8 +22,8 @@ Use Apple’s HIG as the directional guide and preserve the current product stru
 ## Core UI Rules
 
 - The home screen is the product pitch:
-  - small `Add a place` button near the top
-  - large `Find a place` button near the bottom
+  - `Profile` or `Sign in` near the top right
+  - one large `+` add button near the bottom
   - live map behind everything
 - The browse screen should feel like a straightforward map app with a clean bottom sheet.
 - The add-place screen should feel like a simple form over a map, not a multi-step wizard.
@@ -59,6 +59,7 @@ Use the tokens in [src/lib/theme.js](/Users/sirishjoshi/Desktop/Topey/src/lib/th
   - filled primary actions in system blue
   - translucent secondary pills for map chrome
   - minimum 44pt tappable compact controls
+  - only one dominant CTA per sheet; supporting actions should step down in size and emphasis
 - Cards and sheets should have:
   - large radii
   - thin separators
