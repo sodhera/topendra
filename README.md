@@ -36,20 +36,20 @@ cd topey
   - `apps/web` ships a browser version focused on browsing and inspecting place drops
   - `packages/shared` keeps cross-platform logic in one place
 - Home screen:
-  - opens on the Kathmandu demo region so the place dots are visible immediately
+  - opens near the user’s current location when foreground location is available, with the Kathmandu seeded field as the fallback
   - `Profile` or `Sign in` button at the top right
   - one large `+` button at the bottom that opens the add-place flow
   - tapping a dot opens the place modal directly on home instead of navigating away
   - the modal uses a single metadata line, `Open location`, a participation row with stemmed arrow voting plus `Added by: <Username>`, and a Reddit-style thread preview
 - Browse screen:
-  - starts on the Kathmandu demo region with up to 50 demo location dots
+  - starts near the user’s current location when available, with up to 50 seeded demo dots still merged into the dataset
   - `Back` button at the top left and `Add a place` at the top right
   - tapping a dot opens a native-feeling light preview card with rating, votes, and thread count
   - `View more` opens a details modal with inline metadata, a participation row that combines stemmed arrow voting with creator attribution, a stacked thread preview, and a separate discussion modal
   - guests still see the latest two preview comments, but `See More` and comment actions route into email auth
 - Add-place screen:
   - opens on the user’s current location once foreground location resolves
-  - movable map with a centered pin that follows the visible location
+  - movable map with a fixed center pin overlay that always marks the exact add target
   - `Add here` action that opens a details modal
   - modal form with name, description, and final `Add` submit for logged-in users
   - guest add attempts expose the same email-link auth path used by voting and comments
@@ -74,10 +74,11 @@ packages/
 ## Map Interaction Model
 
 - `Home` and `Browse` mount the map with `initialRegion`; they do not keep `react-native-maps` locked to a controlled `region` prop during drag gestures.
+- `Home`, `Browse`, and `AddPlace` all request foreground location so the app can open near the user anywhere, not only around the Kathmandu seed region.
 - Home and browse both stay directly draggable because only the actual buttons intercept touch events.
 - Mobile map views intentionally suppress native POIs, buildings, indoor labels, traffic, and toolbar chrome so Topey pins are the only location layer that stands out.
 - Home place details open in a modal on dot tap, and browse previews also open only from explicit dot taps.
-- `AddPlace` updates the pending pin from map movement and keeps the details form behind an explicit modal instead of a permanent card.
+- `AddPlace` updates the pending coordinates from map movement and uses a fixed center pin overlay so the target never disappears.
 
 ## Tech Stack
 
@@ -164,6 +165,7 @@ npm run web:preview
 ### Mobile guest
 
 - can open the map and roam around pins
+- sees the map open near the current device location when permission is granted
 - can read place metadata
 - can open the place modal from any demo dot
 - can open the pinned coordinates in the native maps app
@@ -175,6 +177,7 @@ npm run web:preview
 ### Mobile logged-in user
 
 - can sign in or make an account using only email plus an anonymous username
+- sees home, browse, and add-place open near the current device location when permission is granted
 - can read comments
 - can add comments
 - can upvote or downvote
@@ -202,7 +205,7 @@ Important:
 
 - Topey only asks end users for email plus an anonymous username
 - place and comment authorship is shown using the anonymous username, not the raw email address
-- foreground location is used to center the add-place map, show nearby map context, and save place coordinates when a user adds a drop
+- foreground location is used to center the mobile maps near the user, show nearby map context, and save place coordinates when a user adds a drop
 - each place open is tracked with a viewer session id for future area notifications
 
 ## Supabase Notes

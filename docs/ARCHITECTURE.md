@@ -80,7 +80,7 @@ Defined in [HomeScreen.js](/Users/sirishjoshi/Desktop/Topey/apps/mobile/src/scre
 
 Responsibilities:
 
-- show the Kathmandu demo map immediately
+- center the initial map on the resolved live location when available, with Kathmandu as the fallback
 - suppress native POIs/buildings/traffic chrome so only Topey place drops compete for attention
 - keep the map directly pannable without any full-screen overlay layer
 - render only `Profile` or `Sign in` at the top right
@@ -103,7 +103,7 @@ Defined in [BrowseScreen.js](/Users/sirishjoshi/Desktop/Topey/apps/mobile/src/sc
 
 Responsibilities:
 
-- render the same Kathmandu demo map foundation as home
+- render the same live-location-first map foundation as home
 - keep the same decluttered mobile map configuration so only Topey pins stand out against the base map
 - show only two top controls: `Back` and `Add a place`
 - display up to 50 place markers from Supabase plus the runtime demo fallback
@@ -124,6 +124,7 @@ Responsibilities:
 - center on the resolved live location before enabling submission
 - keep the base map decluttered while still showing the user location and current pin target
 - let the user move the pin by moving the map instead of dragging a controlled region prop
+- render a fixed center pin overlay so the add target never disappears while the map moves underneath it
 - open a details modal from the map-first `Add here` action
 - capture the place name and description inside the modal
 - require login before save
@@ -261,12 +262,10 @@ Behavior:
 
 1. Request foreground location permission.
 2. Hold the initial map-centering step until the first live-location lookup resolves.
-3. Use the live position when permission is granted.
+3. Use the live position for `Home`, `Browse`, and `AddPlace` when permission is granted.
 4. Fall back to Kathmandu when location is unavailable.
-5. Allow screens to opt out of live recentering so the browse map can be explored freely.
+5. Recenter only once automatically, then let the user explore the map freely.
 6. Show explicit copy that location is used to center the map, show nearby places, and save added place coordinates.
-
-Only `AddPlace` uses live recentering now. `Home` and `Browse` intentionally start on the Kathmandu demo region so the 50 seeded dots are visible immediately.
 
 ## Map Gesture Model
 
@@ -275,8 +274,8 @@ The map screens intentionally avoid controlling `react-native-maps` with `region
 Mechanism:
 
 1. Each map screen mounts the map with `initialRegion`.
-2. `Home` and `Browse` stay on the Kathmandu demo region.
-3. `AddPlace` recenters once from foreground location.
+2. `Home`, `Browse`, and `AddPlace` all recenter once from foreground location when permission is granted.
+3. `AddPlace` keeps the target coordinates synced to the visible map center and shows a fixed overlay pin.
 4. User drags happen directly inside the native map view because only the actual buttons intercept touches.
 5. `Home` modals and `Browse` previews both come from explicit marker taps instead of automatic map-center selection.
 
