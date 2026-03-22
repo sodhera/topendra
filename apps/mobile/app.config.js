@@ -42,9 +42,12 @@ module.exports = () => ({
           'Topey uses your location to center the map around you, show nearby place drops, and save the coordinates of places you add.',
       },
     ],
+    'expo-apple-authentication',
   ],
   extra: {
     supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL ?? null,
     supabasePublishableKey: process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? null,
+    googleWebClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? null,
+    googleIosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID ?? null,
   },
 });

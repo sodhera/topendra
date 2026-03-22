@@ -32,6 +32,10 @@ export function HomeScreen({ navigation }) {
     authNoticeMessage,
     errorMessage,
     requestEmailAccess,
+    signUpWithPassword,
+    signInWithPassword,
+    signInWithGoogle,
+    signInWithApple,
     signOut,
     addComment,
     votePlace,
@@ -46,8 +50,6 @@ export function HomeScreen({ navigation }) {
   const [isAccountModalVisible, setIsAccountModalVisible] = useState(false);
   const [isPlaceModalVisible, setIsPlaceModalVisible] = useState(false);
   const [selectedPlaceId, setSelectedPlaceId] = useState('');
-  const [email, setEmail] = useState('');
-  const [username, setUsername] = useState('');
 
   useEffect(() => {
     if (!hasCenteredMap && hasResolvedInitialRegion) {
@@ -74,7 +76,43 @@ export function HomeScreen({ navigation }) {
     )?.value ?? 0;
   }, [selectedPlace, state.session?.user?.id, state.votes]);
 
-  async function handleEmailAccess() {
+  async function handleSignUp({ email, username, password }) {
+    try {
+      await signUpWithPassword({ email, username, password });
+      setIsAccountModalVisible(false);
+    } catch (error) {
+      Alert.alert('Sign-up failed', error.message);
+    }
+  }
+
+  async function handleSignIn({ email, password }) {
+    try {
+      await signInWithPassword({ email, password });
+      setIsAccountModalVisible(false);
+    } catch (error) {
+      Alert.alert('Sign-in failed', error.message);
+    }
+  }
+
+  async function handleGoogleSignIn() {
+    try {
+      await signInWithGoogle();
+      setIsAccountModalVisible(false);
+    } catch (error) {
+      Alert.alert('Google Sign-in failed', error.message);
+    }
+  }
+
+  async function handleAppleSignIn() {
+    try {
+      await signInWithApple();
+      setIsAccountModalVisible(false);
+    } catch (error) {
+      Alert.alert('Apple Sign-in failed', error.message);
+    }
+  }
+
+  async function handleMagicLink({ email, username }) {
     try {
       await requestEmailAccess({ email, username });
       Alert.alert('Check your email', 'We sent you a sign-in link. Open it on this device to unlock posting, voting, and threads.');
@@ -305,11 +343,11 @@ export function HomeScreen({ navigation }) {
                   Use email access to post places, join threads, and vote on the Kathmandu map. Choose an anonymous public username.
                 </Text>
                 <EmailAuthCard
-                  email={email}
-                  username={username}
-                  onEmailChange={setEmail}
-                  onUsernameChange={setUsername}
-                  onSubmit={handleEmailAccess}
+                  onSignUp={handleSignUp}
+                  onSignIn={handleSignIn}
+                  onMagicLink={handleMagicLink}
+                  onGoogleSignIn={handleGoogleSignIn}
+                  onAppleSignIn={handleAppleSignIn}
                   authBusy={isEmailAuthLoading}
                   helperText={authNoticeMessage}
                 />
