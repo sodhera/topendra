@@ -14,7 +14,8 @@
   - live map in the background
 - Browsing happens inside the Topey app, not by kicking the user out to Apple Maps or Google Maps.
 - Logged-in users can upvote, downvote, and comment.
-- Guests can still browse and add places in the current local prototype.
+- Guests can browse places, but adding a place remains login-gated.
+- The add-place flow should land on a live map first, then open a details modal from an explicit `Add here` action.
 - The app is Expo native and written in JavaScript.
 
 ## Design Direction

@@ -76,8 +76,10 @@ Defined in [src/screens/AddPlaceScreen.js](/Users/sirishjoshi/Desktop/Topey/src/
 
 Responsibilities:
 
-- let the user move the pin
-- capture the place name and description
+- center on the resolved live location before enabling submission
+- let the user move the pin by tapping or dragging
+- open a details modal from the map-first `Add here` action
+- capture the place name and description inside the modal
 - require login before save
 - insert the place into Supabase
 
@@ -175,9 +177,10 @@ Location logic lives in [src/hooks/useLiveLocation.js](/Users/sirishjoshi/Deskto
 Behavior:
 
 1. Request foreground location permission.
-2. Use the live position when permission is granted.
-3. Fall back to Kathmandu when location is unavailable.
-4. Allow screens to opt out of live recentering so the browse map can be explored freely.
+2. Hold the initial map-centering step until the first live-location lookup resolves.
+3. Use the live position when permission is granted.
+4. Fall back to Kathmandu when location is unavailable.
+5. Allow screens to opt out of live recentering so the browse map can be explored freely.
 
 ## Legacy Prototype Code
 

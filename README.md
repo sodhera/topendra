@@ -35,9 +35,10 @@ cd topey
   - place widget with name, description, distance, vote ratio, and comments
   - comments visible only to logged-in users
 - Add-place screen:
-  - draggable marker
-  - place name and description form
-  - save-to-Supabase flow for logged-in users
+  - opens on the user’s current location once foreground location resolves
+  - draggable marker with tap-to-reposition support
+  - `Add here` action that opens a details modal
+  - modal form with name, description, and final `Add` submit for logged-in users
 
 ## Tech Stack
 
@@ -128,7 +129,7 @@ npm run supabase:test-user
 - can read comments
 - can add comments
 - can upvote or downvote
-- can save a new pinned place
+- can pin the current map location, open the add-details modal, and save a new place
 
 ### Test account
 
