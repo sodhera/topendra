@@ -83,13 +83,15 @@ const styles = StyleSheet.create({
   loadingTitle: {
     color: colors.text,
     fontFamily: typography.semibold,
-    fontSize: 30,
+    fontSize: 32,
+    fontWeight: '700',
+    letterSpacing: -0.9,
   },
   loadingCopy: {
     color: colors.mutedText,
     fontFamily: typography.body,
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 15,
+    lineHeight: 22,
     textAlign: 'center',
     marginTop: 12,
     maxWidth: 320,

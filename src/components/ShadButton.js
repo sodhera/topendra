@@ -18,8 +18,8 @@ export function ShadButton({
   function animateTo(value) {
     Animated.spring(scale, {
       toValue: value,
-      friction: 8,
-      tension: 170,
+      friction: 10,
+      tension: 210,
       useNativeDriver: true,
     }).start();
   }
@@ -28,7 +28,7 @@ export function ShadButton({
     <Pressable
       disabled={disabled}
       onPress={onPress}
-      onPressIn={() => animateTo(0.97)}
+      onPressIn={() => animateTo(0.985)}
       onPressOut={() => animateTo(1)}
       style={[styles.base, styles[variant], styles[size], styles[shape], disabled && styles.disabled, style]}
       testID={testID}
@@ -51,34 +51,34 @@ export function ShadButton({
 const styles = StyleSheet.create({
   base: {
     alignItems: 'center',
-    borderWidth: 1,
+    borderWidth: 0.75,
     justifyContent: 'center',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.12,
+    shadowRadius: 20,
+    elevation: 6,
   },
   primary: {
     backgroundColor: colors.primary,
-    borderColor: colors.primary,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
   },
   secondary: {
-    backgroundColor: colors.card,
-    borderColor: colors.border,
+    backgroundColor: colors.secondary,
+    borderColor: 'rgba(255, 255, 255, 0.62)',
   },
   default: {
-    minHeight: 52,
+    minHeight: 50,
     paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
+    paddingVertical: spacing.sm,
   },
   compact: {
-    minHeight: 42,
+    minHeight: 44,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
   },
   large: {
-    minHeight: 58,
+    minHeight: 62,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
   },
@@ -97,7 +97,9 @@ const styles = StyleSheet.create({
   },
   label: {
     fontFamily: typography.semibold,
-    fontSize: 15,
+    fontSize: 16,
+    fontWeight: '600',
+    letterSpacing: -0.24,
   },
   primaryLabel: {
     color: colors.primaryText,

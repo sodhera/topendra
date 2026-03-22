@@ -212,6 +212,7 @@ export function HomeScreen({ navigation }) {
         >
           <Pressable style={styles.modalBackdrop} onPress={closePlaceModal} />
           <View style={styles.sheet}>
+            <View style={styles.sheetHandle} />
             {selectedPlace ? (
               <>
                 <Text style={styles.sheetTitle}>{selectedPlace.name}</Text>
@@ -292,6 +293,7 @@ export function HomeScreen({ navigation }) {
         >
           <Pressable style={styles.modalBackdrop} onPress={() => setIsAccountModalVisible(false)} />
           <View style={styles.sheet}>
+            <View style={styles.sheetHandle} />
             {isAuthenticated ? (
               <>
                 <Text style={styles.sheetTitle}>Profile</Text>
@@ -349,7 +351,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: spacing.md,
     paddingBottom: spacing.lg,
-    paddingTop: spacing.sm,
+    paddingTop: spacing.xs,
   },
   topRow: {
     alignItems: 'flex-end',
@@ -365,11 +367,17 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     height: 88,
     justifyContent: 'center',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.2,
+    shadowRadius: 24,
     width: 88,
   },
   addButtonLabel: {
-    fontSize: 34,
-    lineHeight: 34,
+    fontSize: 38,
+    fontWeight: '500',
+    letterSpacing: -1.2,
+    lineHeight: 38,
   },
   modalRoot: {
     flex: 1,
@@ -377,42 +385,56 @@ const styles = StyleSheet.create({
   },
   modalBackdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(9, 9, 11, 0.18)',
+    backgroundColor: colors.sheetBackdrop,
   },
   sheet: {
     backgroundColor: colors.card,
     borderColor: colors.border,
-    borderTopLeftRadius: radius.lg,
-    borderTopRightRadius: radius.lg,
-    borderWidth: 1,
+    borderTopLeftRadius: radius.xl,
+    borderTopRightRadius: radius.xl,
+    borderWidth: 0.75,
     borderBottomWidth: 0,
     maxHeight: '80%',
-    padding: spacing.md,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.xl,
     ...shadows.floating,
+  },
+  sheetHandle: {
+    alignSelf: 'center',
+    backgroundColor: colors.handle,
+    borderRadius: radius.pill,
+    height: 5,
+    marginBottom: spacing.md,
+    width: 38,
   },
   sheetTitle: {
     color: colors.text,
     fontFamily: typography.semibold,
-    fontSize: 22,
+    fontSize: 28,
+    fontWeight: '700',
+    letterSpacing: -0.8,
   },
   sheetCopy: {
     color: colors.mutedText,
     fontFamily: typography.body,
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 15,
+    lineHeight: 22,
     marginTop: spacing.sm,
   },
   sheetMeta: {
     color: colors.mutedText,
     fontFamily: typography.body,
-    fontSize: 12,
+    fontSize: 13,
     lineHeight: 18,
     marginTop: spacing.sm,
   },
   profileName: {
     color: colors.text,
     fontFamily: typography.semibold,
-    fontSize: 18,
+    fontSize: 20,
+    fontWeight: '600',
+    letterSpacing: -0.3,
     marginTop: spacing.md,
   },
   profileMeta: {
@@ -434,16 +456,24 @@ const styles = StyleSheet.create({
   },
   previewStat: {
     flex: 1,
+    backgroundColor: colors.secondary,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    borderWidth: 0.75,
+    padding: spacing.sm,
   },
   previewStatLabel: {
     color: colors.mutedText,
     fontFamily: typography.medium,
     fontSize: 12,
+    fontWeight: '500',
   },
   previewStatValue: {
     color: colors.text,
     fontFamily: typography.semibold,
-    fontSize: 15,
+    fontSize: 16,
+    fontWeight: '600',
+    letterSpacing: -0.18,
     marginTop: spacing.xxs,
   },
   commentComposer: {
@@ -453,15 +483,16 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
   },
   input: {
-    backgroundColor: colors.secondary,
+    backgroundColor: colors.elevatedCard,
     borderColor: colors.border,
     borderRadius: radius.md,
-    borderWidth: 1,
+    borderWidth: 0.75,
     color: colors.text,
     flex: 1,
     fontFamily: typography.body,
-    minHeight: 46,
+    minHeight: 48,
     paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
   },
   commentsList: {
     marginTop: spacing.md,
@@ -470,7 +501,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.elevatedCard,
     borderColor: colors.border,
     borderRadius: radius.md,
-    borderWidth: 1,
+    borderWidth: 0.75,
     marginBottom: spacing.sm,
     padding: spacing.md,
   },
@@ -478,6 +509,8 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontFamily: typography.semibold,
     fontSize: 13,
+    fontWeight: '600',
+    letterSpacing: -0.16,
   },
   commentBody: {
     color: colors.mutedText,
@@ -490,7 +523,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.secondary,
     borderColor: colors.border,
     borderRadius: radius.md,
-    borderWidth: 1,
+    borderWidth: 0.75,
     marginTop: spacing.md,
     padding: spacing.md,
   },
@@ -498,6 +531,8 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontFamily: typography.semibold,
     fontSize: 16,
+    fontWeight: '600',
+    letterSpacing: -0.18,
   },
   lockedCopy: {
     color: colors.mutedText,
