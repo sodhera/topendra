@@ -12,10 +12,17 @@ jest.mock('react-native-maps', () => {
   const React = require('react');
   const { Pressable, Text, View } = require('react-native');
 
-  function MockMapView({ children, region, onRegionChangeStart, onRegionChangeComplete }) {
+  const MockMapView = React.forwardRef(function MockMapView(
+    { children, initialRegion, onRegionChangeStart, onRegionChangeComplete },
+    ref
+  ) {
+    React.useImperativeHandle(ref, () => ({
+      animateToRegion: jest.fn(),
+    }));
+
     return (
       <View testID="home-map">
-        <Text testID="home-map-region">{JSON.stringify(region)}</Text>
+        <Text testID="home-map-region">{JSON.stringify(initialRegion)}</Text>
         <Pressable testID="map-drag-start" onPress={() => onRegionChangeStart?.()}>
           <Text>drag-start</Text>
         </Pressable>
@@ -35,7 +42,7 @@ jest.mock('react-native-maps', () => {
         {children}
       </View>
     );
-  }
+  });
 
   function Marker({ children }) {
     return <View>{children}</View>;
@@ -147,5 +154,22 @@ describe('HomeScreen', () => {
     });
 
     expect(screen.getByText('Open details')).toBeTruthy();
+  });
+
+  test('re-centers the initial map from the resolved live location before interaction', () => {
+    useLiveLocation.mockReturnValue({
+      region: {
+        latitude: 40.7128,
+        longitude: -74.006,
+        latitudeDelta: 0.06,
+        longitudeDelta: 0.06,
+      },
+      errorMessage: '',
+      hasResolvedInitialRegion: true,
+    });
+
+    const screen = render(<HomeScreen navigation={{ navigate: jest.fn(), canGoBack: jest.fn(() => false) }} />);
+
+    expect(screen.getByTestId('home-map-region').props.children).toContain('40.7128');
   });
 });

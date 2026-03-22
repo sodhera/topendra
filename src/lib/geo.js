@@ -51,6 +51,24 @@ export function distanceInKm(from, to) {
   return earthRadiusKm * c;
 }
 
+export function getNearestPlace(places, region) {
+  if (!places?.length) {
+    return null;
+  }
+
+  if (!region) {
+    return places[0];
+  }
+
+  return places.reduce((nearestPlace, place) => {
+    if (!nearestPlace) {
+      return place;
+    }
+
+    return distanceInKm(region, place) < distanceInKm(region, nearestPlace) ? place : nearestPlace;
+  }, null);
+}
+
 function toRadians(value) {
   return (value * Math.PI) / 180;
 }

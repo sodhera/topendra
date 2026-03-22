@@ -8,14 +8,18 @@ jest.mock('react-native-maps', () => {
   const React = require('react');
   const { Text, View } = require('react-native');
 
-  function MockMapView({ children, region }) {
+  const MockMapView = React.forwardRef(function MockMapView({ children, initialRegion }, ref) {
+    React.useImperativeHandle(ref, () => ({
+      animateToRegion: jest.fn(),
+    }));
+
     return (
       <View testID="map-view">
-        <Text testID="map-region">{JSON.stringify(region)}</Text>
+        <Text testID="map-region">{JSON.stringify(initialRegion)}</Text>
         {children}
       </View>
     );
-  }
+  });
 
   function Marker({ coordinate }) {
     return (
@@ -106,7 +110,9 @@ describe('AddPlaceScreen', () => {
 
     const screen = render(<AddPlaceScreen navigation={navigation} />);
 
-    expect(screen.getByText('40.71280, -74.00600')).toBeTruthy();
+    await waitFor(() => {
+      expect(screen.getByText('40.71280, -74.00600')).toBeTruthy();
+    });
 
     fireEvent.press(screen.getByText('Add here'));
 

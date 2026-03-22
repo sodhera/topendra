@@ -30,6 +30,7 @@ export function AddPlaceScreen({ navigation }) {
     errorMessage: locationError,
     hasResolvedInitialRegion,
   } = useLiveLocation({ watch: false });
+  const [mapKey, setMapKey] = useState(0);
   const [mapRegion, setMapRegion] = useState(DEFAULT_REGION);
   const [hasCenteredMap, setHasCenteredMap] = useState(false);
   const [isMapMoving, setIsMapMoving] = useState(false);
@@ -50,15 +51,9 @@ export function AddPlaceScreen({ navigation }) {
         longitude: userRegion.longitude,
       });
       setHasCenteredMap(true);
+      setMapKey((value) => value + 1);
     }
   }, [hasCenteredMap, hasResolvedInitialRegion, userRegion]);
-
-  useEffect(() => {
-    setPin({
-      latitude: mapRegion.latitude,
-      longitude: mapRegion.longitude,
-    });
-  }, [mapRegion.latitude, mapRegion.longitude]);
 
   async function handleProviderPress(provider) {
     try {
@@ -103,16 +98,27 @@ export function AddPlaceScreen({ navigation }) {
   const locationStatusCopy =
     permissionStatus === 'loading' && !hasResolvedInitialRegion
       ? 'Finding your current location so the map opens where you are.'
-      : 'Move the pin if needed, then tap Add here to enter the place details.';
+      : 'Move the map if needed, then tap Add here to enter the place details.';
 
   return (
     <View style={styles.container}>
       <MapView
+        key={`add-place-map-${mapKey}`}
         style={StyleSheet.absoluteFill}
-        region={mapRegion}
+        initialRegion={mapRegion}
         onRegionChangeStart={() => setIsMapMoving(true)}
+        onRegionChange={(nextRegion) => {
+          setPin({
+            latitude: nextRegion.latitude,
+            longitude: nextRegion.longitude,
+          });
+        }}
         onRegionChangeComplete={(nextRegion) => {
           setMapRegion(nextRegion);
+          setPin({
+            latitude: nextRegion.latitude,
+            longitude: nextRegion.longitude,
+          });
           setIsMapMoving(false);
         }}
         showsUserLocation
@@ -122,15 +128,20 @@ export function AddPlaceScreen({ navigation }) {
           moving={isMapMoving}
         />
       </MapView>
-      <View style={styles.scrim} pointerEvents="none" />
-
       <SafeAreaView style={styles.safeArea} pointerEvents="box-none">
         <View style={styles.topBar} pointerEvents="box-none">
-          <ShadButton label="Back" size="compact" variant="secondary" onPress={() => navigation.goBack()} />
+          <ShadButton
+            label="Back"
+            size="compact"
+            shape="pill"
+            variant="secondary"
+            onPress={() => navigation.goBack()}
+          />
         </View>
 
         <View style={styles.actionCard}>
-          <Text style={styles.title}>Add a place</Text>
+          <Text style={styles.eyebrow}>Add a place</Text>
+          <Text style={styles.title}>Move the map, then pin here</Text>
           <Text style={styles.copy}>{locationStatusCopy}</Text>
 
           <View style={styles.coordsCard}>
@@ -145,6 +156,7 @@ export function AddPlaceScreen({ navigation }) {
 
           <ShadButton
             label="Add here"
+            shape="pill"
             onPress={() => setIsDetailsModalVisible(true)}
             disabled={!hasResolvedInitialRegion}
           />
@@ -211,11 +223,13 @@ export function AddPlaceScreen({ navigation }) {
                 <ShadButton
                   label="Cancel"
                   variant="secondary"
+                  shape="pill"
                   onPress={() => setIsDetailsModalVisible(false)}
                   style={styles.modalButton}
                 />
                 <ShadButton
                   label={isSaving ? 'Adding...' : 'Add'}
+                  shape="pill"
                   onPress={handleSubmit}
                   disabled={isSaving || !isAuthenticated}
                   style={styles.modalButton}
@@ -234,10 +248,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  scrim: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.18)',
-  },
   safeArea: {
     flex: 1,
     justifyContent: 'space-between',
@@ -248,17 +258,25 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
   },
   actionCard: {
-    backgroundColor: colors.card,
-    borderColor: colors.border,
+    backgroundColor: 'rgba(12, 18, 30, 0.44)',
+    borderColor: 'rgba(255, 255, 255, 0.18)',
     borderRadius: radius.lg,
     borderWidth: 1,
     padding: spacing.md,
     ...shadows.floating,
   },
+  eyebrow: {
+    color: colors.mutedText,
+    fontFamily: typography.medium,
+    fontSize: 11,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+  },
   title: {
     color: colors.text,
     fontFamily: typography.semibold,
     fontSize: 26,
+    marginTop: spacing.xs,
   },
   copy: {
     color: colors.mutedText,

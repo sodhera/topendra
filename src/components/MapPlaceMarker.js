@@ -8,9 +8,9 @@ export function MapPlaceMarker({ coordinate, title, selected = false, moving = f
 
   useEffect(() => {
     Animated.spring(scale, {
-      toValue: moving ? 0.66 : selected ? 1.08 : 1,
-      friction: 7,
-      tension: 120,
+      toValue: moving ? 0.54 : selected ? 1.1 : 1,
+      friction: 8,
+      tension: 138,
       useNativeDriver: true,
     }).start();
   }, [moving, scale, selected]);
@@ -44,8 +44,8 @@ export function MapPlaceMarker({ coordinate, title, selected = false, moving = f
 const styles = StyleSheet.create({
   shell: {
     alignItems: 'center',
-    backgroundColor: 'rgba(24, 24, 27, 0.66)',
-    borderColor: 'rgba(255, 255, 255, 0.22)',
+    backgroundColor: 'rgba(15, 23, 42, 0.62)',
+    borderColor: 'rgba(255, 255, 255, 0.24)',
     borderRadius: radius.pill,
     borderWidth: 1,
     flexDirection: 'row',
@@ -64,8 +64,8 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(34, 197, 94, 0.5)',
   },
   shellMoving: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
   },
   core: {
     backgroundColor: colors.accent,
@@ -79,8 +79,8 @@ const styles = StyleSheet.create({
     width: 12,
   },
   coreMoving: {
-    height: 8,
-    width: 18,
+    height: 7,
+    width: 20,
   },
   label: {
     color: colors.text,

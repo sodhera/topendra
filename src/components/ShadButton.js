@@ -7,8 +7,10 @@ export function ShadButton({
   onPress,
   variant = 'primary',
   size = 'default',
+  shape = 'rounded',
   style,
   disabled = false,
+  testID,
 }) {
   const scale = React.useRef(new Animated.Value(1)).current;
 
@@ -27,10 +29,12 @@ export function ShadButton({
       onPress={onPress}
       onPressIn={() => animateTo(0.97)}
       onPressOut={() => animateTo(1)}
-      style={[styles.base, styles[variant], styles[size], disabled && styles.disabled, style]}
+      style={[styles.base, styles[variant], styles[size], styles[shape], disabled && styles.disabled, style]}
+      testID={testID}
     >
       <Animated.View style={[styles.inner, { transform: [{ scale }] }]}>
         <View style={styles.sheen} pointerEvents="none" />
+        <View style={styles.shadowFill} pointerEvents="none" />
         <Text style={[styles.label, variant === 'primary' ? styles.primaryLabel : styles.secondaryLabel]}>
           {label}
         </Text>
@@ -42,23 +46,22 @@ export function ShadButton({
 const styles = StyleSheet.create({
   base: {
     alignItems: 'center',
-    borderRadius: radius.md,
     borderWidth: 1,
     overflow: 'hidden',
     justifyContent: 'center',
     shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.16,
-    shadowRadius: 16,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 14 },
+    shadowOpacity: 0.2,
+    shadowRadius: 18,
+    elevation: 6,
   },
   primary: {
-    backgroundColor: 'rgba(255, 255, 255, 0.16)',
-    borderColor: 'rgba(255, 255, 255, 0.26)',
+    backgroundColor: 'rgba(255, 255, 255, 0.14)',
+    borderColor: 'rgba(255, 255, 255, 0.28)',
   },
   secondary: {
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    borderColor: 'rgba(255, 255, 255, 0.18)',
+    backgroundColor: 'rgba(15, 23, 42, 0.28)',
+    borderColor: 'rgba(255, 255, 255, 0.22)',
   },
   default: {
     minHeight: 52,
@@ -70,6 +73,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
   },
+  rounded: {
+    borderRadius: radius.md,
+  },
+  pill: {
+    borderRadius: radius.pill,
+  },
   disabled: {
     opacity: 0.48,
   },
@@ -77,17 +86,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     alignSelf: 'stretch',
     backgroundColor: 'rgba(255, 255, 255, 0.02)',
-    borderRadius: radius.md,
     flex: 1,
     justifyContent: 'center',
     width: '100%',
   },
   sheen: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    borderTopLeftRadius: radius.md,
-    borderTopRightRadius: radius.md,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     height: '42%',
+  },
+  shadowFill: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255, 255, 255, 0.02)',
+    top: '48%',
   },
   label: {
     fontFamily: typography.semibold,
