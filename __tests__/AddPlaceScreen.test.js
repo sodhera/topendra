@@ -1,0 +1,150 @@
+import React from 'react';
+import { fireEvent, render, waitFor } from '@testing-library/react-native';
+import { AddPlaceScreen } from '../src/screens/AddPlaceScreen';
+import { useAppContext } from '../src/context/AppContext';
+import { useLiveLocation } from '../src/hooks/useLiveLocation';
+
+jest.mock('react-native-maps', () => {
+  const React = require('react');
+  const { Text, View } = require('react-native');
+
+  function MockMapView({ children, region }) {
+    return (
+      <View testID="map-view">
+        <Text testID="map-region">{JSON.stringify(region)}</Text>
+        {children}
+      </View>
+    );
+  }
+
+  function Marker({ coordinate }) {
+    return (
+      <View testID="map-marker">
+        <Text testID="marker-coordinate">{JSON.stringify(coordinate)}</Text>
+      </View>
+    );
+  }
+
+  return {
+    __esModule: true,
+    default: MockMapView,
+    Marker,
+  };
+});
+
+jest.mock('../src/context/AppContext', () => ({
+  useAppContext: jest.fn(),
+}));
+
+jest.mock('../src/hooks/useLiveLocation', () => ({
+  useLiveLocation: jest.fn(),
+}));
+
+jest.mock('react-native-safe-area-context', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+
+  return {
+    __esModule: true,
+    SafeAreaView: ({ children }) => <View>{children}</View>,
+  };
+});
+
+jest.mock('../src/components/AuthButtons', () => ({
+  AuthButtons: () => {
+    const React = require('react');
+    const { Text, View } = require('react-native');
+
+    return (
+      <View>
+        <Text>Auth buttons</Text>
+      </View>
+    );
+  },
+}));
+
+describe('AddPlaceScreen', () => {
+  const addPlace = jest.fn();
+  const signInWithOAuth = jest.fn();
+  const navigation = {
+    goBack: jest.fn(),
+    navigate: jest.fn(),
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+
+    useAppContext.mockReturnValue({
+      state: {
+        session: {
+          user: {
+            id: 'user-1',
+          },
+        },
+      },
+      authBusyProvider: '',
+      errorMessage: '',
+      signInWithOAuth,
+      addPlace,
+    });
+
+    useLiveLocation.mockReturnValue({
+      region: {
+        latitude: 40.7128,
+        longitude: -74.006,
+        latitudeDelta: 0.06,
+        longitudeDelta: 0.06,
+      },
+      permissionStatus: 'granted',
+      errorMessage: '',
+      hasResolvedInitialRegion: true,
+    });
+  });
+
+  test('centers the add flow on the resolved live location and adds from the modal', async () => {
+    addPlace.mockResolvedValue(undefined);
+
+    const screen = render(<AddPlaceScreen navigation={navigation} />);
+
+    expect(screen.getByText('40.71280, -74.00600')).toBeTruthy();
+
+    fireEvent.press(screen.getByText('Add here'));
+
+    fireEvent.changeText(screen.getByPlaceholderText('Place name'), 'Corner Cafe');
+    fireEvent.changeText(screen.getByPlaceholderText('Description'), 'Late-night coffee and Wi-Fi.');
+    fireEvent.press(screen.getByText('Add'));
+
+    await waitFor(() => {
+      expect(addPlace).toHaveBeenCalledWith({
+        name: 'Corner Cafe',
+        description: 'Late-night coffee and Wi-Fi.',
+        latitude: 40.7128,
+        longitude: -74.006,
+      });
+    });
+
+    expect(navigation.navigate).toHaveBeenCalledWith('Browse');
+  });
+
+  test('keeps add-here disabled until the initial location has resolved', () => {
+    useLiveLocation.mockReturnValue({
+      region: {
+        latitude: 27.7172,
+        longitude: 85.324,
+        latitudeDelta: 0.06,
+        longitudeDelta: 0.06,
+      },
+      permissionStatus: 'loading',
+      errorMessage: '',
+      hasResolvedInitialRegion: false,
+    });
+
+    const screen = render(<AddPlaceScreen navigation={navigation} />);
+
+    expect(screen.getByText('Finding your current location so the map opens where you are.')).toBeTruthy();
+
+    fireEvent.press(screen.getByText('Add here'));
+
+    expect(screen.queryByText('Place details')).toBeNull();
+  });
+});

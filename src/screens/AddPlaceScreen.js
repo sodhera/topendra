@@ -1,5 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { Alert, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  Alert,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AuthButtons } from '../components/AuthButtons';
@@ -12,7 +23,12 @@ import { useLiveLocation } from '../hooks/useLiveLocation';
 
 export function AddPlaceScreen({ navigation }) {
   const { state, authBusyProvider, errorMessage: appError, signInWithOAuth, addPlace } = useAppContext();
-  const { region: userRegion, errorMessage: locationError } = useLiveLocation({ watch: false });
+  const {
+    region: userRegion,
+    permissionStatus,
+    errorMessage: locationError,
+    hasResolvedInitialRegion,
+  } = useLiveLocation({ watch: false });
   const [mapRegion, setMapRegion] = useState(DEFAULT_REGION);
   const [hasCenteredMap, setHasCenteredMap] = useState(false);
   const [pin, setPin] = useState({
@@ -22,9 +38,11 @@ export function AddPlaceScreen({ navigation }) {
   const [hasPinnedManually, setHasPinnedManually] = useState(false);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [isDetailsModalVisible, setIsDetailsModalVisible] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    if (!hasCenteredMap) {
+    if (!hasCenteredMap && hasResolvedInitialRegion) {
       setMapRegion(userRegion);
       setPin({
         latitude: userRegion.latitude,
@@ -32,7 +50,7 @@ export function AddPlaceScreen({ navigation }) {
       });
       setHasCenteredMap(true);
     }
-  }, [hasCenteredMap, userRegion]);
+  }, [hasCenteredMap, hasResolvedInitialRegion, userRegion]);
 
   useEffect(() => {
     if (!hasPinnedManually) {
@@ -63,6 +81,7 @@ export function AddPlaceScreen({ navigation }) {
     }
 
     try {
+      setIsSaving(true);
       await addPlace({
         name,
         description,
@@ -70,11 +89,27 @@ export function AddPlaceScreen({ navigation }) {
         longitude: pin.longitude,
       });
 
+      setName('');
+      setDescription('');
+      setIsDetailsModalVisible(false);
       navigation.navigate('Browse');
     } catch (error) {
       Alert.alert('Save failed', error.message);
+    } finally {
+      setIsSaving(false);
     }
   }
+
+  function handlePinUpdate(coordinate) {
+    setHasPinnedManually(true);
+    setPin(coordinate);
+  }
+
+  const isAuthenticated = isLoggedIn(state.session);
+  const locationStatusCopy =
+    permissionStatus === 'loading' && !hasResolvedInitialRegion
+      ? 'Finding your current location so the map opens where you are.'
+      : 'Move the pin if needed, then tap Add here to enter the place details.';
 
   return (
     <View style={styles.container}>
@@ -82,19 +117,13 @@ export function AddPlaceScreen({ navigation }) {
         style={StyleSheet.absoluteFill}
         region={mapRegion}
         onRegionChangeComplete={setMapRegion}
-        onPress={(event) => {
-          setHasPinnedManually(true);
-          setPin(event.nativeEvent.coordinate);
-        }}
+        onPress={(event) => handlePinUpdate(event.nativeEvent.coordinate)}
         showsUserLocation
       >
         <Marker
           coordinate={pin}
           draggable
-          onDragEnd={(event) => {
-            setHasPinnedManually(true);
-            setPin(event.nativeEvent.coordinate);
-          }}
+          onDragEnd={(event) => handlePinUpdate(event.nativeEvent.coordinate)}
         />
       </MapView>
       <View style={styles.scrim} />
@@ -104,37 +133,9 @@ export function AddPlaceScreen({ navigation }) {
           <ShadButton label="Back" size="compact" variant="secondary" onPress={() => navigation.goBack()} />
         </View>
 
-        <View style={styles.sheet}>
+        <View style={styles.actionCard}>
           <Text style={styles.title}>Add a place</Text>
-          <Text style={styles.copy}>
-            Drop the pin where you want it, then save the place into Supabase.
-          </Text>
-
-          {!isLoggedIn(state.session) ? (
-            <View style={styles.authCallout}>
-              <Text style={styles.authTitle}>Login required before saving.</Text>
-              <Text style={styles.authCopy}>
-                Google and Facebook sign-in unlock place submission, comments, and voting.
-              </Text>
-              <AuthButtons busyProvider={authBusyProvider} onProviderPress={handleProviderPress} />
-            </View>
-          ) : null}
-
-          <TextInput
-            placeholder="Place name"
-            placeholderTextColor={colors.mutedText}
-            style={styles.input}
-            value={name}
-            onChangeText={setName}
-          />
-          <TextInput
-            placeholder="Description"
-            placeholderTextColor={colors.mutedText}
-            style={[styles.input, styles.multiline]}
-            value={description}
-            onChangeText={setDescription}
-            multiline
-          />
+          <Text style={styles.copy}>{locationStatusCopy}</Text>
 
           <View style={styles.coordsCard}>
             <Text style={styles.coordsLabel}>Pinned at</Text>
@@ -147,12 +148,87 @@ export function AddPlaceScreen({ navigation }) {
           {locationError ? <Text style={styles.subtle}>{locationError}</Text> : null}
 
           <ShadButton
-            label="Save place"
-            onPress={handleSubmit}
-            disabled={!isLoggedIn(state.session)}
+            label="Add here"
+            onPress={() => setIsDetailsModalVisible(true)}
+            disabled={!hasResolvedInitialRegion}
           />
         </View>
       </SafeAreaView>
+
+      <Modal
+        animationType="slide"
+        transparent
+        visible={isDetailsModalVisible}
+        onRequestClose={() => setIsDetailsModalVisible(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.select({ ios: 'padding', default: undefined })}
+          style={styles.modalRoot}
+        >
+          <Pressable style={styles.modalBackdrop} onPress={() => setIsDetailsModalVisible(false)} />
+          <View style={styles.modalSheet}>
+            <View style={styles.modalHandle} />
+            <ScrollView
+              contentContainerStyle={styles.modalContent}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
+              <Text style={styles.title}>Place details</Text>
+              <Text style={styles.copy}>
+                Confirm this pin and fill in the details before the place is added.
+              </Text>
+
+              {!isAuthenticated ? (
+                <View style={styles.authCallout}>
+                  <Text style={styles.authTitle}>Login required before adding.</Text>
+                  <Text style={styles.authCopy}>
+                    Google and Facebook sign-in unlock place submission, comments, and voting.
+                  </Text>
+                  <AuthButtons busyProvider={authBusyProvider} onProviderPress={handleProviderPress} />
+                </View>
+              ) : null}
+
+              <TextInput
+                placeholder="Place name"
+                placeholderTextColor={colors.mutedText}
+                style={styles.input}
+                value={name}
+                onChangeText={setName}
+              />
+              <TextInput
+                placeholder="Description"
+                placeholderTextColor={colors.mutedText}
+                style={[styles.input, styles.multiline]}
+                value={description}
+                onChangeText={setDescription}
+                multiline
+              />
+
+              <View style={styles.coordsCard}>
+                <Text style={styles.coordsLabel}>Adding at</Text>
+                <Text style={styles.coordsValue}>
+                  {pin.latitude.toFixed(5)}, {pin.longitude.toFixed(5)}
+                </Text>
+              </View>
+
+              <View style={styles.modalActions}>
+                <ShadButton
+                  label="Cancel"
+                  variant="secondary"
+                  onPress={() => setIsDetailsModalVisible(false)}
+                  style={styles.modalButton}
+                />
+                <ShadButton
+                  label={isSaving ? 'Adding...' : 'Add'}
+                  onPress={handleSubmit}
+                  disabled={isSaving || !isAuthenticated}
+                  style={styles.modalButton}
+                />
+              </View>
+            </ScrollView>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </View>
   );
 }
@@ -175,7 +251,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'flex-start',
   },
-  sheet: {
+  actionCard: {
     backgroundColor: colors.card,
     borderColor: colors.border,
     borderRadius: radius.lg,
@@ -221,6 +297,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 18,
     marginBottom: spacing.sm,
+    marginTop: spacing.sm,
   },
   input: {
     backgroundColor: colors.secondary,
@@ -256,5 +333,45 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontFamily: typography.semibold,
     fontSize: 14,
+  },
+  modalRoot: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  modalBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.52)',
+  },
+  modalSheet: {
+    backgroundColor: colors.card,
+    borderTopLeftRadius: radius.lg,
+    borderTopRightRadius: radius.lg,
+    borderWidth: 1,
+    borderBottomWidth: 0,
+    borderColor: colors.border,
+    maxHeight: '82%',
+    minHeight: 420,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.xl,
+  },
+  modalHandle: {
+    alignSelf: 'center',
+    backgroundColor: colors.border,
+    borderRadius: radius.pill,
+    height: 5,
+    marginBottom: spacing.md,
+    width: 44,
+  },
+  modalContent: {
+    paddingBottom: spacing.xl,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginTop: spacing.sm,
+  },
+  modalButton: {
+    flex: 1,
   },
 });
