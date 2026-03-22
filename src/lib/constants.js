@@ -5,6 +5,8 @@ export const USER_IDS = {
 
 export const STORAGE_KEY = 'topey-mobile-state-v2';
 export const VIEWER_SESSION_KEY = 'topey-viewer-session-v1';
+export const LOCATION_DISCLOSURE_COPY =
+  'Topey uses your location to center the map around you, show nearby place drops, and save coordinates for places you add.';
 
 export const DEFAULT_REGION = {
   latitude: 27.7172,
@@ -18,9 +20,4 @@ export const KATHMANDU_EXPLORE_REGION = {
   longitude: 85.324,
   latitudeDelta: 0.12,
   longitudeDelta: 0.12,
-};
-
-export const OAUTH_PROVIDERS = {
-  GOOGLE: 'google',
-  FACEBOOK: 'facebook',
 };

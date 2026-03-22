@@ -54,14 +54,16 @@ jest.mock('react-native-safe-area-context', () => {
   };
 });
 
-jest.mock('../src/components/AuthButtons', () => ({
-  AuthButtons: () => {
+jest.mock('../src/components/EmailAuthCard', () => ({
+  EmailAuthCard: ({ email, username }) => {
     const React = require('react');
     const { Text, View } = require('react-native');
 
     return (
       <View>
-        <Text>Auth buttons</Text>
+        <Text>Email access</Text>
+        <Text>{email}</Text>
+        <Text>{username}</Text>
       </View>
     );
   },
@@ -69,7 +71,7 @@ jest.mock('../src/components/AuthButtons', () => ({
 
 describe('AddPlaceScreen', () => {
   const addPlace = jest.fn();
-  const signInWithOAuth = jest.fn();
+  const requestEmailAccess = jest.fn();
   const navigation = {
     goBack: jest.fn(),
     navigate: jest.fn(),
@@ -86,9 +88,10 @@ describe('AddPlaceScreen', () => {
           },
         },
       },
-      authBusyProvider: '',
+      isEmailAuthLoading: false,
+      authNoticeMessage: '',
       errorMessage: '',
-      signInWithOAuth,
+      requestEmailAccess,
       addPlace,
     });
 
@@ -152,5 +155,29 @@ describe('AddPlaceScreen', () => {
     fireEvent.press(screen.getByText('Add here'));
 
     expect(screen.queryByText('Place details')).toBeNull();
+  });
+
+  test('shows the email access path when a guest opens add place details', async () => {
+    useAppContext.mockReturnValue({
+      state: {
+        session: null,
+      },
+      isEmailAuthLoading: false,
+      authNoticeMessage: '',
+      errorMessage: '',
+      requestEmailAccess,
+      addPlace,
+    });
+
+    const screen = render(<AddPlaceScreen navigation={navigation} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('40.71280, -74.00600')).toBeTruthy();
+    });
+
+    fireEvent.press(screen.getByText('Add here'));
+
+    expect(screen.getByText('Login required before adding.')).toBeTruthy();
+    expect(screen.getByText('Email access')).toBeTruthy();
   });
 });

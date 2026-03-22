@@ -11,7 +11,6 @@ import {
 } from 'react-native';
 import MapView from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { AuthButtons } from '../components/AuthButtons';
 import { CompactVoteControls } from '../components/CompactVoteControls';
 import { EmailAuthCard } from '../components/EmailAuthCard';
 import { MapPlaceMarker } from '../components/MapPlaceMarker';
@@ -27,11 +26,10 @@ import { colors, radius, shadows, spacing, typography } from '../lib/theme';
 export function HomeScreen({ navigation }) {
   const {
     state,
-    authBusyProvider,
-    isPasswordAuthLoading,
+    isEmailAuthLoading,
+    authNoticeMessage,
     errorMessage,
-    signInWithOAuth,
-    signInWithPassword,
+    requestEmailAccess,
     signOut,
     addComment,
     votePlace,
@@ -42,8 +40,8 @@ export function HomeScreen({ navigation }) {
   const [isAccountModalVisible, setIsAccountModalVisible] = useState(false);
   const [isPlaceModalVisible, setIsPlaceModalVisible] = useState(false);
   const [selectedPlaceId, setSelectedPlaceId] = useState('');
-  const [email, setEmail] = useState('testuser@topey.app');
-  const [password, setPassword] = useState('TopeyTest123!');
+  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
 
   const selectedPlace = useMemo(
     () => state.places.find((place) => place.id === selectedPlaceId) || null,
@@ -62,19 +60,10 @@ export function HomeScreen({ navigation }) {
     )?.value ?? 0;
   }, [selectedPlace, state.session?.user?.id, state.votes]);
 
-  async function handleProviderPress(provider) {
+  async function handleEmailAccess() {
     try {
-      await signInWithOAuth(provider);
-      setIsAccountModalVisible(false);
-    } catch (error) {
-      return;
-    }
-  }
-
-  async function handleEmailSignIn() {
-    try {
-      await signInWithPassword({ email, password });
-      setIsAccountModalVisible(false);
+      await requestEmailAccess({ email, username });
+      Alert.alert('Check your email', 'We sent you a sign-in link. Open it on this device to unlock posting, voting, and threads.');
     } catch (error) {
       Alert.alert('Sign-in failed', error.message);
     }
@@ -293,17 +282,16 @@ export function HomeScreen({ navigation }) {
               <>
                 <Text style={styles.sheetTitle}>Sign in</Text>
                 <Text style={styles.sheetCopy}>
-                  Sign in to post places, join threads, and vote on the Kathmandu map.
+                  Use email access to post places, join threads, and vote on the Kathmandu map. Choose an anonymous public username.
                 </Text>
-                <AuthButtons busyProvider={authBusyProvider} onProviderPress={handleProviderPress} />
                 <EmailAuthCard
                   email={email}
-                  password={password}
+                  username={username}
                   onEmailChange={setEmail}
-                  onPasswordChange={setPassword}
-                  onSignIn={handleEmailSignIn}
-                  authBusy={isPasswordAuthLoading}
-                  helperText="Test account: testuser@topey.app / TopeyTest123!"
+                  onUsernameChange={setUsername}
+                  onSubmit={handleEmailAccess}
+                  authBusy={isEmailAuthLoading}
+                  helperText={authNoticeMessage}
                 />
                 {errorMessage ? <Text style={styles.sheetMeta}>{errorMessage}</Text> : null}
               </>

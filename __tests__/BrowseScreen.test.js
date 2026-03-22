@@ -51,27 +51,16 @@ jest.mock('react-native-safe-area-context', () => {
   };
 });
 
-jest.mock('../src/components/AuthButtons', () => ({
-  AuthButtons: () => {
-    const React = require('react');
-    const { Text, View } = require('react-native');
-
-    return (
-      <View>
-        <Text>Auth buttons</Text>
-      </View>
-    );
-  },
-}));
-
 jest.mock('../src/components/EmailAuthCard', () => ({
-  EmailAuthCard: () => {
+  EmailAuthCard: ({ email, username }) => {
     const React = require('react');
     const { Text, View } = require('react-native');
 
     return (
       <View>
-        <Text>Email auth</Text>
+        <Text>Email access</Text>
+        <Text>{email}</Text>
+        <Text>{username}</Text>
       </View>
     );
   },
@@ -79,6 +68,7 @@ jest.mock('../src/components/EmailAuthCard', () => ({
 
 describe('BrowseScreen', () => {
   const trackPlaceOpen = jest.fn();
+  const requestEmailAccess = jest.fn();
   const navigation = {
     goBack: jest.fn(),
     navigate: jest.fn(),
@@ -97,11 +87,10 @@ describe('BrowseScreen', () => {
           },
         },
       },
-      authBusyProvider: '',
-      isPasswordAuthLoading: false,
+      isEmailAuthLoading: false,
+      authNoticeMessage: '',
       errorMessage: '',
-      signInWithOAuth: jest.fn(),
-      signInWithPassword: jest.fn(),
+      requestEmailAccess,
       addComment: jest.fn(),
       votePlace: jest.fn(),
       trackPlaceOpen,
@@ -123,11 +112,10 @@ describe('BrowseScreen', () => {
           },
         },
       },
-      authBusyProvider: '',
-      isPasswordAuthLoading: false,
+      isEmailAuthLoading: false,
+      authNoticeMessage: '',
       errorMessage: '',
-      signInWithOAuth: jest.fn(),
-      signInWithPassword: jest.fn(),
+      requestEmailAccess,
       addComment: jest.fn(),
       votePlace: jest.fn(),
       trackPlaceOpen,
@@ -169,11 +157,10 @@ describe('BrowseScreen', () => {
         ...state,
         session: null,
       },
-      authBusyProvider: '',
-      isPasswordAuthLoading: false,
+      isEmailAuthLoading: false,
+      authNoticeMessage: '',
       errorMessage: '',
-      signInWithOAuth: jest.fn(),
-      signInWithPassword: jest.fn(),
+      requestEmailAccess,
       addComment: jest.fn(),
       votePlace: jest.fn(),
       trackPlaceOpen,
@@ -185,5 +172,9 @@ describe('BrowseScreen', () => {
 
     expect(screen.getByText('Log in to read threads.')).toBeTruthy();
     expect(screen.getByText('Log in')).toBeTruthy();
+
+    fireEvent.press(screen.getByText('Log in'));
+
+    expect(screen.getByText('Email access')).toBeTruthy();
   });
 });

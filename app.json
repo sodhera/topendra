@@ -15,7 +15,7 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "Topey uses your location to center the live map around you and help you find nearby places."
+        "NSLocationWhenInUseUsageDescription": "Topey uses your location to center the map around you, show nearby place drops, and save the coordinates of places you add."
       }
     },
     "android": {
@@ -37,10 +37,9 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "Topey uses your location to center the live map around you and help you find nearby places."
+          "locationWhenInUsePermission": "Topey uses your location to center the map around you, show nearby place drops, and save the coordinates of places you add."
         }
-      ],
-      "expo-web-browser"
+      ]
     ]
   }
 }

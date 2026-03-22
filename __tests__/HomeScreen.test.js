@@ -51,27 +51,16 @@ jest.mock('react-native-safe-area-context', () => {
   };
 });
 
-jest.mock('../src/components/AuthButtons', () => ({
-  AuthButtons: () => {
-    const React = require('react');
-    const { Text, View } = require('react-native');
-
-    return (
-      <View>
-        <Text>Auth buttons</Text>
-      </View>
-    );
-  },
-}));
-
 jest.mock('../src/components/EmailAuthCard', () => ({
-  EmailAuthCard: () => {
+  EmailAuthCard: ({ email, username }) => {
     const React = require('react');
     const { Text, View } = require('react-native');
 
     return (
       <View>
-        <Text>Email auth</Text>
+        <Text>Email access</Text>
+        <Text>{email}</Text>
+        <Text>{username}</Text>
       </View>
     );
   },
@@ -82,6 +71,7 @@ describe('HomeScreen', () => {
     navigate: jest.fn(),
   };
   const trackPlaceOpen = jest.fn();
+  const requestEmailAccess = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -96,11 +86,10 @@ describe('HomeScreen', () => {
           },
         },
       },
-      authBusyProvider: '',
-      isPasswordAuthLoading: false,
+      isEmailAuthLoading: false,
+      authNoticeMessage: '',
       errorMessage: '',
-      signInWithOAuth: jest.fn(),
-      signInWithPassword: jest.fn(),
+      requestEmailAccess,
       signOut: jest.fn(),
       addComment: jest.fn(),
       votePlace: jest.fn(),
@@ -143,5 +132,29 @@ describe('HomeScreen', () => {
 
     expect(screen.getByText('Discussion')).toBeTruthy();
     expect(screen.getAllByText('Reply').length).toBeGreaterThan(0);
+  });
+
+  test('opens the email access path when a guest tries to vote from home', () => {
+    useAppContext.mockReturnValue({
+      state: {
+        ...buildSeedState(),
+        session: null,
+      },
+      isEmailAuthLoading: false,
+      authNoticeMessage: '',
+      errorMessage: '',
+      requestEmailAccess,
+      signOut: jest.fn(),
+      addComment: jest.fn(),
+      votePlace: jest.fn(),
+      trackPlaceOpen,
+    });
+
+    const screen = render(<HomeScreen navigation={navigation} />);
+
+    fireEvent.press(screen.getAllByTestId('map-marker')[0]);
+    fireEvent.press(screen.getByTestId('home-vote-up-button'));
+
+    expect(screen.getByText('Email access')).toBeTruthy();
   });
 });

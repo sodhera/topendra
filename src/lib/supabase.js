@@ -2,10 +2,7 @@ import 'react-native-url-polyfill/auto';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { makeRedirectUri } from 'expo-auth-session';
 import * as Linking from 'expo-linking';
-import * as WebBrowser from 'expo-web-browser';
 import { createClient } from '@supabase/supabase-js';
-
-WebBrowser.maybeCompleteAuthSession();
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const supabasePublishableKey = process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
@@ -30,28 +27,58 @@ export function getAuthRedirectUrl() {
   });
 }
 
-export async function completeOAuthFlow(signInUrl, redirectUrl) {
-  const result = await WebBrowser.openAuthSessionAsync(signInUrl, redirectUrl);
+function parseAuthCallbackQuery(url) {
+  const normalizedUrl = url.replace('#', '?');
+  const { queryParams } = Linking.parse(normalizedUrl);
+  return queryParams ?? {};
+}
 
-  if (result.type !== 'success' || !result.url) {
+export async function restoreSessionFromUrl(url) {
+  if (!url) {
     return null;
   }
 
-  const normalizedUrl = result.url.replace('#', '?');
-  const { queryParams } = Linking.parse(normalizedUrl);
+  const queryParams = parseAuthCallbackQuery(url);
 
-  if (queryParams?.code) {
-    return {
-      code: String(queryParams.code),
-    };
+  if (queryParams.error_description || queryParams.error) {
+    throw new Error(String(queryParams.error_description ?? queryParams.error));
   }
 
-  if (queryParams?.access_token && queryParams?.refresh_token) {
-    return {
+  if (queryParams.code) {
+    const { data, error } = await supabase.auth.exchangeCodeForSession(String(queryParams.code));
+
+    if (error) {
+      throw error;
+    }
+
+    return data.session ?? null;
+  }
+
+  if (queryParams.access_token && queryParams.refresh_token) {
+    const { data, error } = await supabase.auth.setSession({
       access_token: String(queryParams.access_token),
       refresh_token: String(queryParams.refresh_token),
-    };
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    return data.session ?? null;
   }
 
-  throw new Error('The OAuth provider returned without a usable Supabase session.');
+  if (queryParams.token_hash && queryParams.type) {
+    const { data, error } = await supabase.auth.verifyOtp({
+      token_hash: String(queryParams.token_hash),
+      type: String(queryParams.type),
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    return data.session ?? null;
+  }
+
+  return null;
 }

@@ -13,17 +13,24 @@ import {
 } from 'react-native';
 import MapView from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { AuthButtons } from '../components/AuthButtons';
+import { EmailAuthCard } from '../components/EmailAuthCard';
 import { MapPlaceMarker } from '../components/MapPlaceMarker';
 import { ShadButton } from '../components/ShadButton';
 import { useAppContext } from '../context/AppContext';
 import { isLoggedIn } from '../lib/auth';
-import { DEFAULT_REGION } from '../lib/constants';
+import { DEFAULT_REGION, LOCATION_DISCLOSURE_COPY } from '../lib/constants';
 import { colors, radius, shadows, spacing, typography } from '../lib/theme';
 import { useLiveLocation } from '../hooks/useLiveLocation';
 
 export function AddPlaceScreen({ navigation }) {
-  const { state, authBusyProvider, errorMessage: appError, signInWithOAuth, addPlace } = useAppContext();
+  const {
+    state,
+    isEmailAuthLoading,
+    authNoticeMessage,
+    errorMessage: appError,
+    requestEmailAccess,
+    addPlace,
+  } = useAppContext();
   const {
     region: userRegion,
     permissionStatus,
@@ -42,6 +49,8 @@ export function AddPlaceScreen({ navigation }) {
   const [description, setDescription] = useState('');
   const [isDetailsModalVisible, setIsDetailsModalVisible] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
 
   useEffect(() => {
     if (!hasCenteredMap && hasResolvedInitialRegion) {
@@ -55,17 +64,18 @@ export function AddPlaceScreen({ navigation }) {
     }
   }, [hasCenteredMap, hasResolvedInitialRegion, userRegion]);
 
-  async function handleProviderPress(provider) {
+  async function handleEmailAccess() {
     try {
-      await signInWithOAuth(provider);
+      await requestEmailAccess({ email, username });
+      Alert.alert('Check your email', 'We sent you a sign-in link. Open it on this device, then come back to finish adding the place.');
     } catch (error) {
-      return;
+      Alert.alert('Sign-in failed', error.message);
     }
   }
 
   async function handleSubmit() {
     if (!isLoggedIn(state.session)) {
-      Alert.alert('Login required', 'Sign in with Google or Facebook before saving a new place.');
+      Alert.alert('Login required', 'Use email access before saving a new place.');
       return;
     }
 
@@ -153,6 +163,7 @@ export function AddPlaceScreen({ navigation }) {
 
           {appError ? <Text style={styles.subtle}>{appError}</Text> : null}
           {locationError ? <Text style={styles.subtle}>{locationError}</Text> : null}
+          <Text style={styles.subtle}>{LOCATION_DISCLOSURE_COPY}</Text>
 
           <ShadButton
             label="Add here"
@@ -190,9 +201,17 @@ export function AddPlaceScreen({ navigation }) {
                 <View style={styles.authCallout}>
                   <Text style={styles.authTitle}>Login required before adding.</Text>
                   <Text style={styles.authCopy}>
-                    Google and Facebook sign-in unlock place submission, comments, and voting.
+                    Use email access to unlock place submission, comments, and voting. Choose an anonymous public username.
                   </Text>
-                  <AuthButtons busyProvider={authBusyProvider} onProviderPress={handleProviderPress} />
+                  <EmailAuthCard
+                    email={email}
+                    username={username}
+                    onEmailChange={setEmail}
+                    onUsernameChange={setUsername}
+                    onSubmit={handleEmailAccess}
+                    authBusy={isEmailAuthLoading}
+                    helperText={authNoticeMessage}
+                  />
                 </View>
               ) : null}
 

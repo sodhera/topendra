@@ -1,10 +1,11 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Linking from 'expo-linking';
 import { buildKathmanduDemoData } from '../data/demoCatalog';
-import { getUserIdentity } from '../lib/auth';
+import { getUserIdentity, normalizeAnonymousUsername } from '../lib/auth';
 import { createComment, createPlace, createPlaceOpenEvent, fetchAppData, voteForPlace } from '../lib/backend';
 import { VIEWER_SESSION_KEY } from '../lib/constants';
-import { completeOAuthFlow, getAuthRedirectUrl, supabase } from '../lib/supabase';
+import { getAuthRedirectUrl, restoreSessionFromUrl, supabase } from '../lib/supabase';
 
 const AppContext = createContext(null);
 const demoData = buildKathmanduDemoData();
@@ -37,8 +38,8 @@ export function AppProvider({ children }) {
   const [comments, setComments] = useState([]);
   const [isHydrated, setIsHydrated] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [authBusyProvider, setAuthBusyProvider] = useState('');
-  const [isPasswordAuthLoading, setIsPasswordAuthLoading] = useState(false);
+  const [isEmailAuthLoading, setIsEmailAuthLoading] = useState(false);
+  const [authNoticeMessage, setAuthNoticeMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
   const refreshData = useCallback(async (activeSession) => {
@@ -63,13 +64,28 @@ export function AppProvider({ children }) {
     }
   }, []);
 
+  const applySession = useCallback(
+    async (nextSession) => {
+      setSession(nextSession ?? null);
+      if (nextSession?.user) {
+        setAuthNoticeMessage('');
+      }
+      await refreshData(nextSession ?? null);
+    },
+    [refreshData]
+  );
+
   useEffect(() => {
     let active = true;
 
     async function bootstrap() {
       try {
         const nextViewerSessionId = await getOrCreateViewerSessionId();
-        const { data, error } = await supabase.auth.getSession();
+        const initialUrl = await Linking.getInitialURL();
+        const restoredSession = initialUrl ? await restoreSessionFromUrl(initialUrl) : null;
+        const { data, error } = restoredSession
+          ? { data: { session: restoredSession }, error: null }
+          : await supabase.auth.getSession();
 
         if (error) {
           throw error;
@@ -80,8 +96,7 @@ export function AppProvider({ children }) {
         }
 
         setViewerSessionId(nextViewerSessionId);
-        setSession(data.session ?? null);
-        await refreshData(data.session ?? null);
+        await applySession(data.session ?? null);
       } catch (error) {
         if (active) {
           setErrorMessage(getReadableError(error, 'Topey could not restore the saved session.'));
@@ -102,27 +117,61 @@ export function AppProvider({ children }) {
         return;
       }
 
-      setSession(nextSession ?? null);
-      refreshData(nextSession ?? null).catch(() => undefined);
+      applySession(nextSession ?? null).catch(() => undefined);
+    });
+
+    const linkingSubscription = Linking.addEventListener('url', ({ url }) => {
+      if (!active) {
+        return;
+      }
+
+      restoreSessionFromUrl(url)
+        .then((nextSession) => {
+          if (!nextSession || !active) {
+            return;
+          }
+
+          applySession(nextSession).catch(() => undefined);
+        })
+        .catch((error) => {
+          if (active) {
+            setErrorMessage(getReadableError(error, 'Email sign-in link could not be completed.'));
+          }
+        });
     });
 
     return () => {
       active = false;
       subscription.unsubscribe();
+      linkingSubscription.remove();
     };
-  }, [refreshData]);
+  }, [applySession]);
 
-  const signInWithOAuth = useCallback(async (provider) => {
-    setAuthBusyProvider(provider);
+  const requestEmailAccess = useCallback(async ({ email, username }) => {
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedUsername = normalizeAnonymousUsername(username);
+
+    if (!normalizedEmail || !normalizedEmail.includes('@')) {
+      throw new Error('Enter a valid email address.');
+    }
+
+    if (normalizedUsername.length < 3) {
+      throw new Error('Choose an anonymous username with at least 3 characters.');
+    }
+
+    setIsEmailAuthLoading(true);
     setErrorMessage('');
+    setAuthNoticeMessage('');
 
     try {
-      const redirectTo = getAuthRedirectUrl();
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider,
+      const { error } = await supabase.auth.signInWithOtp({
+        email: normalizedEmail,
         options: {
-          redirectTo,
-          skipBrowserRedirect: true,
+          shouldCreateUser: true,
+          emailRedirectTo: getAuthRedirectUrl(),
+          data: {
+            preferred_username: normalizedUsername,
+          },
         },
       });
 
@@ -130,28 +179,14 @@ export function AppProvider({ children }) {
         throw error;
       }
 
-      if (!data?.url) {
-        throw new Error('Supabase did not return an OAuth URL.');
-      }
-
-      const tokens = await completeOAuthFlow(data.url, redirectTo);
-
-      if (!tokens) {
-        return;
-      }
-
-      const sessionResult = tokens.code
-        ? await supabase.auth.exchangeCodeForSession(tokens.code)
-        : await supabase.auth.setSession(tokens);
-
-      if (sessionResult.error) {
-        throw sessionResult.error;
-      }
+      setAuthNoticeMessage(
+        'Check your email for the sign-in link. Your places and comments will show the anonymous username you chose.'
+      );
     } catch (error) {
-      setErrorMessage(getReadableError(error, 'Sign-in failed. Check the Supabase OAuth configuration.'));
+      setErrorMessage(getReadableError(error, 'Email sign-in failed.'));
       throw error;
     } finally {
-      setAuthBusyProvider('');
+      setIsEmailAuthLoading(false);
     }
   }, []);
 
@@ -162,27 +197,7 @@ export function AppProvider({ children }) {
       setErrorMessage(getReadableError(error, 'Sign-out failed.'));
       throw error;
     }
-  }, []);
-
-  const signInWithPassword = useCallback(async ({ email, password }) => {
-    setIsPasswordAuthLoading(true);
-    setErrorMessage('');
-
-    try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password,
-      });
-
-      if (error) {
-        throw error;
-      }
-    } catch (error) {
-      setErrorMessage(getReadableError(error, 'Email sign-in failed.'));
-      throw error;
-    } finally {
-      setIsPasswordAuthLoading(false);
-    }
+    setAuthNoticeMessage('');
   }, []);
 
   const addPlace = useCallback(
@@ -271,12 +286,11 @@ export function AppProvider({ children }) {
       },
       isHydrated,
       isRefreshing,
-      authBusyProvider,
-      isPasswordAuthLoading,
+      isEmailAuthLoading,
+      authNoticeMessage,
       errorMessage,
       refreshData,
-      signInWithOAuth,
-      signInWithPassword,
+      requestEmailAccess,
       signOut,
       addPlace,
       votePlace,
@@ -291,12 +305,11 @@ export function AppProvider({ children }) {
       comments,
       isHydrated,
       isRefreshing,
-      authBusyProvider,
-      isPasswordAuthLoading,
+      isEmailAuthLoading,
+      authNoticeMessage,
       errorMessage,
       refreshData,
-      signInWithOAuth,
-      signInWithPassword,
+      requestEmailAccess,
       signOut,
       addPlace,
       votePlace,

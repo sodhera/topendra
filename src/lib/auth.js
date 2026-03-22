@@ -1,5 +1,9 @@
 import { USER_IDS } from './constants';
 
+export function normalizeAnonymousUsername(value) {
+  return (value ?? '').trim().replace(/\s+/g, ' ').slice(0, 24);
+}
+
 export function isLoggedIn(sessionOrUser) {
   if (!sessionOrUser) {
     return false;
@@ -41,17 +45,13 @@ export function getUserIdentity(user) {
   }
 
   const metadata = user.user_metadata ?? {};
-  const displayName =
-    metadata.full_name ??
-    metadata.name ??
-    metadata.user_name ??
-    metadata.preferred_username ??
-    user.email?.split('@')[0] ??
-    'Topey user';
+  const displayName = normalizeAnonymousUsername(
+    metadata.preferred_username ?? metadata.user_name ?? metadata.username
+  );
 
   return {
     id: user.id,
-    name: displayName,
+    name: displayName || 'Anonymous member',
     email: user.email ?? '',
     avatarUrl: metadata.avatar_url ?? null,
   };

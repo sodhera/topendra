@@ -1,23 +1,27 @@
 import React from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
+import { LOCATION_DISCLOSURE_COPY } from '../lib/constants';
 import { colors, radius, spacing, typography } from '../lib/theme';
 import { ShadButton } from './ShadButton';
 
 export function EmailAuthCard({
   email,
-  password,
+  username,
   onEmailChange,
-  onPasswordChange,
-  onSignIn,
+  onUsernameChange,
+  onSubmit,
   authBusy,
   helperText,
 }) {
   return (
     <View style={styles.card}>
-      <Text style={styles.title}>Email sign-in</Text>
-      <Text style={styles.copy}>Use the test account below or your own email/password credentials.</Text>
+      <Text style={styles.title}>Email access</Text>
+      <Text style={styles.copy}>
+        We only collect your email. Choose an anonymous username that will appear on places and comments.
+      </Text>
       <TextInput
         autoCapitalize="none"
+        autoCorrect={false}
         keyboardType="email-address"
         placeholder="Email"
         placeholderTextColor={colors.mutedText}
@@ -27,20 +31,23 @@ export function EmailAuthCard({
       />
       <TextInput
         autoCapitalize="none"
-        placeholder="Password"
+        autoCorrect={false}
+        placeholder="Anonymous username"
         placeholderTextColor={colors.mutedText}
-        secureTextEntry
         style={styles.input}
-        value={password}
-        onChangeText={onPasswordChange}
+        value={username}
+        onChangeText={onUsernameChange}
       />
       <ShadButton
-        label={authBusy ? 'Signing in...' : 'Sign in with email'}
-        onPress={onSignIn}
+        label={authBusy ? 'Sending link...' : 'Email me a sign-in link'}
+        onPress={onSubmit}
         disabled={authBusy}
         style={styles.button}
       />
       {helperText ? <Text style={styles.helper}>{helperText}</Text> : null}
+      <Text style={styles.note}>
+        Keep the username anonymous. {LOCATION_DISCLOSURE_COPY}
+      </Text>
     </View>
   );
 }
@@ -88,6 +95,13 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
   },
   helper: {
+    color: colors.primary,
+    fontFamily: typography.body,
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: spacing.sm,
+  },
+  note: {
     color: colors.mutedText,
     fontFamily: typography.body,
     fontSize: 12,

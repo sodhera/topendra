@@ -11,7 +11,6 @@ import {
 } from 'react-native';
 import MapView from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { AuthButtons } from '../components/AuthButtons';
 import { CompactVoteControls } from '../components/CompactVoteControls';
 import { EmailAuthCard } from '../components/EmailAuthCard';
 import { MapPlaceMarker } from '../components/MapPlaceMarker';
@@ -36,11 +35,10 @@ function buildPlaceRegion(place) {
 export function BrowseScreen({ navigation, route }) {
   const {
     state,
-    authBusyProvider,
-    isPasswordAuthLoading,
+    isEmailAuthLoading,
+    authNoticeMessage,
     errorMessage,
-    signInWithOAuth,
-    signInWithPassword,
+    requestEmailAccess,
     addComment,
     votePlace,
     trackPlaceOpen,
@@ -51,8 +49,8 @@ export function BrowseScreen({ navigation, route }) {
   const [selectedPlaceId, setSelectedPlaceId] = useState(initialPlaceId);
   const [isDetailsModalVisible, setIsDetailsModalVisible] = useState(false);
   const [isAuthModalVisible, setIsAuthModalVisible] = useState(false);
-  const [email, setEmail] = useState('testuser@topey.app');
-  const [password, setPassword] = useState('TopeyTest123!');
+  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
 
   const selectedPlace = useMemo(
     () => state.places.find((place) => place.id === selectedPlaceId) || null,
@@ -101,19 +99,10 @@ export function BrowseScreen({ navigation, route }) {
     });
   }
 
-  async function handleProviderPress(provider) {
+  async function handleEmailAccess() {
     try {
-      await signInWithOAuth(provider);
-      setIsAuthModalVisible(false);
-    } catch (error) {
-      return;
-    }
-  }
-
-  async function handleEmailSignIn() {
-    try {
-      await signInWithPassword({ email, password });
-      setIsAuthModalVisible(false);
+      await requestEmailAccess({ email, username });
+      Alert.alert('Check your email', 'We sent you a sign-in link. Open it on this device to unlock place drops, voting, and discussion.');
     } catch (error) {
       Alert.alert('Sign-in failed', error.message);
     }
@@ -312,17 +301,16 @@ export function BrowseScreen({ navigation, route }) {
             <View style={styles.sheetHandle} />
             <Text style={styles.sheetTitle}>Sign in</Text>
             <Text style={styles.sheetCopy}>
-              Sign in to see the place threads, vote, and post comments.
+              Use email access to read threads, vote, and post comments. Choose an anonymous public username.
             </Text>
-            <AuthButtons busyProvider={authBusyProvider} onProviderPress={handleProviderPress} />
             <EmailAuthCard
               email={email}
-              password={password}
+              username={username}
               onEmailChange={setEmail}
-              onPasswordChange={setPassword}
-              onSignIn={handleEmailSignIn}
-              authBusy={isPasswordAuthLoading}
-              helperText="Test account: testuser@topey.app / TopeyTest123!"
+              onUsernameChange={setUsername}
+              onSubmit={handleEmailAccess}
+              authBusy={isEmailAuthLoading}
+              helperText={authNoticeMessage}
             />
             {errorMessage ? <Text style={styles.sheetMeta}>{errorMessage}</Text> : null}
           </View>
