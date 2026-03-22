@@ -2,15 +2,24 @@ import React from 'react';
 import { Pressable, StyleSheet, Text } from 'react-native';
 import { colors, radius, spacing, typography } from '../lib/theme';
 
-export function ShadButton({ label, onPress, variant = 'primary', size = 'default', style }) {
+export function ShadButton({
+  label,
+  onPress,
+  variant = 'primary',
+  size = 'default',
+  style,
+  disabled = false,
+}) {
   return (
     <Pressable
+      disabled={disabled}
       onPress={onPress}
       style={({ pressed }) => [
         styles.base,
         styles[variant],
         styles[size],
-        pressed && styles.pressed,
+        pressed && !disabled && styles.pressed,
+        disabled && styles.disabled,
         style,
       ]}
     >
@@ -48,6 +57,9 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.82,
+  },
+  disabled: {
+    opacity: 0.48,
   },
   label: {
     fontFamily: typography.semibold,

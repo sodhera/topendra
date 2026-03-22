@@ -1,75 +1,107 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import MapView, { Marker } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { AuthButtons } from '../components/AuthButtons';
 import { ShadButton } from '../components/ShadButton';
 import { useAppContext } from '../context/AppContext';
 import { isLoggedIn } from '../lib/auth';
-import { distanceInKm, getCommentsForPlace, getPlaceScore } from '../lib/geo';
+import { DEFAULT_REGION } from '../lib/constants';
+import { distanceInKm, getCommentsForPlace, getVoteBreakdown } from '../lib/geo';
 import { colors, radius, shadows, spacing, typography } from '../lib/theme';
 import { useLiveLocation } from '../hooks/useLiveLocation';
 
 export function BrowseScreen({ navigation }) {
-  const { state, dispatch } = useAppContext();
-  const { region, setRegion, errorMessage } = useLiveLocation();
-  const [selectedPlaceId, setSelectedPlaceId] = useState(state.places[0]?.id);
+  const {
+    state,
+    authBusyProvider,
+    errorMessage: appError,
+    signInWithOAuth,
+    votePlace,
+    addComment,
+  } = useAppContext();
+  const { region: userRegion, errorMessage: locationError } = useLiveLocation({ watch: false });
+  const [mapRegion, setMapRegion] = useState(DEFAULT_REGION);
+  const [hasCenteredMap, setHasCenteredMap] = useState(false);
+  const [selectedPlaceId, setSelectedPlaceId] = useState('');
   const [commentDraft, setCommentDraft] = useState('');
 
+  useEffect(() => {
+    if (!hasCenteredMap) {
+      setMapRegion(userRegion);
+      setHasCenteredMap(true);
+    }
+  }, [hasCenteredMap, userRegion]);
+
+  useEffect(() => {
+    if (!state.places.length) {
+      setSelectedPlaceId('');
+      return;
+    }
+
+    if (!state.places.some((place) => place.id === selectedPlaceId)) {
+      setSelectedPlaceId(state.places[0].id);
+    }
+  }, [selectedPlaceId, state.places]);
+
+  const isAuthenticated = isLoggedIn(state.session);
   const selectedPlace = useMemo(
-    () => state.places.find((place) => place.id === selectedPlaceId) || state.places[0],
+    () => state.places.find((place) => place.id === selectedPlaceId) || state.places[0] || null,
     [selectedPlaceId, state.places]
   );
-
-  const selectedScore = getPlaceScore(state.votes, selectedPlace?.id);
+  const voteBreakdown = getVoteBreakdown(state.votes, selectedPlace?.id);
   const comments = getCommentsForPlace(state.comments, selectedPlace?.id);
-  const selectedDistance = distanceInKm(region, selectedPlace);
+  const selectedDistance = distanceInKm(userRegion, selectedPlace);
 
-  function requireLogin() {
-    Alert.alert('Login required', 'Switch to the demo user on the home screen to vote or comment.');
+  async function handleProviderPress(provider) {
+    try {
+      await signInWithOAuth(provider);
+    } catch (error) {
+      return;
+    }
   }
 
-  function handleVote(value) {
-    if (!isLoggedIn(state.currentUserId)) {
-      requireLogin();
+  async function handleVote(value) {
+    if (!isAuthenticated || !selectedPlace) {
+      Alert.alert('Login required', 'Sign in with Google or Facebook before voting on a place.');
       return;
     }
 
-    dispatch({
-      type: 'vote_place',
-      payload: {
+    try {
+      await votePlace({
         placeId: selectedPlace.id,
-        userId: state.currentUserId,
         value,
-      },
-    });
+      });
+    } catch (error) {
+      Alert.alert('Vote failed', error.message);
+    }
   }
 
-  function handleComment() {
-    if (!isLoggedIn(state.currentUserId)) {
-      requireLogin();
+  async function handleComment() {
+    if (!isAuthenticated || !selectedPlace) {
+      Alert.alert('Login required', 'Comments are only available to logged-in users.');
       return;
     }
 
-    dispatch({
-      type: 'add_comment',
-      payload: {
+    try {
+      await addComment({
         placeId: selectedPlace.id,
-        userId: state.currentUserId,
         body: commentDraft,
-      },
-    });
-    setCommentDraft('');
+      });
+      setCommentDraft('');
+    } catch (error) {
+      Alert.alert('Comment failed', error.message);
+    }
   }
 
   return (
     <View style={styles.container}>
       <MapView
         style={StyleSheet.absoluteFill}
-        region={region}
-        onRegionChangeComplete={setRegion}
+        region={mapRegion}
+        onRegionChangeComplete={setMapRegion}
         showsUserLocation
-        followsUserLocation
       >
         {state.places.map((place) => (
           <Marker
@@ -90,76 +122,113 @@ export function BrowseScreen({ navigation }) {
 
         <View style={styles.sheet}>
           <View style={styles.handle} />
-          <Text style={styles.placeName}>{selectedPlace?.name}</Text>
-          <Text style={styles.placeCopy}>{selectedPlace?.description}</Text>
-          <Text style={styles.meta}>
-            {selectedDistance ? `${selectedDistance.toFixed(1)} km away` : 'Nearby'}
-          </Text>
-          {errorMessage ? <Text style={styles.subtle}>{errorMessage}</Text> : null}
 
-          <View style={styles.voteRow}>
-            <VoteButton icon="thumb-up-outline" label="Upvote" onPress={() => handleVote(1)} />
-            <View style={styles.scorePill}>
-              <Text style={styles.scoreText}>{selectedScore}</Text>
-            </View>
-            <VoteButton icon="thumb-down-outline" label="Downvote" onPress={() => handleVote(-1)} />
-          </View>
+          {selectedPlace ? (
+            <>
+              <Text style={styles.placeName}>{selectedPlace.name}</Text>
+              <Text style={styles.placeCopy}>{selectedPlace.description}</Text>
 
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.carousel}>
-            {state.places.map((place) => (
-              <Pressable
-                key={place.id}
-                onPress={() => {
-                  setSelectedPlaceId(place.id);
-                  setRegion({
-                    ...region,
-                    latitude: place.latitude,
-                    longitude: place.longitude,
-                  });
-                }}
-                style={[
-                  styles.placeChip,
-                  place.id === selectedPlace?.id && styles.placeChipActive,
-                ]}
-              >
-                <Text style={styles.placeChipText}>{place.name}</Text>
-              </Pressable>
-            ))}
-          </ScrollView>
-
-          <View style={styles.commentsHeader}>
-            <Text style={styles.commentsTitle}>Comments</Text>
-            {!isLoggedIn(state.currentUserId) ? (
-              <Text style={styles.subtle}>Login on the home screen to join in.</Text>
-            ) : null}
-          </View>
-
-          {isLoggedIn(state.currentUserId) ? (
-            <View style={styles.commentComposer}>
-              <TextInput
-                placeholder="Add a comment"
-                placeholderTextColor={colors.mutedText}
-                value={commentDraft}
-                onChangeText={setCommentDraft}
-                style={styles.input}
-              />
-              <ShadButton label="Send" size="compact" onPress={handleComment} />
-            </View>
-          ) : null}
-
-          <ScrollView style={styles.commentsList} showsVerticalScrollIndicator={false}>
-            {comments.map((comment) => (
-              <View key={comment.id} style={styles.commentCard}>
-                <Text style={styles.commentAuthor}>
-                  {state.users.find((user) => user.id === comment.authorId)?.name || 'User'}
-                </Text>
-                <Text style={styles.commentBody}>{comment.body}</Text>
+              <View style={styles.metaGrid}>
+                <MetaItem
+                  label="Distance from user"
+                  value={selectedDistance ? `${selectedDistance.toFixed(1)} km` : 'Locating you'}
+                />
+                <MetaItem
+                  label="Upvotes/downvotes"
+                  value={`${voteBreakdown.ratioLabel} (${voteBreakdown.score >= 0 ? '+' : ''}${voteBreakdown.score})`}
+                />
               </View>
-            ))}
-            {comments.length === 0 ? <Text style={styles.subtle}>No comments yet.</Text> : null}
-          </ScrollView>
+
+              <View style={styles.voteRow}>
+                <VoteButton icon="thumb-up-outline" label="Upvote" onPress={() => handleVote(1)} />
+                <VoteButton icon="thumb-down-outline" label="Downvote" onPress={() => handleVote(-1)} />
+              </View>
+
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.carousel}
+              >
+                {state.places.map((place) => (
+                  <Pressable
+                    key={place.id}
+                    onPress={() => {
+                      setSelectedPlaceId(place.id);
+                      setMapRegion({
+                        ...mapRegion,
+                        latitude: place.latitude,
+                        longitude: place.longitude,
+                      });
+                    }}
+                    style={[styles.placeChip, place.id === selectedPlace.id && styles.placeChipActive]}
+                  >
+                    <Text style={styles.placeChipText}>{place.name}</Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
+
+              <View style={styles.commentsHeader}>
+                <Text style={styles.commentsTitle}>Comments</Text>
+                <Text style={styles.subtle}>
+                  {isAuthenticated
+                    ? `${comments.length} loaded for this place`
+                    : 'Login required before reading or posting comments.'}
+                </Text>
+              </View>
+
+              {isAuthenticated ? (
+                <>
+                  <View style={styles.commentComposer}>
+                    <TextInput
+                      placeholder="Add a comment"
+                      placeholderTextColor={colors.mutedText}
+                      value={commentDraft}
+                      onChangeText={setCommentDraft}
+                      style={styles.input}
+                    />
+                    <ShadButton label="Send" size="compact" onPress={handleComment} />
+                  </View>
+
+                  <ScrollView style={styles.commentsList} showsVerticalScrollIndicator={false}>
+                    {comments.map((comment) => (
+                      <View key={comment.id} style={styles.commentCard}>
+                        <Text style={styles.commentAuthor}>{comment.authorName || 'Topey user'}</Text>
+                        <Text style={styles.commentBody}>{comment.body}</Text>
+                      </View>
+                    ))}
+                    {comments.length === 0 ? <Text style={styles.subtle}>No comments yet.</Text> : null}
+                  </ScrollView>
+                </>
+              ) : (
+                <View style={styles.lockedCard}>
+                  <Text style={styles.lockedTitle}>Comments are private to logged-in users.</Text>
+                  <Text style={styles.lockedCopy}>
+                    Sign in once and this place widget will show the full discussion thread.
+                  </Text>
+                  <AuthButtons compact busyProvider={authBusyProvider} onProviderPress={handleProviderPress} />
+                </View>
+              )}
+            </>
+          ) : (
+            <View style={styles.emptyState}>
+              <Text style={styles.placeName}>No places loaded yet</Text>
+              <Text style={styles.placeCopy}>Seed the Supabase project or add the first place after logging in.</Text>
+            </View>
+          )}
+
+          {appError ? <Text style={styles.subtle}>{appError}</Text> : null}
+          {locationError ? <Text style={styles.subtle}>{locationError}</Text> : null}
         </View>
       </SafeAreaView>
+    </View>
+  );
+}
+
+function MetaItem({ label, value }) {
+  return (
+    <View style={styles.metaCard}>
+      <Text style={styles.metaLabel}>{label}</Text>
+      <Text style={styles.metaValue}>{value}</Text>
     </View>
   );
 }
@@ -180,7 +249,7 @@ const styles = StyleSheet.create({
   },
   scrim: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.16)',
+    backgroundColor: 'rgba(0, 0, 0, 0.12)',
   },
   safeArea: {
     flex: 1,
@@ -196,8 +265,8 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     borderRadius: radius.lg,
     borderWidth: 1,
-    maxHeight: '58%',
-    minHeight: 360,
+    maxHeight: '68%',
+    minHeight: 420,
     padding: spacing.md,
     ...shadows.floating,
   },
@@ -221,23 +290,40 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     marginTop: spacing.sm,
   },
-  meta: {
-    color: colors.text,
+  metaGrid: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginTop: spacing.md,
+  },
+  metaCard: {
+    backgroundColor: colors.secondary,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    flex: 1,
+    padding: spacing.md,
+  },
+  metaLabel: {
+    color: colors.mutedText,
     fontFamily: typography.medium,
-    fontSize: 13,
-    marginTop: spacing.sm,
+    fontSize: 12,
+  },
+  metaValue: {
+    color: colors.text,
+    fontFamily: typography.semibold,
+    fontSize: 16,
+    marginTop: spacing.xs,
   },
   subtle: {
     color: colors.mutedText,
     fontFamily: typography.body,
     fontSize: 12,
     lineHeight: 18,
-    marginTop: spacing.xs,
+    marginTop: spacing.sm,
   },
   voteRow: {
-    alignItems: 'center',
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    gap: spacing.sm,
     marginTop: spacing.md,
   },
   voteButton: {
@@ -256,17 +342,6 @@ const styles = StyleSheet.create({
     fontFamily: typography.medium,
     fontSize: 13,
     marginLeft: spacing.sm,
-  },
-  scorePill: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    minWidth: 56,
-    paddingHorizontal: spacing.md,
-  },
-  scoreText: {
-    color: colors.text,
-    fontFamily: typography.semibold,
-    fontSize: 16,
   },
   carousel: {
     gap: spacing.sm,
@@ -327,12 +402,34 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontFamily: typography.medium,
     fontSize: 13,
-    marginBottom: spacing.xs,
   },
   commentBody: {
     color: colors.mutedText,
     fontFamily: typography.body,
     fontSize: 14,
     lineHeight: 20,
+    marginTop: spacing.xs,
+  },
+  lockedCard: {
+    backgroundColor: colors.secondary,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    padding: spacing.md,
+  },
+  lockedTitle: {
+    color: colors.text,
+    fontFamily: typography.semibold,
+    fontSize: 16,
+  },
+  lockedCopy: {
+    color: colors.mutedText,
+    fontFamily: typography.body,
+    fontSize: 14,
+    lineHeight: 20,
+    marginTop: spacing.xs,
+  },
+  emptyState: {
+    paddingVertical: spacing.lg,
   },
 });

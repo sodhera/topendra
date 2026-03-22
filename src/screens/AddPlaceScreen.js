@@ -1,62 +1,87 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Alert, StyleSheet, Text, TextInput, View } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { AuthButtons } from '../components/AuthButtons';
 import { ShadButton } from '../components/ShadButton';
 import { useAppContext } from '../context/AppContext';
+import { isLoggedIn } from '../lib/auth';
+import { DEFAULT_REGION } from '../lib/constants';
 import { colors, radius, shadows, spacing, typography } from '../lib/theme';
 import { useLiveLocation } from '../hooks/useLiveLocation';
 
 export function AddPlaceScreen({ navigation }) {
-  const { state, dispatch } = useAppContext();
-  const { region, setRegion, errorMessage } = useLiveLocation();
-  const initialPin = useMemo(
-    () => ({
-      latitude: region.latitude,
-      longitude: region.longitude,
-    }),
-    [region.latitude, region.longitude]
-  );
-  const [pin, setPin] = useState(initialPin);
+  const { state, authBusyProvider, errorMessage: appError, signInWithOAuth, addPlace } = useAppContext();
+  const { region: userRegion, errorMessage: locationError } = useLiveLocation({ watch: false });
+  const [mapRegion, setMapRegion] = useState(DEFAULT_REGION);
+  const [hasCenteredMap, setHasCenteredMap] = useState(false);
+  const [pin, setPin] = useState({
+    latitude: DEFAULT_REGION.latitude,
+    longitude: DEFAULT_REGION.longitude,
+  });
   const [hasPinnedManually, setHasPinnedManually] = useState(false);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
 
   useEffect(() => {
+    if (!hasCenteredMap) {
+      setMapRegion(userRegion);
+      setPin({
+        latitude: userRegion.latitude,
+        longitude: userRegion.longitude,
+      });
+      setHasCenteredMap(true);
+    }
+  }, [hasCenteredMap, userRegion]);
+
+  useEffect(() => {
     if (!hasPinnedManually) {
       setPin({
-        latitude: region.latitude,
-        longitude: region.longitude,
+        latitude: mapRegion.latitude,
+        longitude: mapRegion.longitude,
       });
     }
-  }, [hasPinnedManually, region.latitude, region.longitude]);
+  }, [hasPinnedManually, mapRegion.latitude, mapRegion.longitude]);
 
-  function handleSubmit() {
+  async function handleProviderPress(provider) {
+    try {
+      await signInWithOAuth(provider);
+    } catch (error) {
+      return;
+    }
+  }
+
+  async function handleSubmit() {
+    if (!isLoggedIn(state.session)) {
+      Alert.alert('Login required', 'Sign in with Google or Facebook before saving a new place.');
+      return;
+    }
+
     if (!name.trim() || !description.trim()) {
       Alert.alert('Missing details', 'Add a name and description before saving the place.');
       return;
     }
 
-    dispatch({
-      type: 'add_place',
-      payload: {
+    try {
+      await addPlace({
         name,
         description,
         latitude: pin.latitude,
         longitude: pin.longitude,
-        authorId: state.currentUserId,
-      },
-    });
+      });
 
-    navigation.navigate('Browse');
+      navigation.navigate('Browse');
+    } catch (error) {
+      Alert.alert('Save failed', error.message);
+    }
   }
 
   return (
     <View style={styles.container}>
       <MapView
         style={StyleSheet.absoluteFill}
-        region={region}
-        onRegionChangeComplete={setRegion}
+        region={mapRegion}
+        onRegionChangeComplete={setMapRegion}
         onPress={(event) => {
           setHasPinnedManually(true);
           setPin(event.nativeEvent.coordinate);
@@ -81,8 +106,19 @@ export function AddPlaceScreen({ navigation }) {
 
         <View style={styles.sheet}>
           <Text style={styles.title}>Add a place</Text>
-          <Text style={styles.copy}>Tap the map or drag the pin, then add a short name and description.</Text>
-          {errorMessage ? <Text style={styles.subtle}>{errorMessage}</Text> : null}
+          <Text style={styles.copy}>
+            Drop the pin where you want it, then save the place into Supabase.
+          </Text>
+
+          {!isLoggedIn(state.session) ? (
+            <View style={styles.authCallout}>
+              <Text style={styles.authTitle}>Login required before saving.</Text>
+              <Text style={styles.authCopy}>
+                Google and Facebook sign-in unlock place submission, comments, and voting.
+              </Text>
+              <AuthButtons busyProvider={authBusyProvider} onProviderPress={handleProviderPress} />
+            </View>
+          ) : null}
 
           <TextInput
             placeholder="Place name"
@@ -107,7 +143,14 @@ export function AddPlaceScreen({ navigation }) {
             </Text>
           </View>
 
-          <ShadButton label="Save place" onPress={handleSubmit} />
+          {appError ? <Text style={styles.subtle}>{appError}</Text> : null}
+          {locationError ? <Text style={styles.subtle}>{locationError}</Text> : null}
+
+          <ShadButton
+            label="Save place"
+            onPress={handleSubmit}
+            disabled={!isLoggedIn(state.session)}
+          />
         </View>
       </SafeAreaView>
     </View>
@@ -152,12 +195,32 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     marginTop: spacing.sm,
   },
+  authCallout: {
+    backgroundColor: colors.secondary,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    marginTop: spacing.md,
+    padding: spacing.md,
+  },
+  authTitle: {
+    color: colors.text,
+    fontFamily: typography.semibold,
+    fontSize: 16,
+  },
+  authCopy: {
+    color: colors.mutedText,
+    fontFamily: typography.body,
+    fontSize: 14,
+    lineHeight: 20,
+    marginTop: spacing.xs,
+  },
   subtle: {
     color: colors.mutedText,
     fontFamily: typography.body,
     fontSize: 12,
     lineHeight: 18,
-    marginTop: spacing.xs,
+    marginBottom: spacing.sm,
   },
   input: {
     backgroundColor: colors.secondary,

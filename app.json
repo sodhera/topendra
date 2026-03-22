@@ -2,6 +2,7 @@
   "expo": {
     "name": "Topey",
     "slug": "topey",
+    "scheme": "topey",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -38,7 +39,8 @@
         {
           "locationWhenInUsePermission": "Topey uses your location to center the live map around you and help you find nearby places."
         }
-      ]
+      ],
+      "expo-web-browser"
     ]
   }
 }

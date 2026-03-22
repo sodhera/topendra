@@ -3,7 +3,8 @@ import * as Location from 'expo-location';
 import { DEFAULT_REGION } from '../lib/constants';
 import { createRegionFromLocation } from '../lib/geo';
 
-export function useLiveLocation() {
+export function useLiveLocation(options = {}) {
+  const { watch = true } = options;
   const [region, setRegion] = useState(DEFAULT_REGION);
   const [permissionStatus, setPermissionStatus] = useState('loading');
   const [errorMessage, setErrorMessage] = useState('');
@@ -37,17 +38,19 @@ export function useLiveLocation() {
 
         setRegion(createRegionFromLocation(current.coords));
 
-        watcher = await Location.watchPositionAsync(
-          {
-            accuracy: Location.Accuracy.Balanced,
-            distanceInterval: 20,
-          },
-          (nextLocation) => {
-            if (active) {
-              setRegion(createRegionFromLocation(nextLocation.coords));
+        if (watch) {
+          watcher = await Location.watchPositionAsync(
+            {
+              accuracy: Location.Accuracy.Balanced,
+              distanceInterval: 20,
+            },
+            (nextLocation) => {
+              if (active) {
+                setRegion(createRegionFromLocation(nextLocation.coords));
+              }
             }
-          }
-        );
+          );
+        }
       } catch (error) {
         if (active) {
           setPermissionStatus('error');
@@ -62,7 +65,7 @@ export function useLiveLocation() {
       active = false;
       watcher?.remove?.();
     };
-  }, []);
+  }, [watch]);
 
   return {
     region,

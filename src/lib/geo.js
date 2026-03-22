@@ -6,6 +6,19 @@ export function getPlaceScore(votes, placeId) {
     .reduce((sum, vote) => sum + vote.value, 0);
 }
 
+export function getVoteBreakdown(votes, placeId) {
+  const matchingVotes = votes.filter((vote) => vote.placeId === placeId);
+  const upvotes = matchingVotes.filter((vote) => vote.value > 0).length;
+  const downvotes = matchingVotes.filter((vote) => vote.value < 0).length;
+
+  return {
+    upvotes,
+    downvotes,
+    score: upvotes - downvotes,
+    ratioLabel: `${upvotes}:${downvotes}`,
+  };
+}
+
 export function getCommentsForPlace(comments, placeId) {
   return comments
     .filter((comment) => comment.placeId === placeId)

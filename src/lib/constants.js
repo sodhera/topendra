@@ -11,3 +11,8 @@ export const DEFAULT_REGION = {
   latitudeDelta: 0.06,
   longitudeDelta: 0.06,
 };
+
+export const OAUTH_PROVIDERS = {
+  GOOGLE: 'google',
+  FACEBOOK: 'facebook',
+};
