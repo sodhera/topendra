@@ -4,6 +4,7 @@ export const USER_IDS = {
 };
 
 export const STORAGE_KEY = 'topey-mobile-state-v2';
+export const VIEWER_SESSION_KEY = 'topey-viewer-session-v1';
 
 export const DEFAULT_REGION = {
   latitude: 27.7172,

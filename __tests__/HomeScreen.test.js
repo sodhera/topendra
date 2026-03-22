@@ -1,21 +1,37 @@
 import React from 'react';
-import { Text, View } from 'react-native';
-import { render } from '@testing-library/react-native';
+import { Pressable, Text, View } from 'react-native';
+import { act, fireEvent, render } from '@testing-library/react-native';
 import { HomeScreen } from '../src/screens/HomeScreen';
 import { buildSeedState } from '../src/data/seed';
-import { DEFAULT_REGION } from '../src/lib/constants';
 import { useAppContext } from '../src/context/AppContext';
 import { useLiveLocation } from '../src/hooks/useLiveLocation';
 
+jest.useFakeTimers();
+
 jest.mock('react-native-maps', () => {
   const React = require('react');
-  const { Text, View } = require('react-native');
+  const { Pressable, Text, View } = require('react-native');
 
   function MockMapView({ children, region, onRegionChangeStart, onRegionChangeComplete }) {
     return (
       <View testID="home-map">
         <Text testID="home-map-region">{JSON.stringify(region)}</Text>
-        <Text testID="home-map-handlers">{onRegionChangeStart && onRegionChangeComplete ? 'ready' : 'missing'}</Text>
+        <Pressable testID="map-drag-start" onPress={() => onRegionChangeStart?.()}>
+          <Text>drag-start</Text>
+        </Pressable>
+        <Pressable
+          testID="map-drag-end"
+          onPress={() =>
+            onRegionChangeComplete?.({
+              latitude: 27.7172,
+              longitude: 85.324,
+              latitudeDelta: 0.06,
+              longitudeDelta: 0.06,
+            })
+          }
+        >
+          <Text>drag-end</Text>
+        </Pressable>
         {children}
       </View>
     );
@@ -77,35 +93,59 @@ jest.mock('../src/components/EmailAuthCard', () => ({
 }));
 
 describe('HomeScreen', () => {
+  const trackPlaceOpen = jest.fn();
+
   beforeEach(() => {
+    jest.clearAllMocks();
+
     useAppContext.mockReturnValue({
-      state: buildSeedState(),
+      state: {
+        ...buildSeedState(),
+        session: {
+          user: {
+            id: 'user-1',
+            email: 'testuser@topey.app',
+          },
+        },
+      },
       authBusyProvider: '',
       isPasswordAuthLoading: false,
       errorMessage: '',
       signInWithOAuth: jest.fn(),
       signInWithPassword: jest.fn(),
       signOut: jest.fn(),
+      votePlace: jest.fn(),
+      addComment: jest.fn(),
+      trackPlaceOpen,
     });
 
     useLiveLocation.mockReturnValue({
       region: {
-        latitude: 51.5,
-        longitude: -0.1,
-        latitudeDelta: 0.01,
-        longitudeDelta: 0.01,
+        latitude: 27.7172,
+        longitude: 85.324,
+        latitudeDelta: 0.06,
+        longitudeDelta: 0.06,
       },
       errorMessage: '',
     });
   });
 
-  test('keeps the home map anchored to the Kathmandu demo region and exposes drag handlers', () => {
-    const screen = render(<HomeScreen navigation={{ navigate: jest.fn() }} />);
+  test('enters browse mode when the home map moves and expands preview after idle time', () => {
+    const screen = render(<HomeScreen navigation={{ navigate: jest.fn(), canGoBack: jest.fn(() => false) }} />);
 
-    expect(screen.getByTestId('home-map-handlers').props.children).toBe('ready');
-    expect(JSON.parse(screen.getByTestId('home-map-region').props.children)).toEqual(DEFAULT_REGION);
-    expect(screen.getByTestId('home-safe-area').props.pointerEvents).toBe('box-none');
-    expect(screen.getByTestId('home-top-row').props.pointerEvents).toBe('box-none');
-    expect(screen.getByTestId('home-bottom-stack').props.pointerEvents).toBe('box-none');
+    expect(screen.getByTestId('home-mode-chrome')).toBeTruthy();
+    expect(screen.queryByText('Open details')).toBeNull();
+
+    fireEvent.press(screen.getByTestId('map-drag-start'));
+    fireEvent.press(screen.getByTestId('map-drag-end'));
+
+    expect(screen.getByText('Back')).toBeTruthy();
+    expect(screen.queryByText('Open details')).toBeNull();
+
+    act(() => {
+      jest.advanceTimersByTime(2000);
+    });
+
+    expect(screen.getByText('Open details')).toBeTruthy();
   });
 });

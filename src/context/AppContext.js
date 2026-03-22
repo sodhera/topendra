@@ -1,6 +1,8 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getUserIdentity } from '../lib/auth';
-import { createComment, createPlace, fetchAppData, voteForPlace } from '../lib/backend';
+import { createComment, createPlace, createPlaceOpenEvent, fetchAppData, voteForPlace } from '../lib/backend';
+import { VIEWER_SESSION_KEY } from '../lib/constants';
 import { completeOAuthFlow, getAuthRedirectUrl, supabase } from '../lib/supabase';
 
 const AppContext = createContext(null);
@@ -9,8 +11,25 @@ function getReadableError(error, fallback) {
   return error?.message ?? fallback;
 }
 
+function createViewerSessionId() {
+  return `viewer-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+async function getOrCreateViewerSessionId() {
+  const existingId = await AsyncStorage.getItem(VIEWER_SESSION_KEY);
+
+  if (existingId) {
+    return existingId;
+  }
+
+  const nextId = createViewerSessionId();
+  await AsyncStorage.setItem(VIEWER_SESSION_KEY, nextId);
+  return nextId;
+}
+
 export function AppProvider({ children }) {
   const [session, setSession] = useState(null);
+  const [viewerSessionId, setViewerSessionId] = useState('');
   const [places, setPlaces] = useState([]);
   const [votes, setVotes] = useState([]);
   const [comments, setComments] = useState([]);
@@ -44,6 +63,7 @@ export function AppProvider({ children }) {
 
     async function bootstrap() {
       try {
+        const nextViewerSessionId = await getOrCreateViewerSessionId();
         const { data, error } = await supabase.auth.getSession();
 
         if (error) {
@@ -54,6 +74,7 @@ export function AppProvider({ children }) {
           return;
         }
 
+        setViewerSessionId(nextViewerSessionId);
         setSession(data.session ?? null);
         await refreshData(data.session ?? null);
       } catch (error) {
@@ -212,6 +233,26 @@ export function AppProvider({ children }) {
     [refreshData, session]
   );
 
+  const trackPlaceOpen = useCallback(
+    async ({ placeId, sourceScreen }) => {
+      if (!viewerSessionId || !placeId) {
+        return;
+      }
+
+      try {
+        await createPlaceOpenEvent({
+          placeId,
+          userId: session?.user?.id ?? null,
+          viewerSessionId,
+          sourceScreen,
+        });
+      } catch (error) {
+        return;
+      }
+    },
+    [session?.user?.id, viewerSessionId]
+  );
+
   const currentUser = session?.user ? getUserIdentity(session.user) : getUserIdentity(null);
 
   const value = useMemo(
@@ -235,6 +276,7 @@ export function AppProvider({ children }) {
       addPlace,
       votePlace,
       addComment,
+      trackPlaceOpen,
     }),
     [
       session,
@@ -254,6 +296,7 @@ export function AppProvider({ children }) {
       addPlace,
       votePlace,
       addComment,
+      trackPlaceOpen,
     ]
   );
 

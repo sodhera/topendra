@@ -155,3 +155,22 @@ export async function createComment({ placeId, user, body }) {
     throw error;
   }
 }
+
+export async function createPlaceOpenEvent({ placeId, userId = null, viewerSessionId, sourceScreen }) {
+  const normalizedSource = normalizeText(sourceScreen) || 'unknown';
+
+  if (!placeId || !viewerSessionId) {
+    throw new Error('Place open tracking requires a place id and viewer session id.');
+  }
+
+  const { error } = await supabase.from('place_open_events').insert({
+    place_id: placeId,
+    user_id: userId,
+    viewer_session_id: viewerSessionId,
+    source_screen: normalizedSource,
+  });
+
+  if (error) {
+    throw error;
+  }
+}
