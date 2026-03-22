@@ -7,12 +7,14 @@ export const MapPlaceMarker = React.memo(function MapPlaceMarker({
   coordinate,
   selected = false,
   onPress,
+  testID,
 }) {
   return (
     <Marker
       coordinate={coordinate}
       onPress={onPress}
       anchor={{ x: 0.5, y: 0.5 }}
+      testID={testID}
       tracksViewChanges={selected}
     >
       <View style={[styles.outerDot, selected && styles.outerDotSelected]}>

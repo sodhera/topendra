@@ -89,7 +89,7 @@ jest.mock('../src/components/EmailAuthCard', () => ({
 
     return (
       <View>
-        <Text>Email access</Text>
+        <Text>Email</Text>
         <Text>{email}</Text>
         <Text>{username}</Text>
       </View>
@@ -209,6 +209,6 @@ describe('AddPlaceScreen', () => {
     fireEvent.press(screen.getByText('Add here'));
 
     expect(screen.getByText('Login required before adding.')).toBeTruthy();
-    expect(screen.getByText('Email access')).toBeTruthy();
+    expect(screen.getByText('Email')).toBeTruthy();
   });
 });

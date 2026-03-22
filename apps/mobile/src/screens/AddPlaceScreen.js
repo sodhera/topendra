@@ -203,7 +203,7 @@ export function AddPlaceScreen({ navigation }) {
                 <View style={styles.authCallout}>
                   <Text style={styles.authTitle}>Login required before adding.</Text>
                   <Text style={styles.authCopy}>
-                    Use email access to unlock place submission, comments, and voting. Choose an anonymous public username.
+                    Use email to add places, vote, and comment.
                   </Text>
                   <EmailAuthCard
                     email={email}

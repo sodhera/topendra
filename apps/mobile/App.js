@@ -21,7 +21,7 @@ function LoadingScreen() {
   return (
     <View style={styles.loading}>
       <Text style={styles.loadingTitle}>Topey</Text>
-      <Text style={styles.loadingCopy}>Loading the Kathmandu map and preparing the latest place data.</Text>
+      <Text style={styles.loadingCopy}>Loading the map and latest place data.</Text>
       <ActivityIndicator color={colors.primary} style={styles.spinner} />
       <StatusBar style="dark" />
     </View>

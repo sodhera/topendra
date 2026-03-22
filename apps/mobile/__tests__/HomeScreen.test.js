@@ -3,6 +3,7 @@ import { Pressable, Text, View } from 'react-native';
 import { fireEvent, render } from '@testing-library/react-native';
 import { HomeScreen } from '../src/screens/HomeScreen';
 import { buildSeedState } from '@topey/shared/data/seed';
+import { getMapPlacesForRegion } from '@topey/shared/lib/geo';
 import { useAppContext } from '../src/context/AppContext';
 import { useLiveLocation } from '../src/hooks/useLiveLocation';
 
@@ -51,9 +52,9 @@ jest.mock('react-native-maps', () => {
     );
   });
 
-  function Marker({ children, onPress }) {
+  function Marker({ children, onPress, testID }) {
     return (
-      <Pressable testID="map-marker" onPress={onPress}>
+      <Pressable testID={testID ?? 'map-marker'} onPress={onPress}>
         {children}
       </Pressable>
     );
@@ -91,7 +92,7 @@ jest.mock('../src/components/EmailAuthCard', () => ({
 
     return (
       <View>
-        <Text>Email access</Text>
+        <Text>Email</Text>
         <Text>{email}</Text>
         <Text>{username}</Text>
       </View>
@@ -131,8 +132,8 @@ describe('HomeScreen', () => {
 
     useLiveLocation.mockReturnValue({
       region: {
-        latitude: 40.7128,
-        longitude: -74.006,
+        latitude: 27.7172,
+        longitude: 85.324,
         latitudeDelta: 0.06,
         longitudeDelta: 0.06,
       },
@@ -149,7 +150,7 @@ describe('HomeScreen', () => {
     expect(screen.getByTestId('home-plus-button')).toBeTruthy();
     expect(screen.getByTestId('home-map-config').props.children).toContain('"showsPointsOfInterest":false');
     expect(screen.getByTestId('home-map-config').props.children).toContain('"showsBuildings":false');
-    expect(screen.getByTestId('home-map-region').props.children).toContain('40.7128');
+    expect(screen.getByTestId('home-map-region').props.children).toContain('27.7172');
 
     fireEvent.press(screen.getByTestId('home-plus-button'));
 
@@ -158,21 +159,31 @@ describe('HomeScreen', () => {
 
   test('opens the place modal when a map marker is tapped from home', () => {
     const screen = render(<HomeScreen navigation={navigation} />);
-    const firstPlace = buildSeedState().places[0];
-    const firstPlaceComments = buildSeedState().comments.filter((comment) => comment.placeId === firstPlace.id);
+    const state = buildSeedState();
+    const visiblePlace = getMapPlacesForRegion(
+      state.places,
+      {
+        latitude: 27.7172,
+        longitude: 85.324,
+        latitudeDelta: 0.06,
+        longitudeDelta: 0.06,
+      },
+      state.votes
+    )[0];
+    const visiblePlaceComments = state.comments.filter((comment) => comment.placeId === visiblePlace.id);
 
-    fireEvent.press(screen.getAllByTestId('map-marker')[0]);
+    fireEvent.press(screen.getByTestId(`home-marker-${visiblePlace.id}`));
 
-    expect(screen.getByText(firstPlace.name)).toBeTruthy();
+    expect(screen.getByText(visiblePlace.name)).toBeTruthy();
     expect(screen.getByTestId('home-open-location-button')).toBeTruthy();
     expect(screen.getByTestId('home-vote-up-button')).toBeTruthy();
     expect(screen.getByTestId('home-vote-down-button')).toBeTruthy();
     expect(screen.getByTestId('home-added-by-label')).toBeTruthy();
-    expect(screen.getByText(firstPlace.authorName)).toBeTruthy();
+    expect(screen.getByText(visiblePlace.authorName)).toBeTruthy();
     expect(screen.getByTestId('home-comment-compose-button')).toBeTruthy();
-    expect(screen.getByText(firstPlaceComments[0].body)).toBeTruthy();
+    expect(screen.getByText(visiblePlaceComments[0].body)).toBeTruthy();
     expect(trackPlaceOpen).toHaveBeenCalledWith({
-      placeId: firstPlace.id,
+      placeId: visiblePlace.id,
       sourceScreen: 'home_pin_modal',
     });
 
@@ -199,10 +210,21 @@ describe('HomeScreen', () => {
     });
 
     const screen = render(<HomeScreen navigation={navigation} />);
+    const state = buildSeedState();
+    const visiblePlace = getMapPlacesForRegion(
+      state.places,
+      {
+        latitude: 27.7172,
+        longitude: 85.324,
+        latitudeDelta: 0.06,
+        longitudeDelta: 0.06,
+      },
+      state.votes
+    )[0];
 
-    fireEvent.press(screen.getAllByTestId('map-marker')[0]);
+    fireEvent.press(screen.getByTestId(`home-marker-${visiblePlace.id}`));
     fireEvent.press(screen.getByTestId('home-vote-up-button'));
 
-    expect(screen.getByText('Email access')).toBeTruthy();
+    expect(screen.getByText('Email')).toBeTruthy();
   });
 });

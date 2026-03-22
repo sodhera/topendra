@@ -19,7 +19,7 @@ import { ShadButton } from '../components/ShadButton';
 import { useAppContext } from '../context/AppContext';
 import { getUserIdentity, isLoggedIn } from '@topey/shared/lib/auth';
 import { KATHMANDU_EXPLORE_REGION } from '@topey/shared/lib/constants';
-import { getCommentsForPlace, getVoteBreakdown } from '@topey/shared/lib/geo';
+import { getCommentsForPlace, getMapPlacesForRegion, getVoteBreakdown } from '@topey/shared/lib/geo';
 import { CLEAN_MOBILE_MAP_PROPS } from '@topey/shared/lib/mobileMap';
 import { openPlaceInMaps } from '../lib/locationLinks';
 import { colors, radius, spacing, typography } from '@topey/shared/lib/theme';
@@ -60,6 +60,10 @@ export function HomeScreen({ navigation }) {
   const selectedPlace = useMemo(
     () => state.places.find((place) => place.id === selectedPlaceId) || null,
     [selectedPlaceId, state.places]
+  );
+  const visiblePlaces = useMemo(
+    () => getMapPlacesForRegion(state.places, mapRegion, state.votes, selectedPlaceId),
+    [mapRegion, selectedPlaceId, state.places, state.votes]
   );
   const voteBreakdown = getVoteBreakdown(state.votes, selectedPlace?.id);
   const comments = getCommentsForPlace(state.comments, selectedPlace?.id);
@@ -168,16 +172,18 @@ export function HomeScreen({ navigation }) {
         {...CLEAN_MOBILE_MAP_PROPS}
         key={`home-map-${mapKey}`}
         initialRegion={mapRegion}
+        onRegionChangeComplete={setMapRegion}
         showsUserLocation
         style={StyleSheet.absoluteFill}
         testID="home-map"
       >
-        {state.places.map((place) => (
+        {visiblePlaces.map((place) => (
           <MapPlaceMarker
             key={place.id}
             coordinate={{ latitude: place.latitude, longitude: place.longitude }}
             selected={place.id === selectedPlaceId}
             onPress={() => handleMarkerPress(place.id)}
+            testID={`home-marker-${place.id}`}
           />
         ))}
       </MapView>
@@ -302,7 +308,7 @@ export function HomeScreen({ navigation }) {
               <>
                 <Text style={styles.sheetTitle}>Sign in</Text>
                 <Text style={styles.sheetCopy}>
-                  Use email access to post places, join threads, and vote on the Kathmandu map. Choose an anonymous public username.
+                  Use email to post, vote, and join threads.
                 </Text>
                 <EmailAuthCard
                   email={email}

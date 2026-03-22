@@ -15,9 +15,9 @@ export function EmailAuthCard({
 }) {
   return (
     <View style={styles.card}>
-      <Text style={styles.title}>Email access</Text>
+      <Text style={styles.title}>Email</Text>
       <Text style={styles.copy}>
-        We only collect your email. Choose an anonymous username that will appear on places and comments.
+        Email plus an anonymous username.
       </Text>
       <TextInput
         autoCapitalize="none"
@@ -39,14 +39,14 @@ export function EmailAuthCard({
         onChangeText={onUsernameChange}
       />
       <ShadButton
-        label={authBusy ? 'Sending link...' : 'Email me a sign-in link'}
+        label={authBusy ? 'Sending link...' : 'Send sign-in link'}
         onPress={onSubmit}
         disabled={authBusy}
         style={styles.button}
       />
       {helperText ? <Text style={styles.helper}>{helperText}</Text> : null}
       <Text style={styles.note}>
-        Keep the username anonymous. {LOCATION_DISCLOSURE_COPY}
+        Anonymous only. {LOCATION_DISCLOSURE_COPY}
       </Text>
     </View>
   );
