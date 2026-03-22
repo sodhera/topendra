@@ -29,7 +29,7 @@
 - Browse previews should open from explicit dot taps, not automatic map-center tracking.
 - Demo Kathmandu pins should stay visible by default so the map behavior is easy to verify.
 - The runtime demo dataset should include up to 50 Kathmandu places with multiple comment threads for testing.
-- Button and overlay treatment should follow an Apple-like iOS direction: system-blue primary actions, solid white surfaces, generous radii, and clear hierarchy without overdone glass effects.
+- Button and overlay treatment should follow an Apple-like iOS direction with a monochrome white/black/grey palette, solid white surfaces, generous radii, and clear hierarchy without overdone glass effects.
 - Each place open should be tracked so later notification work has real event history.
 - Location usage should stay explicit: it centers the map, supports nearby exploration, and stores added place coordinates.
 - The app is Expo native and written in JavaScript.
@@ -39,7 +39,7 @@
 - Use an Apple-like iOS visual language:
   - grouped light backgrounds
   - solid white map chrome
-  - system-blue primary controls
+  - black primary controls
   - larger rounded sheets and cards
   - clean typography with stronger title hierarchy
 - Do not bring back the earlier fantasy or consultancy-heavy design directions unless the user explicitly asks.

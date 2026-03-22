@@ -42,7 +42,7 @@ cd topey
   - `Add here` action that opens a details modal
   - modal form with name, description, and final `Add` submit for logged-in users
   - guest add attempts expose the same email-link auth path used by voting and comments
-- Buttons and sheets now use an Apple-like iOS treatment with solid white surfaces, system-blue actions, larger sheet geometry, and clearer action hierarchy inside modals.
+- Buttons and sheets now use an Apple-like iOS treatment with a white/black/grey palette, larger sheet geometry, and clearer action hierarchy inside modals.
 - Place discussions now behave more like Reddit: the place sheet shows a short preview stack, while the full conversation opens in a separate modal with per-comment reply controls.
 - Place opens are tracked in Supabase so later area-notification work has usage history to build on.
 - Demo mode now ships with 50 deterministic Kathmandu places plus multiple seeded comment threads per place.

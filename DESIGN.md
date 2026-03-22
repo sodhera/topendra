@@ -33,9 +33,9 @@ Use Apple’s HIG as the directional guide and preserve the current product stru
 - Background: iOS grouped-light neutral
 - Cards: solid white
 - Borders: very light separators, not hard outlines
-- Primary button: system blue
+- Primary button: black
 - Primary button text: white
-- Accent: system blue for active states, selected markers, and actionable emphasis
+- Accent: black and dark grey only
 
 Use the tokens in [src/lib/theme.js](/Users/sirishjoshi/Desktop/Topey/src/lib/theme.js) as the source of truth.
 
@@ -56,11 +56,16 @@ Use the tokens in [src/lib/theme.js](/Users/sirishjoshi/Desktop/Topey/src/lib/th
 ## Components
 
 - Buttons should feel like native iOS controls:
-  - filled primary actions in system blue
+  - filled primary actions in black
   - white secondary pills for map chrome
   - minimum 44pt tappable compact controls
   - only one dominant CTA per sheet; supporting actions should step down in size and emphasis
-  - the home `+` control is the one exception: keep the large plus glyph, but use a black rounded-square silhouette instead of a blue pill
+  - the home `+` control is the one exception: keep the large plus glyph, but use a black rounded-square silhouette instead of a pill
+- Keep the entire palette monochrome:
+  - white
+  - black
+  - light and dark greys
+  - no blue or saturated accent color
 - Place thread previews should feel Reddit-like:
   - metadata sits in one line, not boxed KPI cards
   - place-level voting uses plain arrows under the main location action
