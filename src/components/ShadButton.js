@@ -61,11 +61,11 @@ const styles = StyleSheet.create({
   },
   primary: {
     backgroundColor: colors.primary,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
+    borderColor: 'rgba(17, 17, 17, 0.92)',
   },
   secondary: {
     backgroundColor: colors.secondary,
-    borderColor: 'rgba(255, 255, 255, 0.62)',
+    borderColor: colors.border,
   },
   default: {
     minHeight: 48,

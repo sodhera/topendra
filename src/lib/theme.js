@@ -1,18 +1,18 @@
 export const colors = {
-  background: '#F2F2F7',
+  background: '#F5F5F7',
   card: '#FFFFFF',
-  elevatedCard: '#FFFFFF',
-  border: 'rgba(60, 60, 67, 0.14)',
-  separator: 'rgba(60, 60, 67, 0.12)',
+  elevatedCard: '#FCFCFD',
+  border: 'rgba(17, 17, 17, 0.1)',
+  separator: 'rgba(17, 17, 17, 0.08)',
   text: '#111111',
-  mutedText: '#6E6E73',
-  primary: '#007AFF',
+  mutedText: '#6B6B70',
+  primary: '#111111',
   primaryText: '#FFFFFF',
   secondary: '#FFFFFF',
-  accent: '#007AFF',
-  mapOverlay: 'rgba(255, 255, 255, 0.42)',
-  sheetBackdrop: 'rgba(17, 17, 17, 0.22)',
-  handle: '#C7C7CC',
+  accent: '#2C2C2E',
+  mapOverlay: 'rgba(245, 245, 247, 0.5)',
+  sheetBackdrop: 'rgba(17, 17, 17, 0.26)',
+  handle: '#D1D1D6',
 };
 
 export const spacing = {
