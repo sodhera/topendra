@@ -61,15 +61,15 @@ export function HomeScreen({ navigation }) {
       </MapView>
       <View style={styles.scrim} pointerEvents="none" />
 
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.topRow}>
+      <SafeAreaView style={styles.safeArea} pointerEvents="box-none" testID="home-safe-area">
+        <View style={styles.topRow} pointerEvents="box-none" testID="home-top-row">
           <ShadButton label="Add a place" size="compact" onPress={() => navigation.navigate('AddPlace')} />
           {isAuthenticated ? (
             <ShadButton label="Sign out" size="compact" variant="secondary" onPress={() => signOut()} />
           ) : null}
         </View>
 
-        <View style={styles.bottomStack}>
+        <View style={styles.bottomStack} pointerEvents="box-none" testID="home-bottom-stack">
           <View style={styles.statusDock}>
             <Text style={styles.eyebrow}>Topey</Text>
             <Text style={styles.statusTitle}>{getUserLabel(state.session?.user)}</Text>

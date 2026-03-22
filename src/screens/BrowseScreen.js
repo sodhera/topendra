@@ -122,8 +122,8 @@ export function BrowseScreen({ navigation }) {
       </MapView>
       <View style={styles.scrim} pointerEvents="none" />
 
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.topBar}>
+      <SafeAreaView style={styles.safeArea} pointerEvents="box-none">
+        <View style={styles.topBar} pointerEvents="box-none">
           <ShadButton label="Back" size="compact" variant="secondary" onPress={() => navigation.goBack()} />
           <ShadButton label="Add a place" size="compact" onPress={() => navigation.navigate('AddPlace')} />
         </View>

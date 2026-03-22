@@ -46,7 +46,7 @@ jest.mock('react-native-safe-area-context', () => {
 
   return {
     __esModule: true,
-    SafeAreaView: ({ children }) => <View>{children}</View>,
+    SafeAreaView: ({ children, ...props }) => <View {...props}>{children}</View>,
   };
 });
 

@@ -46,7 +46,7 @@ jest.mock('react-native-safe-area-context', () => {
 
   return {
     __esModule: true,
-    SafeAreaView: ({ children }) => <View>{children}</View>,
+    SafeAreaView: ({ children, ...props }) => <View {...props}>{children}</View>,
   };
 });
 
@@ -104,5 +104,8 @@ describe('HomeScreen', () => {
 
     expect(screen.getByTestId('home-map-handlers').props.children).toBe('ready');
     expect(JSON.parse(screen.getByTestId('home-map-region').props.children)).toEqual(DEFAULT_REGION);
+    expect(screen.getByTestId('home-safe-area').props.pointerEvents).toBe('box-none');
+    expect(screen.getByTestId('home-top-row').props.pointerEvents).toBe('box-none');
+    expect(screen.getByTestId('home-bottom-stack').props.pointerEvents).toBe('box-none');
   });
 });
