@@ -278,7 +278,7 @@ Mechanism:
 1. Each map screen mounts the map with `initialRegion`.
 2. `Home`, `Browse`, and `AddPlace` all recenter once from foreground location when permission is granted.
 3. `AddPlace` keeps the target coordinates synced to the point under the fixed upper-half overlay pin instead of the literal screen center.
-4. `Home` and `Browse` derive a visible marker subset from the current viewport, bucket nearby places together, and lower the marker cap as the map zooms out.
+4. `Home` and `Browse` derive a visible marker subset from the current viewport, bucket nearby places together, ease the marker cap down as the map zooms out, and return to full visible-pin rendering once the user is zoomed in past the density threshold.
 5. User drags happen directly inside the native map view because only the actual buttons intercept touches.
 6. `Home` modals and `Browse` previews both come from explicit marker taps instead of automatic map-center selection.
 

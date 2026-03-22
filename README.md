@@ -79,7 +79,7 @@ packages/
 - `Home`, `Browse`, and `AddPlace` all request foreground location so the app can open near the user anywhere, not only around the Kathmandu seed region.
 - Home and browse both stay directly draggable because only the actual buttons intercept touch events.
 - Mobile map views intentionally suppress native POIs, buildings, indoor labels, traffic, and toolbar chrome so Topey pins are the only location layer that stands out.
-- Home and browse derive a visible marker subset from the current viewport and reduce the total count as the map zooms out.
+- Home and browse derive a visible marker subset from the current viewport, ease marker density down as the map zooms out, and switch back to full visible-pin rendering once the user is zoomed in far enough.
 - Home place details open in a modal on dot tap, and browse previews also open only from explicit dot taps.
 - `AddPlace` updates the pending coordinates from map movement and uses a fixed center pin overlay so the target never disappears.
 
