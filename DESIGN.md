@@ -37,7 +37,7 @@ Use Apple’s HIG as the directional guide and preserve the current product stru
 - Primary button text: white
 - Accent: black and dark grey only
 
-Use the tokens in [src/lib/theme.js](/Users/sirishjoshi/Desktop/Topey/src/lib/theme.js) as the source of truth.
+Use the tokens in [theme.js](/Users/sirishjoshi/Desktop/Topey/packages/shared/lib/theme.js) as the source of truth.
 
 ## Typography
 

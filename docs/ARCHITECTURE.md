@@ -2,21 +2,31 @@
 
 ## Scope
 
-Topey is an Expo-native mobile app for:
+Topey is a monorepo for:
+
+- a native Expo app in `apps/mobile`
+- a browser app in `apps/web`
+- a shared package in `packages/shared`
+
+Runtime product behavior still centers on the map-driven Topey experience:
 
 - browsing nearby places on a map
 - selecting a pin and reading place details
-- viewing comment threads after login
-- upvoting and downvoting a place after login
-- adding new places after login
-
-This repo is no longer a local-only prototype. Runtime data now comes from Supabase.
+- viewing comment threads after login on mobile
+- upvoting and downvoting a place after login on mobile
+- adding new places after login on mobile
 
 ## Runtime Model
 
-### App shell
+## Workspace Layout
 
-The app shell is defined in [App.js](/Users/sirishjoshi/Desktop/Topey/App.js).
+- [apps/mobile](/Users/sirishjoshi/Desktop/Topey/apps/mobile): Expo app for iOS and Android
+- [apps/web](/Users/sirishjoshi/Desktop/Topey/apps/web): Vite browser app
+- [packages/shared](/Users/sirishjoshi/Desktop/Topey/packages/shared): shared cross-platform data and UI tokens
+
+### Mobile app shell
+
+The mobile app shell is defined in [App.js](/Users/sirishjoshi/Desktop/Topey/apps/mobile/App.js).
 
 The navigation stack is:
 
@@ -24,9 +34,32 @@ The navigation stack is:
 - `Browse`
 - `AddPlace`
 
-### State container
+### Web app shell
 
-Shared app state lives in [src/context/AppContext.js](/Users/sirishjoshi/Desktop/Topey/src/context/AppContext.js).
+The browser app shell is defined in [App.jsx](/Users/sirishjoshi/Desktop/Topey/apps/web/src/App.jsx).
+
+Responsibilities:
+
+- render the Kathmandu place field in a browser-friendly layout
+- project the same shared place coordinates onto a web map canvas
+- expose metadata, vote summary, creator attribution, and thread previews
+- keep browser behavior read-only for now while mobile remains the full participation surface
+
+### Shared package
+
+Cross-platform source-of-truth utilities live in [packages/shared](/Users/sirishjoshi/Desktop/Topey/packages/shared).
+
+Important shared modules:
+
+- [theme.js](/Users/sirishjoshi/Desktop/Topey/packages/shared/lib/theme.js)
+- [constants.js](/Users/sirishjoshi/Desktop/Topey/packages/shared/lib/constants.js)
+- [auth.js](/Users/sirishjoshi/Desktop/Topey/packages/shared/lib/auth.js)
+- [geo.js](/Users/sirishjoshi/Desktop/Topey/packages/shared/lib/geo.js)
+- [demoCatalog.js](/Users/sirishjoshi/Desktop/Topey/packages/shared/data/demoCatalog.js)
+
+### Mobile state container
+
+Shared mobile app state lives in [AppContext.js](/Users/sirishjoshi/Desktop/Topey/apps/mobile/src/context/AppContext.js).
 
 The context is responsible for:
 
@@ -43,7 +76,7 @@ This replaced the old reducer-backed local runtime for the actual app flow.
 
 ### Home
 
-Defined in [src/screens/HomeScreen.js](/Users/sirishjoshi/Desktop/Topey/src/screens/HomeScreen.js).
+Defined in [HomeScreen.js](/Users/sirishjoshi/Desktop/Topey/apps/mobile/src/screens/HomeScreen.js).
 
 Responsibilities:
 
@@ -65,7 +98,7 @@ The large center hero card, test-user widget, and center-floating action row are
 
 ### Browse
 
-Defined in [src/screens/BrowseScreen.js](/Users/sirishjoshi/Desktop/Topey/src/screens/BrowseScreen.js).
+Defined in [BrowseScreen.js](/Users/sirishjoshi/Desktop/Topey/apps/mobile/src/screens/BrowseScreen.js).
 
 Responsibilities:
 
@@ -82,7 +115,7 @@ Responsibilities:
 
 ### AddPlace
 
-Defined in [src/screens/AddPlaceScreen.js](/Users/sirishjoshi/Desktop/Topey/src/screens/AddPlaceScreen.js).
+Defined in [AddPlaceScreen.js](/Users/sirishjoshi/Desktop/Topey/apps/mobile/src/screens/AddPlaceScreen.js).
 
 Responsibilities:
 
@@ -98,8 +131,8 @@ Responsibilities:
 
 Client auth helpers live in:
 
-- [src/lib/supabase.js](/Users/sirishjoshi/Desktop/Topey/src/lib/supabase.js)
-- [src/lib/auth.js](/Users/sirishjoshi/Desktop/Topey/src/lib/auth.js)
+- [supabase.js](/Users/sirishjoshi/Desktop/Topey/apps/mobile/src/lib/supabase.js)
+- [auth.js](/Users/sirishjoshi/Desktop/Topey/packages/shared/lib/auth.js)
 
 Mechanism:
 
@@ -168,7 +201,7 @@ Each comment contains:
 
 ## Data Fetching And Writes
 
-Backend data helpers live in [src/lib/backend.js](/Users/sirishjoshi/Desktop/Topey/src/lib/backend.js).
+Backend data helpers live in [backend.js](/Users/sirishjoshi/Desktop/Topey/apps/mobile/src/lib/backend.js).
 
 ### Reads
 
@@ -219,7 +252,7 @@ This is the first piece of the planned area-update notification system.
 
 ## Location Handling
 
-Location logic lives in [src/hooks/useLiveLocation.js](/Users/sirishjoshi/Desktop/Topey/src/hooks/useLiveLocation.js).
+Location logic lives in [useLiveLocation.js](/Users/sirishjoshi/Desktop/Topey/apps/mobile/src/hooks/useLiveLocation.js).
 
 Behavior:
 
@@ -250,8 +283,8 @@ This keeps the interaction simple and avoids the earlier bug where the map felt 
 
 The repo still contains:
 
-- [src/lib/reducer.js](/Users/sirishjoshi/Desktop/Topey/src/lib/reducer.js)
-- [src/data/seed.js](/Users/sirishjoshi/Desktop/Topey/src/data/seed.js)
+- [reducer.js](/Users/sirishjoshi/Desktop/Topey/apps/mobile/src/lib/reducer.js)
+- [seed.js](/Users/sirishjoshi/Desktop/Topey/packages/shared/data/seed.js)
 
 These are retained mainly for existing unit tests and historical reference. They are not the live runtime source of truth anymore.
 

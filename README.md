@@ -1,6 +1,12 @@
 # Topey
 
-Topey is an Expo mobile app for exploring nearby places on a live map, selecting pinned locations, reading discussion threads, and contributing new places after signing in.
+Topey is now a monorepo with:
+
+- `apps/mobile`: the Expo app for iOS and Android
+- `apps/web`: a dedicated browser app for browsing the Kathmandu place field
+- `packages/shared`: shared demo data, theme tokens, auth helpers, and map utilities
+
+The product centers on exploring nearby places on a live map, selecting pinned locations, reading discussion threads, and contributing new places after signing in.
 
 The app is now backed by Supabase for:
 
@@ -25,6 +31,10 @@ cd topey
 
 ## Current Product Shape
 
+- Monorepo:
+  - `apps/mobile` ships the live mobile experience
+  - `apps/web` ships a browser version focused on browsing and inspecting place drops
+  - `packages/shared` keeps cross-platform logic in one place
 - Home screen:
   - opens on the Kathmandu demo region so the place dots are visible immediately
   - `Profile` or `Sign in` button at the top right
@@ -48,6 +58,17 @@ cd topey
 - Demo mode now ships with 50 deterministic Kathmandu places plus multiple seeded comment threads per place.
 - Account creation is email-only and asks the user to choose an anonymous public username for places and comments.
 - Location data is used to center the map, show nearby place drops, and save the coordinates of places the user adds.
+- Web now exists as a dedicated app in `apps/web`; it reuses the shared Kathmandu dataset and lets users inspect place metadata, votes, and thread previews in the browser.
+
+## Workspace Layout
+
+```text
+apps/
+  mobile/   Expo app for iOS and Android
+  web/      Vite browser app
+packages/
+  shared/   Shared data, theme, auth helpers, and geo utilities
+```
 
 ## Map Interaction Model
 
@@ -60,11 +81,14 @@ cd topey
 
 - Expo SDK `54`
 - React Native
+- React DOM
 - React Navigation native stack
 - `react-native-maps`
 - `expo-location`
 - Supabase JS
 - Expo Auth Session / Linking
+- Vite
+- npm workspaces
 - Jest
 
 ## Environment Setup
@@ -109,27 +133,29 @@ What these do:
 - `supabase:migrate`: creates the `places`, `place_votes`, and `place_comments` tables with RLS
 - `supabase:seed`: replaces the demo dataset with 50 Kathmandu places, votes, and comment threads
 
-## Running The App
+## Running The Apps
 
-Start Expo:
+Mobile:
 
 ```bash
-npm run start
+npm run mobile:start
+npm run mobile:ios
+npm run mobile:android
+npm run mobile:test
+npm run mobile:doctor
 ```
 
-Useful scripts:
+Web:
 
 ```bash
-npm run start
-npm run ios
-npm run android
-npm run test -- --runInBand
-npx expo-doctor
+npm run web:dev
+npm run web:build
+npm run web:preview
 ```
 
 ## How The App Behaves
 
-### Guest
+### Mobile guest
 
 - can open the map and roam around pins
 - can read place metadata
@@ -139,7 +165,7 @@ npx expo-doctor
 - cannot vote
 - cannot save new places
 
-### Logged-in user
+### Mobile logged-in user
 
 - can sign in or make an account using only email plus an anonymous username
 - can read comments
@@ -147,6 +173,13 @@ npx expo-doctor
 - can upvote or downvote
 - can see who added each place directly in the place sheet
 - can pin the current map location, open the add-details modal, and save a new place
+
+### Web user
+
+- can browse the Kathmandu place field in the browser
+- can click place dots and inspect metadata, creator attribution, and thread previews
+- can open the selected place in external maps
+- does not yet submit places or post comments from the browser
 
 ## Email Access Notes
 
@@ -179,6 +212,7 @@ Detailed backend notes are in [docs/SUPABASE.md](/Users/sirishjoshi/Desktop/Tope
 ## Documentation
 
 - [README.md](/Users/sirishjoshi/Desktop/Topey/README.md)
+- [docs/MONOREPO.md](/Users/sirishjoshi/Desktop/Topey/docs/MONOREPO.md)
 - [docs/ARCHITECTURE.md](/Users/sirishjoshi/Desktop/Topey/docs/ARCHITECTURE.md)
 - [docs/SUPABASE.md](/Users/sirishjoshi/Desktop/Topey/docs/SUPABASE.md)
 - [docs/PRIVACY.md](/Users/sirishjoshi/Desktop/Topey/docs/PRIVACY.md)

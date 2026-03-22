@@ -3,7 +3,7 @@
 ## Project Context
 
 - **Project:** Topey
-- **Current shape:** a minimal Expo mobile app with a live in-app map, a browse flow, and an add-place flow
+- **Current shape:** a monorepo with `apps/mobile`, `apps/web`, and `packages/shared`
 - **Important change:** earlier moderation-heavy planning docs are historical only; the current repo implements a much smaller product
 
 ## Product Rules
@@ -33,6 +33,7 @@
 - Each place open should be tracked so later notification work has real event history.
 - Location usage should stay explicit: it centers the map, supports nearby exploration, and stores added place coordinates.
 - The app is Expo native and written in JavaScript.
+- The browser app is React + Vite and reuses the shared demo data/utilities package.
 
 ## Design Direction
 
@@ -47,6 +48,7 @@
 ## Key Docs To Read First
 
 - [README.md](/Users/sirishjoshi/Desktop/Topey/README.md)
+- [docs/MONOREPO.md](/Users/sirishjoshi/Desktop/Topey/docs/MONOREPO.md)
 - [DESIGN.md](/Users/sirishjoshi/Desktop/Topey/DESIGN.md)
 - [docs/ARCHITECTURE.md](/Users/sirishjoshi/Desktop/Topey/docs/ARCHITECTURE.md)
 - [docs/PRIVACY.md](/Users/sirishjoshi/Desktop/Topey/docs/PRIVACY.md)

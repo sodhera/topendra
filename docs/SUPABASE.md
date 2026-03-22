@@ -2,7 +2,12 @@
 
 ## Purpose
 
-This document explains the backend contract that the Topey mobile app depends on.
+This document explains the backend contract that the Topey monorepo depends on.
+
+Today that means:
+
+- the mobile app in `apps/mobile` uses Supabase directly
+- the web app in `apps/web` is currently browse-first and driven by shared demo data
 
 ## Environment Variables
 
@@ -102,7 +107,7 @@ The seed first clears old `Topey team` and `Topey demo` rows, then rebuilds the 
 
 ## App-Side Data Flow
 
-The app context lives in [src/context/AppContext.js](/Users/sirishjoshi/Desktop/Topey/src/context/AppContext.js).
+The mobile app context lives in [AppContext.js](/Users/sirishjoshi/Desktop/Topey/apps/mobile/src/context/AppContext.js).
 
 Flow:
 
@@ -115,8 +120,8 @@ Flow:
 
 Backend helper code lives in:
 
-- [src/lib/supabase.js](/Users/sirishjoshi/Desktop/Topey/src/lib/supabase.js)
-- [src/lib/backend.js](/Users/sirishjoshi/Desktop/Topey/src/lib/backend.js)
+- [supabase.js](/Users/sirishjoshi/Desktop/Topey/apps/mobile/src/lib/supabase.js)
+- [backend.js](/Users/sirishjoshi/Desktop/Topey/apps/mobile/src/lib/backend.js)
 
 ## Mobile Email Auth
 

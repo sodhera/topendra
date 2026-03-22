@@ -8,6 +8,7 @@ The current documentation spine is:
 
 - [README.md](/Users/sirishjoshi/Desktop/Topey/README.md)
 - [docs/README.md](/Users/sirishjoshi/Desktop/Topey/docs/README.md)
+- [docs/MONOREPO.md](/Users/sirishjoshi/Desktop/Topey/docs/MONOREPO.md)
 - [docs/ARCHITECTURE.md](/Users/sirishjoshi/Desktop/Topey/docs/ARCHITECTURE.md)
 - [docs/SUPABASE.md](/Users/sirishjoshi/Desktop/Topey/docs/SUPABASE.md)
 - [docs/PRIVACY.md](/Users/sirishjoshi/Desktop/Topey/docs/PRIVACY.md)
@@ -32,13 +33,14 @@ If the machine does not have Node on the shell path:
 Run the app:
 
 ```bash
-npm run start
+npm run mobile:start
+npm run web:dev
 ```
 
 Run tests:
 
 ```bash
-npm run test -- --runInBand
+npm run mobile:test
 ```
 
 Sync the backend project when auth or schema changes:
@@ -58,6 +60,7 @@ The current product is intentionally minimal:
 - live map-backed home screen
 - browse flow
 - add-place flow
+- read-only browser companion
 - Supabase-backed login for comments, voting, and place submission
 
 Do not reintroduce old trust-heavy or moderation-heavy product machinery unless the product direction changes explicitly.
@@ -91,13 +94,14 @@ instead of rolling unrelated changes together.
 At minimum, run:
 
 ```bash
-npm run test -- --runInBand
+npm run mobile:test
 ```
 
 For Expo/runtime-sensitive changes, also run:
 
 ```bash
-npx expo-doctor
+npm run mobile:doctor
+npm run web:build
 ```
 
 When changing the backend contract, also verify the remote project state with the Supabase management API scripts.
