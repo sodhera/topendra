@@ -20,6 +20,7 @@ import { useAppContext } from '../context/AppContext';
 import { isLoggedIn } from '@topey/shared/lib/auth';
 import { DEFAULT_REGION, KATHMANDU_EXPLORE_REGION } from '@topey/shared/lib/constants';
 import { getCommentsForPlace, getVoteBreakdown } from '@topey/shared/lib/geo';
+import { CLEAN_MOBILE_MAP_PROPS } from '@topey/shared/lib/mobileMap';
 import { openPlaceInMaps } from '../lib/locationLinks';
 import { colors, radius, shadows, spacing, typography } from '@topey/shared/lib/theme';
 
@@ -156,6 +157,7 @@ export function BrowseScreen({ navigation, route }) {
   return (
     <View style={styles.container}>
       <MapView
+        {...CLEAN_MOBILE_MAP_PROPS}
         ref={mapRef}
         initialRegion={KATHMANDU_EXPLORE_REGION}
         onPress={() => setSelectedPlaceId('')}

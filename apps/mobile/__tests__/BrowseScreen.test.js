@@ -9,7 +9,22 @@ jest.mock('react-native-maps', () => {
   const React = require('react');
   const { Pressable, Text, View } = require('react-native');
 
-  const MockMapView = React.forwardRef(function MockMapView({ children, initialRegion }, ref) {
+  const MockMapView = React.forwardRef(function MockMapView(
+    {
+      children,
+      initialRegion,
+      poiClickEnabled,
+      showsBuildings,
+      showsCompass,
+      showsIndoorLevelPicker,
+      showsIndoors,
+      showsPointsOfInterest,
+      showsScale,
+      showsTraffic,
+      toolbarEnabled,
+    },
+    ref
+  ) {
     React.useImperativeHandle(ref, () => ({
       animateToRegion: jest.fn(),
     }));
@@ -17,6 +32,19 @@ jest.mock('react-native-maps', () => {
     return (
       <View testID="browse-map">
         <Text testID="browse-map-region">{JSON.stringify(initialRegion)}</Text>
+        <Text testID="browse-map-config">
+          {JSON.stringify({
+            poiClickEnabled,
+            showsBuildings,
+            showsCompass,
+            showsIndoorLevelPicker,
+            showsIndoors,
+            showsPointsOfInterest,
+            showsScale,
+            showsTraffic,
+            toolbarEnabled,
+          })}
+        </Text>
         {children}
       </View>
     );
@@ -125,6 +153,8 @@ describe('BrowseScreen', () => {
 
     fireEvent.press(screen.getAllByTestId('map-marker')[0]);
 
+    expect(screen.getByTestId('browse-map-config').props.children).toContain('"showsPointsOfInterest":false');
+    expect(screen.getByTestId('browse-map-config').props.children).toContain('"showsBuildings":false');
     expect(screen.getByTestId('browse-preview-card')).toBeTruthy();
     expect(screen.getByText(firstPlace.name)).toBeTruthy();
     expect(trackPlaceOpen).toHaveBeenCalledWith({

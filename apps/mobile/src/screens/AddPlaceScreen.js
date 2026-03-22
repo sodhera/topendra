@@ -19,6 +19,7 @@ import { ShadButton } from '../components/ShadButton';
 import { useAppContext } from '../context/AppContext';
 import { isLoggedIn } from '@topey/shared/lib/auth';
 import { DEFAULT_REGION, LOCATION_DISCLOSURE_COPY } from '@topey/shared/lib/constants';
+import { CLEAN_MOBILE_MAP_PROPS } from '@topey/shared/lib/mobileMap';
 import { colors, radius, shadows, spacing, typography } from '@topey/shared/lib/theme';
 import { useLiveLocation } from '../hooks/useLiveLocation';
 
@@ -113,6 +114,7 @@ export function AddPlaceScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <MapView
+        {...CLEAN_MOBILE_MAP_PROPS}
         key={`add-place-map-${mapKey}`}
         style={StyleSheet.absoluteFill}
         initialRegion={mapRegion}

@@ -8,7 +8,22 @@ jest.mock('react-native-maps', () => {
   const React = require('react');
   const { Text, View } = require('react-native');
 
-  const MockMapView = React.forwardRef(function MockMapView({ children, initialRegion }, ref) {
+  const MockMapView = React.forwardRef(function MockMapView(
+    {
+      children,
+      initialRegion,
+      poiClickEnabled,
+      showsBuildings,
+      showsCompass,
+      showsIndoorLevelPicker,
+      showsIndoors,
+      showsPointsOfInterest,
+      showsScale,
+      showsTraffic,
+      toolbarEnabled,
+    },
+    ref
+  ) {
     React.useImperativeHandle(ref, () => ({
       animateToRegion: jest.fn(),
     }));
@@ -16,6 +31,19 @@ jest.mock('react-native-maps', () => {
     return (
       <View testID="map-view">
         <Text testID="map-region">{JSON.stringify(initialRegion)}</Text>
+        <Text testID="map-config">
+          {JSON.stringify({
+            poiClickEnabled,
+            showsBuildings,
+            showsCompass,
+            showsIndoorLevelPicker,
+            showsIndoors,
+            showsPointsOfInterest,
+            showsScale,
+            showsTraffic,
+            toolbarEnabled,
+          })}
+        </Text>
         {children}
       </View>
     );
@@ -116,6 +144,8 @@ describe('AddPlaceScreen', () => {
     await waitFor(() => {
       expect(screen.getByText('40.71280, -74.00600')).toBeTruthy();
     });
+    expect(screen.getByTestId('map-config').props.children).toContain('"showsPointsOfInterest":false');
+    expect(screen.getByTestId('map-config').props.children).toContain('"showsBuildings":false');
 
     fireEvent.press(screen.getByText('Add here'));
 

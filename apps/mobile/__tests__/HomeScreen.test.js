@@ -9,7 +9,22 @@ jest.mock('react-native-maps', () => {
   const React = require('react');
   const { Pressable, Text, View } = require('react-native');
 
-  const MockMapView = React.forwardRef(function MockMapView({ children, initialRegion }, ref) {
+  const MockMapView = React.forwardRef(function MockMapView(
+    {
+      children,
+      initialRegion,
+      poiClickEnabled,
+      showsBuildings,
+      showsCompass,
+      showsIndoorLevelPicker,
+      showsIndoors,
+      showsPointsOfInterest,
+      showsScale,
+      showsTraffic,
+      toolbarEnabled,
+    },
+    ref
+  ) {
     React.useImperativeHandle(ref, () => ({
       animateToRegion: jest.fn(),
     }));
@@ -17,6 +32,19 @@ jest.mock('react-native-maps', () => {
     return (
       <View testID="home-map">
         <Text testID="home-map-region">{JSON.stringify(initialRegion)}</Text>
+        <Text testID="home-map-config">
+          {JSON.stringify({
+            poiClickEnabled,
+            showsBuildings,
+            showsCompass,
+            showsIndoorLevelPicker,
+            showsIndoors,
+            showsPointsOfInterest,
+            showsScale,
+            showsTraffic,
+            toolbarEnabled,
+          })}
+        </Text>
         {children}
       </View>
     );
@@ -102,6 +130,8 @@ describe('HomeScreen', () => {
 
     expect(screen.getByTestId('home-account-button')).toBeTruthy();
     expect(screen.getByTestId('home-plus-button')).toBeTruthy();
+    expect(screen.getByTestId('home-map-config').props.children).toContain('"showsPointsOfInterest":false');
+    expect(screen.getByTestId('home-map-config').props.children).toContain('"showsBuildings":false');
 
     fireEvent.press(screen.getByTestId('home-plus-button'));
 

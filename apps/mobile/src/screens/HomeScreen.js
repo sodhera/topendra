@@ -20,6 +20,7 @@ import { useAppContext } from '../context/AppContext';
 import { getUserIdentity, isLoggedIn } from '@topey/shared/lib/auth';
 import { KATHMANDU_EXPLORE_REGION } from '@topey/shared/lib/constants';
 import { getCommentsForPlace, getVoteBreakdown } from '@topey/shared/lib/geo';
+import { CLEAN_MOBILE_MAP_PROPS } from '@topey/shared/lib/mobileMap';
 import { openPlaceInMaps } from '../lib/locationLinks';
 import { colors, radius, spacing, typography } from '@topey/shared/lib/theme';
 
@@ -150,7 +151,12 @@ export function HomeScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <MapView initialRegion={KATHMANDU_EXPLORE_REGION} style={StyleSheet.absoluteFill} testID="home-map">
+      <MapView
+        {...CLEAN_MOBILE_MAP_PROPS}
+        initialRegion={KATHMANDU_EXPLORE_REGION}
+        style={StyleSheet.absoluteFill}
+        testID="home-map"
+      >
         {state.places.map((place) => (
           <MapPlaceMarker
             key={place.id}
