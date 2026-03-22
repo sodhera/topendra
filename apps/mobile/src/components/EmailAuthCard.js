@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { LOCATION_DISCLOSURE_COPY } from '@topey/shared/lib/constants';
 import { colors, radius, spacing, typography } from '@topey/shared/lib/theme';
 import { ShadButton } from './ShadButton';
@@ -48,6 +49,7 @@ export function EmailAuthCard({
       <View style={styles.socialButtonsContainer}>
         {onGoogleSignIn && (
           <ShadButton
+            icon={<Ionicons name="logo-google" size={20} color={colors.text} />}
             label={authBusy ? 'Please wait...' : 'Continue with Google'}
             onPress={onGoogleSignIn}
             disabled={authBusy}
@@ -57,6 +59,7 @@ export function EmailAuthCard({
         )}
         {Platform.OS === 'ios' && onAppleSignIn && (
           <ShadButton
+            icon={<Ionicons name="logo-apple" size={20} color={colors.text} />}
             label={authBusy ? 'Please wait...' : 'Continue with Apple'}
             onPress={onAppleSignIn}
             disabled={authBusy}

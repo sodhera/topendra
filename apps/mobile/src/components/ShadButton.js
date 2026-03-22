@@ -12,6 +12,7 @@ export function ShadButton({
   labelStyle,
   disabled = false,
   testID,
+  icon,
 }) {
   const scale = React.useRef(new Animated.Value(1)).current;
 
@@ -34,6 +35,7 @@ export function ShadButton({
       testID={testID}
     >
       <Animated.View style={[styles.inner, { transform: [{ scale }] }]}>
+        {icon && <View style={styles.iconContainer}>{icon}</View>}
         <Text
           style={[
             styles.label,
@@ -94,6 +96,10 @@ const styles = StyleSheet.create({
   inner: {
     alignItems: 'center',
     justifyContent: 'center',
+    flexDirection: 'row',
+  },
+  iconContainer: {
+    marginRight: spacing.sm,
   },
   label: {
     fontFamily: typography.semibold,
