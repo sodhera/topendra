@@ -40,6 +40,8 @@ export function HomeScreen({ navigation }) {
     addComment,
     votePlace,
     trackPlaceOpen,
+    isAuthModalVisible,
+    setIsAuthModalVisible,
   } = useAppContext();
   const currentUser = getUserIdentity(state.session?.user);
   const isAuthenticated = isLoggedIn(state.session);
@@ -47,7 +49,6 @@ export function HomeScreen({ navigation }) {
   const [mapKey, setMapKey] = useState(0);
   const [mapRegion, setMapRegion] = useState(KATHMANDU_EXPLORE_REGION);
   const [hasCenteredMap, setHasCenteredMap] = useState(false);
-  const [isAccountModalVisible, setIsAccountModalVisible] = useState(false);
   const [isPlaceModalVisible, setIsPlaceModalVisible] = useState(false);
   const [selectedPlaceId, setSelectedPlaceId] = useState('');
 
@@ -79,7 +80,7 @@ export function HomeScreen({ navigation }) {
   async function handleSignUp({ email, username, password }) {
     try {
       await signUpWithPassword({ email, username, password });
-      setIsAccountModalVisible(false);
+      setIsAuthModalVisible(false);
     } catch (error) {
       Alert.alert('Sign-up failed', error.message);
     }
@@ -88,7 +89,7 @@ export function HomeScreen({ navigation }) {
   async function handleSignIn({ email, password }) {
     try {
       await signInWithPassword({ email, password });
-      setIsAccountModalVisible(false);
+      setIsAuthModalVisible(false);
     } catch (error) {
       Alert.alert('Sign-in failed', error.message);
     }
@@ -97,7 +98,7 @@ export function HomeScreen({ navigation }) {
   async function handleGoogleSignIn() {
     try {
       await signInWithGoogle();
-      setIsAccountModalVisible(false);
+      setIsAuthModalVisible(false);
     } catch (error) {
       Alert.alert('Google Sign-in failed', error.message);
     }
@@ -106,7 +107,7 @@ export function HomeScreen({ navigation }) {
   async function handleAppleSignIn() {
     try {
       await signInWithApple();
-      setIsAccountModalVisible(false);
+      setIsAuthModalVisible(false);
     } catch (error) {
       Alert.alert('Apple Sign-in failed', error.message);
     }
@@ -115,7 +116,7 @@ export function HomeScreen({ navigation }) {
   async function handleSignOut() {
     try {
       await signOut();
-      setIsAccountModalVisible(false);
+      setIsAuthModalVisible(false);
     } catch (error) {
       Alert.alert('Sign-out failed', error.message);
     }
@@ -139,7 +140,7 @@ export function HomeScreen({ navigation }) {
   async function handleVote(value) {
     if (!isAuthenticated || !selectedPlace) {
       setIsPlaceModalVisible(false);
-      setIsAccountModalVisible(true);
+      setIsAuthModalVisible(true);
       return;
     }
 
@@ -156,7 +157,7 @@ export function HomeScreen({ navigation }) {
   async function handleComment({ body }) {
     if (!isAuthenticated || !selectedPlace) {
       setIsPlaceModalVisible(false);
-      setIsAccountModalVisible(true);
+      setIsAuthModalVisible(true);
       return;
     }
 
@@ -172,7 +173,7 @@ export function HomeScreen({ navigation }) {
 
   function openAccountFromPlace() {
     setIsPlaceModalVisible(false);
-    setIsAccountModalVisible(true);
+    setIsAuthModalVisible(true);
   }
 
   function closePlaceModal() {
@@ -218,7 +219,7 @@ export function HomeScreen({ navigation }) {
             size="compact"
             shape="pill"
             variant="secondary"
-            onPress={() => setIsAccountModalVisible(true)}
+            onPress={() => setIsAuthModalVisible(true)}
             testID="home-account-button"
           />
         </View>
@@ -305,14 +306,14 @@ export function HomeScreen({ navigation }) {
       <Modal
         animationType="fade"
         transparent
-        visible={isAccountModalVisible}
-        onRequestClose={() => setIsAccountModalVisible(false)}
+        visible={isAuthModalVisible}
+        onRequestClose={() => setIsAuthModalVisible(false)}
       >
         <KeyboardAvoidingView
           behavior={Platform.select({ ios: 'padding', default: undefined })}
           style={styles.modalRoot}
         >
-          <Pressable style={styles.modalBackdrop} onPress={() => setIsAccountModalVisible(false)} />
+          <Pressable style={styles.modalBackdrop} onPress={() => setIsAuthModalVisible(false)} />
           <View style={styles.sheet}>
             <View style={styles.sheetHandle} />
             <ScrollView

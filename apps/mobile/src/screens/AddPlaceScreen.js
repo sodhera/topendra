@@ -14,7 +14,6 @@ import {
 import MapView from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CenteredMapPin } from '../components/CenteredMapPin';
-import { EmailAuthCard } from '../components/EmailAuthCard';
 import { ShadButton } from '../components/ShadButton';
 import { useAppContext } from '../context/AppContext';
 import { isLoggedIn } from '@topey/shared/lib/auth';
@@ -38,8 +37,8 @@ export function AddPlaceScreen({ navigation }) {
     isEmailAuthLoading,
     authNoticeMessage,
     errorMessage: appError,
-    requestEmailAccess,
     addPlace,
+    setIsAuthModalVisible,
   } = useAppContext();
   const {
     region: userRegion,
@@ -59,8 +58,6 @@ export function AddPlaceScreen({ navigation }) {
   const [description, setDescription] = useState('');
   const [isDetailsModalVisible, setIsDetailsModalVisible] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [email, setEmail] = useState('');
-  const [username, setUsername] = useState('');
 
   useEffect(() => {
     if (!hasCenteredMap && hasResolvedInitialRegion) {
@@ -71,14 +68,7 @@ export function AddPlaceScreen({ navigation }) {
     }
   }, [hasCenteredMap, hasResolvedInitialRegion, userRegion]);
 
-  async function handleEmailAccess() {
-    try {
-      await requestEmailAccess({ email, username });
-      Alert.alert('Check your email', 'We sent you a sign-in link. Open it on this device, then come back to finish adding the place.');
-    } catch (error) {
-      Alert.alert('Sign-in failed', error.message);
-    }
-  }
+
 
   async function handleSubmit() {
     if (!isLoggedIn(state.session)) {
@@ -203,16 +193,15 @@ export function AddPlaceScreen({ navigation }) {
                 <View style={styles.authCallout}>
                   <Text style={styles.authTitle}>Login required before adding.</Text>
                   <Text style={styles.authCopy}>
-                    Use email access to unlock place submission, comments, and voting. Choose an anonymous public username.
+                    Use email access to unlock place submission, comments, and voting.
                   </Text>
-                  <EmailAuthCard
-                    email={email}
-                    username={username}
-                    onEmailChange={setEmail}
-                    onUsernameChange={setUsername}
-                    onSubmit={handleEmailAccess}
-                    authBusy={isEmailAuthLoading}
-                    helperText={authNoticeMessage}
+                  <ShadButton
+                    label="Sign in"
+                    onPress={() => {
+                      setIsDetailsModalVisible(false);
+                      setIsAuthModalVisible(true);
+                    }}
+                    style={{ marginTop: spacing.md }}
                   />
                 </View>
               ) : null}

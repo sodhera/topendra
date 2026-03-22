@@ -209,6 +209,6 @@ describe('AddPlaceScreen', () => {
     fireEvent.press(screen.getByText('Add here'));
 
     expect(screen.getByText('Login required before adding.')).toBeTruthy();
-    expect(screen.getByText('Email access')).toBeTruthy();
+    expect(screen.getByText('Sign in')).toBeTruthy();
   });
 });

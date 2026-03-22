@@ -55,6 +55,7 @@ export function AppProvider({ children }) {
   const [isHydrated, setIsHydrated] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isEmailAuthLoading, setIsEmailAuthLoading] = useState(false);
+  const [isAuthModalVisible, setIsAuthModalVisible] = useState(false);
   const [authNoticeMessage, setAuthNoticeMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -489,6 +490,8 @@ export function AppProvider({ children }) {
       isHydrated,
       isRefreshing,
       isEmailAuthLoading,
+      isAuthModalVisible,
+      setIsAuthModalVisible,
       authNoticeMessage,
       errorMessage,
       refreshData,
@@ -512,6 +515,7 @@ export function AppProvider({ children }) {
       isHydrated,
       isRefreshing,
       isEmailAuthLoading,
+      isAuthModalVisible,
       authNoticeMessage,
       errorMessage,
       refreshData,

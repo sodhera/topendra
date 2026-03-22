@@ -127,6 +127,7 @@ describe('HomeScreen', () => {
       addComment: jest.fn(),
       votePlace: jest.fn(),
       trackPlaceOpen,
+      setIsAuthModalVisible: jest.fn(),
     });
 
     useLiveLocation.mockReturnValue({
@@ -196,6 +197,7 @@ describe('HomeScreen', () => {
       addComment: jest.fn(),
       votePlace: jest.fn(),
       trackPlaceOpen,
+      setIsAuthModalVisible: jest.fn(),
     });
 
     const screen = render(<HomeScreen navigation={navigation} />);
