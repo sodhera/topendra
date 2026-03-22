@@ -18,7 +18,7 @@ import { EmailAuthCard } from '../components/EmailAuthCard';
 import { ShadButton } from '../components/ShadButton';
 import { useAppContext } from '../context/AppContext';
 import { isLoggedIn } from '@topey/shared/lib/auth';
-import { DEFAULT_REGION, LOCATION_DISCLOSURE_COPY } from '@topey/shared/lib/constants';
+import { DEFAULT_REGION } from '@topey/shared/lib/constants';
 import { CLEAN_MOBILE_MAP_PROPS } from '@topey/shared/lib/mobileMap';
 import { colors, radius, shadows, spacing, typography } from '@topey/shared/lib/theme';
 import { useLiveLocation } from '../hooks/useLiveLocation';
@@ -37,14 +37,11 @@ export function AddPlaceScreen({ navigation }) {
     state,
     isEmailAuthLoading,
     authNoticeMessage,
-    errorMessage: appError,
     requestEmailAccess,
     addPlace,
   } = useAppContext();
   const {
     region: userRegion,
-    permissionStatus,
-    errorMessage: locationError,
     hasResolvedInitialRegion,
   } = useLiveLocation({ watch: false });
   const [mapKey, setMapKey] = useState(0);
@@ -112,11 +109,6 @@ export function AddPlaceScreen({ navigation }) {
   }
 
   const isAuthenticated = isLoggedIn(state.session);
-  const locationStatusCopy =
-    permissionStatus === 'loading' && !hasResolvedInitialRegion
-      ? 'Finding your current location so the map opens where you are.'
-      : 'Move the map if needed, then tap Add here to enter the place details.';
-
   return (
     <View style={styles.container}>
       <MapView
@@ -151,27 +143,13 @@ export function AddPlaceScreen({ navigation }) {
           />
         </View>
 
-        <View style={styles.actionCard}>
-          <Text style={styles.eyebrow}>Add a place</Text>
-          <Text style={styles.title}>Move the map and Add the pin</Text>
-          <Text style={styles.copy}>{locationStatusCopy}</Text>
-
-          <View style={styles.coordsCard}>
-            <Text style={styles.coordsLabel}>Pinned at</Text>
-            <Text style={styles.coordsValue}>
-              {pin.latitude.toFixed(5)}, {pin.longitude.toFixed(5)}
-            </Text>
-          </View>
-
-          {appError ? <Text style={styles.subtle}>{appError}</Text> : null}
-          {locationError ? <Text style={styles.subtle}>{locationError}</Text> : null}
-          <Text style={styles.subtle}>{LOCATION_DISCLOSURE_COPY}</Text>
-
+        <View style={styles.actionDock}>
           <ShadButton
             label="Add here"
             shape="pill"
             onPress={() => setIsDetailsModalVisible(true)}
             disabled={!hasResolvedInitialRegion}
+            style={styles.actionButton}
           />
         </View>
       </SafeAreaView>
@@ -278,36 +256,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'flex-start',
   },
-  actionCard: {
-    backgroundColor: colors.card,
-    borderColor: colors.border,
-    borderRadius: radius.xl,
-    borderWidth: 0.75,
-    padding: spacing.lg,
+  actionDock: {
+    paddingBottom: spacing.sm,
+  },
+  actionButton: {
     ...shadows.floating,
-  },
-  eyebrow: {
-    color: colors.mutedText,
-    fontFamily: typography.medium,
-    fontSize: 11,
-    fontWeight: '600',
-    letterSpacing: 1.2,
-    textTransform: 'uppercase',
-  },
-  title: {
-    color: colors.text,
-    fontFamily: typography.semibold,
-    fontSize: 30,
-    fontWeight: '700',
-    letterSpacing: -0.9,
-    marginTop: spacing.xs,
-  },
-  copy: {
-    color: colors.mutedText,
-    fontFamily: typography.body,
-    fontSize: 15,
-    lineHeight: 22,
-    marginTop: spacing.sm,
   },
   authCallout: {
     backgroundColor: colors.secondary,
@@ -331,12 +284,19 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     marginTop: spacing.xs,
   },
-  subtle: {
+  title: {
+    color: colors.text,
+    fontFamily: typography.semibold,
+    fontSize: 30,
+    fontWeight: '700',
+    letterSpacing: -0.9,
+    marginTop: spacing.xs,
+  },
+  copy: {
     color: colors.mutedText,
     fontFamily: typography.body,
-    fontSize: 12,
-    lineHeight: 18,
-    marginBottom: spacing.sm,
+    fontSize: 15,
+    lineHeight: 22,
     marginTop: spacing.sm,
   },
   input: {

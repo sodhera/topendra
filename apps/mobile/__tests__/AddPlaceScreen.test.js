@@ -141,9 +141,7 @@ describe('AddPlaceScreen', () => {
 
     const screen = render(<AddPlaceScreen navigation={navigation} />);
 
-    await waitFor(() => {
-      expect(screen.getByText('40.71880, -74.00600')).toBeTruthy();
-    });
+    expect(screen.getByTestId('map-region').props.children).toContain('40.7128');
     expect(screen.getByTestId('map-config').props.children).toContain('"showsPointsOfInterest":false');
     expect(screen.getByTestId('map-config').props.children).toContain('"showsBuildings":false');
     expect(screen.getByTestId('add-place-center-pin')).toBeTruthy();
@@ -181,7 +179,7 @@ describe('AddPlaceScreen', () => {
 
     const screen = render(<AddPlaceScreen navigation={navigation} />);
 
-    expect(screen.getByText('Finding your current location so the map opens where you are.')).toBeTruthy();
+    expect(screen.queryByText('Move the map and Add the pin')).toBeNull();
 
     fireEvent.press(screen.getByText('Add here'));
 
@@ -202,9 +200,7 @@ describe('AddPlaceScreen', () => {
 
     const screen = render(<AddPlaceScreen navigation={navigation} />);
 
-    await waitFor(() => {
-      expect(screen.getByText('40.71880, -74.00600')).toBeTruthy();
-    });
+    expect(screen.getByTestId('map-region').props.children).toContain('40.7128');
 
     fireEvent.press(screen.getByText('Add here'));
 
