@@ -23,6 +23,15 @@ import { CLEAN_MOBILE_MAP_PROPS } from '@topey/shared/lib/mobileMap';
 import { colors, radius, shadows, spacing, typography } from '@topey/shared/lib/theme';
 import { useLiveLocation } from '../hooks/useLiveLocation';
 
+const ADD_PLACE_PIN_VERTICAL_FRACTION = 0.4;
+
+function getPinnedCoordinate(region) {
+  return {
+    latitude: region.latitude + (0.5 - ADD_PLACE_PIN_VERTICAL_FRACTION) * region.latitudeDelta,
+    longitude: region.longitude,
+  };
+}
+
 export function AddPlaceScreen({ navigation }) {
   const {
     state,
@@ -56,10 +65,7 @@ export function AddPlaceScreen({ navigation }) {
   useEffect(() => {
     if (!hasCenteredMap && hasResolvedInitialRegion) {
       setMapRegion(userRegion);
-      setPin({
-        latitude: userRegion.latitude,
-        longitude: userRegion.longitude,
-      });
+      setPin(getPinnedCoordinate(userRegion));
       setHasCenteredMap(true);
       setMapKey((value) => value + 1);
     }
@@ -120,22 +126,20 @@ export function AddPlaceScreen({ navigation }) {
         initialRegion={mapRegion}
         onRegionChangeStart={() => setIsMapMoving(true)}
         onRegionChange={(nextRegion) => {
-          setPin({
-            latitude: nextRegion.latitude,
-            longitude: nextRegion.longitude,
-          });
+          setPin(getPinnedCoordinate(nextRegion));
         }}
         onRegionChangeComplete={(nextRegion) => {
           setMapRegion(nextRegion);
-          setPin({
-            latitude: nextRegion.latitude,
-            longitude: nextRegion.longitude,
-          });
+          setPin(getPinnedCoordinate(nextRegion));
           setIsMapMoving(false);
         }}
         showsUserLocation
       />
-      <CenteredMapPin moving={isMapMoving} testID="add-place-center-pin" />
+      <CenteredMapPin
+        moving={isMapMoving}
+        testID="add-place-center-pin"
+        verticalPercent={`${ADD_PLACE_PIN_VERTICAL_FRACTION * 100}%`}
+      />
       <SafeAreaView style={styles.safeArea} pointerEvents="box-none">
         <View style={styles.topBar} pointerEvents="box-none">
           <ShadButton

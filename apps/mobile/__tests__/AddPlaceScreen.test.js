@@ -142,7 +142,7 @@ describe('AddPlaceScreen', () => {
     const screen = render(<AddPlaceScreen navigation={navigation} />);
 
     await waitFor(() => {
-      expect(screen.getByText('40.71280, -74.00600')).toBeTruthy();
+      expect(screen.getByText('40.71880, -74.00600')).toBeTruthy();
     });
     expect(screen.getByTestId('map-config').props.children).toContain('"showsPointsOfInterest":false');
     expect(screen.getByTestId('map-config').props.children).toContain('"showsBuildings":false');
@@ -158,7 +158,7 @@ describe('AddPlaceScreen', () => {
       expect(addPlace).toHaveBeenCalledWith({
         name: 'Corner Cafe',
         description: 'Late-night coffee and Wi-Fi.',
-        latitude: 40.7128,
+        latitude: 40.7188,
         longitude: -74.006,
       });
     });
@@ -203,7 +203,7 @@ describe('AddPlaceScreen', () => {
     const screen = render(<AddPlaceScreen navigation={navigation} />);
 
     await waitFor(() => {
-      expect(screen.getByText('40.71280, -74.00600')).toBeTruthy();
+      expect(screen.getByText('40.71880, -74.00600')).toBeTruthy();
     });
 
     fireEvent.press(screen.getByText('Add here'));

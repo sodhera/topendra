@@ -2,11 +2,17 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { colors, radius } from '@topey/shared/lib/theme';
 
-export function CenteredMapPin({ moving = false, testID = 'centered-map-pin' }) {
+const PIN_RED = '#DC2626';
+
+export function CenteredMapPin({
+  moving = false,
+  testID = 'centered-map-pin',
+  verticalPercent = '40%',
+}) {
   return (
     <View pointerEvents="none" style={styles.root} testID={testID}>
-      <View style={[styles.pinWrap, moving && styles.pinWrapMoving]}>
-        <View style={styles.stem} />
+      <View style={[styles.pinWrap, { top: verticalPercent }, moving && styles.pinWrapMoving]}>
+        <View style={styles.point} />
         <View style={styles.head}>
           <View style={styles.core} />
         </View>
@@ -27,37 +33,40 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     left: '50%',
     position: 'absolute',
-    top: '50%',
-    transform: [{ translateX: -18 }, { translateY: -44 }],
+    transform: [{ translateX: -20 }, { translateY: -42 }],
   },
   pinWrapMoving: {
-    transform: [{ translateX: -18 }, { translateY: -38 }, { scaleX: 0.94 }, { scaleY: 0.94 }],
+    transform: [{ translateX: -20 }, { translateY: -38 }, { scaleX: 0.94 }, { scaleY: 0.94 }],
   },
-  stem: {
-    backgroundColor: colors.primary,
-    borderRadius: radius.pill,
-    height: 18,
-    marginBottom: -3,
-    width: 6,
+  point: {
+    backgroundColor: PIN_RED,
+    borderBottomLeftRadius: 4,
+    borderBottomRightRadius: 12,
+    borderColor: 'rgba(255, 255, 255, 0.96)',
+    borderWidth: 2,
+    height: 20,
+    marginBottom: -12,
+    transform: [{ rotate: '45deg' }],
+    width: 20,
   },
   head: {
     alignItems: 'center',
-    backgroundColor: colors.primary,
-    borderColor: 'rgba(255, 255, 255, 0.92)',
+    backgroundColor: PIN_RED,
+    borderColor: 'rgba(255, 255, 255, 0.96)',
     borderRadius: 18,
     borderWidth: 2,
     height: 36,
     justifyContent: 'center',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.18,
+    shadowColor: '#111111',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.22,
     shadowRadius: 18,
     width: 36,
   },
   core: {
-    backgroundColor: colors.primaryText,
-    borderRadius: 7,
-    height: 14,
-    width: 14,
+    backgroundColor: colors.background,
+    borderRadius: radius.pill,
+    height: 12,
+    width: 12,
   },
 });
