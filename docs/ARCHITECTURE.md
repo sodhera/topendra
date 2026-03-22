@@ -175,10 +175,19 @@ Backend data helpers live in [src/lib/backend.js](/Users/sirishjoshi/Desktop/Top
 
 ### Writes
 
-- `createPlace`: inserts a new place
+- `createPlace`: inserts a new place with both `created_by` and `author_name`
 - `voteForPlace`: upserts or removes the current user’s vote
 - `createComment`: inserts a comment
 - `createPlaceOpenEvent`: records each place open with a viewer session id and source screen
+
+### Place Sheet Participation Row
+
+The place details modal now exposes place participation in one compact row:
+
+- left side: place-level upvote and downvote arrows
+- right side: `Added by: <Username>` using the persisted `authorName`
+
+This keeps authorship visible at the same moment the user chooses whether to vote, comment, or open the full discussion.
 
 ### Place Open Tracking
 

@@ -29,12 +29,12 @@ cd topey
   - `Profile` or `Sign in` button at the top right
   - one large `+` button at the bottom that opens the add-place flow
   - tapping a dot opens the place modal directly on home instead of navigating away
-  - the modal uses a single metadata line, `Open location`, stemmed arrow voting, and a Reddit-style thread preview
+  - the modal uses a single metadata line, `Open location`, a participation row with stemmed arrow voting plus `Added by: <Username>`, and a Reddit-style thread preview
 - Browse screen:
   - starts on the Kathmandu demo region with up to 50 demo location dots
   - `Back` button at the top left and `Add a place` at the top right
   - tapping a dot opens a native-feeling light preview card with rating, votes, and thread count
-  - `View more` opens a details modal with inline metadata, stemmed arrow voting, a stacked thread preview, and a separate discussion modal
+  - `View more` opens a details modal with inline metadata, a participation row that combines stemmed arrow voting with creator attribution, a stacked thread preview, and a separate discussion modal
 - Add-place screen:
   - opens on the user’s current location once foreground location resolves
   - movable map with a centered pin that follows the visible location
@@ -143,6 +143,7 @@ npm run supabase:test-user
 - can read comments
 - can add comments
 - can upvote or downvote
+- can see who added each place directly in the place sheet
 - can pin the current map location, open the add-details modal, and save a new place
 
 ### Test account

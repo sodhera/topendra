@@ -18,6 +18,7 @@
 - Logged-in users can upvote, downvote, and comment.
 - Guests can browse places, but adding a place remains login-gated.
 - Place modals should expose `Open location` plus compact arrow voting instead of large stacked vote buttons.
+- Place modals should keep creator attribution visible beside the place-level vote controls as `Added by: <Username>`.
 - Sheet actions should have Apple-like hierarchy: one clearly dominant CTA, smaller supporting controls, and compact composer actions.
 - Place sheets should preview only the top of the thread, then open a separate discussion modal for the full Reddit-like conversation flow.
 - The add-place flow should land on a live map first, then open a details modal from an explicit `Add here` action.

@@ -63,6 +63,7 @@ Use the tokens in [src/lib/theme.js](/Users/sirishjoshi/Desktop/Topey/src/lib/th
 - Place thread previews should feel Reddit-like:
   - metadata sits in one line, not boxed KPI cards
   - place-level voting uses plain arrows under the main location action
+  - the vote row also carries `Added by: <Username>` on the right in a smaller muted style
   - the place sheet only previews the top of the thread
   - a separate discussion modal handles the full comment stack
 - Cards and sheets should have:
