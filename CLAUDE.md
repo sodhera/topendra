@@ -17,6 +17,7 @@
 - Browsing happens inside the Topey app, not by kicking the user out to Apple Maps or Google Maps.
 - Logged-in users can upvote, downvote, and comment.
 - Guests can browse places, but adding a place remains login-gated.
+- Place modals should expose `Open location` plus compact arrow voting instead of large stacked vote buttons.
 - The add-place flow should land on a live map first, then open a details modal from an explicit `Add here` action.
 - Home and browse maps must stay pannable; they should not lock to GPS after load.
 - Home and browse maps also must not be controlled with `region={...}` in a way that fights native drag gestures.

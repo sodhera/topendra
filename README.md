@@ -29,11 +29,12 @@ cd topey
   - `Profile` or `Sign in` button at the top right
   - one large `+` button at the bottom that opens the add-place flow
   - tapping a dot opens the place modal directly on home instead of navigating away
+  - the modal includes `Open location`, compact arrow voting, and comments for signed-in users
 - Browse screen:
   - starts on the Kathmandu demo region with up to 50 demo location dots
   - `Back` button at the top left and `Add a place` at the top right
   - tapping a dot opens a small black/white place preview card with rating, votes, and thread count
-  - `View more` opens the full thread view for logged-in users or a login gate for guests
+  - `View more` opens a details modal with `Open location`, compact arrow voting, and the thread view
 - Add-place screen:
   - opens on the user’s current location once foreground location resolves
   - movable map with a centered pin that follows the visible location
@@ -129,6 +130,7 @@ npm run supabase:test-user
 - can open the map and roam around pins
 - can read place metadata
 - can open the place modal from any demo dot
+- can open the pinned coordinates in the native maps app
 - cannot read comments
 - cannot vote
 - cannot save new places

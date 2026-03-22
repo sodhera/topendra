@@ -51,7 +51,9 @@ Responsibilities:
 - render only `Profile` or `Sign in` at the top right
 - keep a single large `+` add-place button anchored at the bottom
 - open the place modal directly on marker taps instead of navigating into another screen
-- let authenticated users vote and comment inside that modal while guests are routed into auth
+- expose `Open location` inside that modal for every viewer
+- use compact Reddit-style arrow voting instead of large full-width vote buttons
+- let authenticated users comment inside that modal while guests are routed into auth
 
 The large center hero card, test-user widget, and center-floating action row are intentionally gone.
 
@@ -67,7 +69,8 @@ Responsibilities:
 - open a compact place preview only when a dot is tapped
 - show rating, vote ratio, and thread count in that preview
 - open an explicit details modal from `View more`
-- gate comments and votes behind login inside the modal
+- expose `Open location` and compact arrow voting inside the details modal
+- gate comments behind login inside the modal and auth-gate voting actions for guests
 
 ### AddPlace
 
