@@ -40,11 +40,6 @@ export function EmailAuthCard({
   return (
     <View style={styles.card}>
       <Text style={styles.title}>{isSignUp ? 'Create account' : 'Sign in'}</Text>
-      <Text style={styles.copy}>
-        {isSignUp
-          ? 'Sign up with a social account or email. Choose an anonymous username that will appear on places and comments.'
-          : 'Sign in with your social account or email.'}
-      </Text>
 
       <View style={styles.socialButtonsContainer}>
         {onGoogleSignIn && (
@@ -130,11 +125,6 @@ export function EmailAuthCard({
         </Pressable>
       ) : null}
       {helperText ? <Text style={styles.helper}>{helperText}</Text> : null}
-      {isSignUp ? (
-        <Text style={styles.note}>
-          Keep the username anonymous. {LOCATION_DISCLOSURE_COPY}
-        </Text>
-      ) : null}
     </View>
   );
 }
@@ -159,13 +149,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     letterSpacing: -0.18,
-  },
-  copy: {
-    color: colors.mutedText,
-    fontFamily: typography.body,
-    fontSize: 13,
-    lineHeight: 18,
-    marginTop: spacing.xs,
+    textAlign: 'center',
+    marginBottom: spacing.xs,
   },
   input: {
     backgroundColor: colors.elevatedCard,
@@ -221,13 +206,6 @@ const styles = StyleSheet.create({
   },
   helper: {
     color: colors.primary,
-    fontFamily: typography.body,
-    fontSize: 12,
-    lineHeight: 18,
-    marginTop: spacing.sm,
-  },
-  note: {
-    color: colors.mutedText,
     fontFamily: typography.body,
     fontSize: 12,
     lineHeight: 18,
