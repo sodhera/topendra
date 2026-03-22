@@ -205,7 +205,11 @@ export function HomeScreen({ navigation }) {
             label="+"
             size="large"
             shape="rounded"
-            onPress={() => navigation.navigate('AddPlace')}
+            onPress={() =>
+              navigation.navigate('AddPlace', {
+                startingRegion: mapRegion,
+              })
+            }
             style={styles.addButton}
             labelStyle={styles.addButtonLabel}
             testID="home-plus-button"

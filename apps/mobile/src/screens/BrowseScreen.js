@@ -210,7 +210,11 @@ export function BrowseScreen({ navigation, route }) {
             size="compact"
             shape="pill"
             variant="secondary"
-            onPress={() => navigation.navigate('AddPlace')}
+            onPress={() =>
+              navigation.navigate('AddPlace', {
+                startingRegion: mapRegion,
+              })
+            }
             testID="browse-add-button"
           />
         </View>

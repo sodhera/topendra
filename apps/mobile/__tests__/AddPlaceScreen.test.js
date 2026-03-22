@@ -4,6 +4,8 @@ import { AddPlaceScreen } from '../src/screens/AddPlaceScreen';
 import { useAppContext } from '../src/context/AppContext';
 import { useLiveLocation } from '../src/hooks/useLiveLocation';
 
+const mockAnimateToRegion = jest.fn();
+
 jest.mock('react-native-maps', () => {
   const React = require('react');
   const { Text, View } = require('react-native');
@@ -25,7 +27,7 @@ jest.mock('react-native-maps', () => {
     ref
   ) {
     React.useImperativeHandle(ref, () => ({
-      animateToRegion: jest.fn(),
+      animateToRegion: mockAnimateToRegion,
     }));
 
     return (
@@ -138,13 +140,25 @@ describe('AddPlaceScreen', () => {
 
   test('centers the add flow on the resolved live location and adds from the modal', async () => {
     addPlace.mockResolvedValue(undefined);
+    const startingRegion = {
+      latitude: 27.7172,
+      longitude: 85.324,
+      latitudeDelta: 0.12,
+      longitudeDelta: 0.12,
+    };
 
-    const screen = render(<AddPlaceScreen navigation={navigation} />);
+    const screen = render(<AddPlaceScreen navigation={navigation} route={{ params: { startingRegion } }} />);
 
-    expect(screen.getByTestId('map-region').props.children).toContain('40.7128');
+    expect(screen.getByTestId('map-region').props.children).toContain('27.7172');
     expect(screen.getByTestId('map-config').props.children).toContain('"showsPointsOfInterest":false');
     expect(screen.getByTestId('map-config').props.children).toContain('"showsBuildings":false');
     expect(screen.getByTestId('add-place-center-pin')).toBeTruthy();
+    expect(mockAnimateToRegion).toHaveBeenCalledWith({
+      latitude: 40.7128,
+      longitude: -74.006,
+      latitudeDelta: 0.06,
+      longitudeDelta: 0.06,
+    }, 280);
 
     fireEvent.press(screen.getByText('Add here'));
 
@@ -198,7 +212,7 @@ describe('AddPlaceScreen', () => {
       addPlace,
     });
 
-    const screen = render(<AddPlaceScreen navigation={navigation} />);
+    const screen = render(<AddPlaceScreen navigation={navigation} route={{ params: {} }} />);
 
     expect(screen.getByTestId('map-region').props.children).toContain('40.7128');
 

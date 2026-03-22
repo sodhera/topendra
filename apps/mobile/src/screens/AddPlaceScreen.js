@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -32,7 +32,7 @@ function getPinnedCoordinate(region) {
   };
 }
 
-export function AddPlaceScreen({ navigation }) {
+export function AddPlaceScreen({ navigation, route }) {
   const {
     state,
     isEmailAuthLoading,
@@ -44,14 +44,14 @@ export function AddPlaceScreen({ navigation }) {
     region: userRegion,
     hasResolvedInitialRegion,
   } = useLiveLocation({ watch: false });
-  const [mapKey, setMapKey] = useState(0);
-  const [mapRegion, setMapRegion] = useState(DEFAULT_REGION);
-  const [hasCenteredMap, setHasCenteredMap] = useState(false);
+  const mapRef = useRef(null);
+  const [initialViewportRegion] = useState(
+    () => route?.params?.startingRegion ?? (hasResolvedInitialRegion ? userRegion : DEFAULT_REGION)
+  );
+  const [mapRegion, setMapRegion] = useState(initialViewportRegion);
+  const [hasAutoScrolledToUserRegion, setHasAutoScrolledToUserRegion] = useState(false);
   const [isMapMoving, setIsMapMoving] = useState(false);
-  const [pin, setPin] = useState({
-    latitude: DEFAULT_REGION.latitude,
-    longitude: DEFAULT_REGION.longitude,
-  });
+  const [pin, setPin] = useState(getPinnedCoordinate(initialViewportRegion));
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [isDetailsModalVisible, setIsDetailsModalVisible] = useState(false);
@@ -60,13 +60,15 @@ export function AddPlaceScreen({ navigation }) {
   const [username, setUsername] = useState('');
 
   useEffect(() => {
-    if (!hasCenteredMap && hasResolvedInitialRegion) {
-      setMapRegion(userRegion);
-      setPin(getPinnedCoordinate(userRegion));
-      setHasCenteredMap(true);
-      setMapKey((value) => value + 1);
+    if (!hasResolvedInitialRegion || hasAutoScrolledToUserRegion) {
+      return;
     }
-  }, [hasCenteredMap, hasResolvedInitialRegion, userRegion]);
+
+    mapRef.current?.animateToRegion?.(userRegion, 280);
+    setMapRegion(userRegion);
+    setPin(getPinnedCoordinate(userRegion));
+    setHasAutoScrolledToUserRegion(true);
+  }, [hasAutoScrolledToUserRegion, hasResolvedInitialRegion, userRegion]);
 
   async function handleEmailAccess() {
     try {
@@ -113,9 +115,9 @@ export function AddPlaceScreen({ navigation }) {
     <View style={styles.container}>
       <MapView
         {...CLEAN_MOBILE_MAP_PROPS}
-        key={`add-place-map-${mapKey}`}
+        ref={mapRef}
         style={StyleSheet.absoluteFill}
-        initialRegion={mapRegion}
+        initialRegion={initialViewportRegion}
         onRegionChangeStart={() => setIsMapMoving(true)}
         onRegionChange={(nextRegion) => {
           setPin(getPinnedCoordinate(nextRegion));

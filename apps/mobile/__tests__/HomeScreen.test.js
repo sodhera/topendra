@@ -154,7 +154,14 @@ describe('HomeScreen', () => {
 
     fireEvent.press(screen.getByTestId('home-plus-button'));
 
-    expect(navigation.navigate).toHaveBeenCalledWith('AddPlace');
+    expect(navigation.navigate).toHaveBeenCalledWith('AddPlace', {
+      startingRegion: {
+        latitude: 27.7172,
+        longitude: 85.324,
+        latitudeDelta: 0.06,
+        longitudeDelta: 0.06,
+      },
+    });
   });
 
   test('opens the place modal when a map marker is tapped from home', () => {

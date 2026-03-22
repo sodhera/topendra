@@ -237,4 +237,19 @@ describe('BrowseScreen', () => {
 
     expect(screen.getByText('Email')).toBeTruthy();
   });
+
+  test('opens add place from the current browse viewport', () => {
+    const screen = render(<BrowseScreen navigation={navigation} route={{ params: {} }} />);
+
+    fireEvent.press(screen.getByTestId('browse-add-button'));
+
+    expect(navigation.navigate).toHaveBeenCalledWith('AddPlace', {
+      startingRegion: {
+        latitude: 27.7172,
+        longitude: 85.324,
+        latitudeDelta: 0.06,
+        longitudeDelta: 0.06,
+      },
+    });
+  });
 });
