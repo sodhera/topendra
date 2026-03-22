@@ -60,6 +60,7 @@ Use the tokens in [src/lib/theme.js](/Users/sirishjoshi/Desktop/Topey/src/lib/th
   - white secondary pills for map chrome
   - minimum 44pt tappable compact controls
   - only one dominant CTA per sheet; supporting actions should step down in size and emphasis
+  - the home `+` control is the one exception: keep the large plus glyph, but use a black rounded-square silhouette instead of a blue pill
 - Place thread previews should feel Reddit-like:
   - metadata sits in one line, not boxed KPI cards
   - place-level voting uses plain arrows under the main location action
