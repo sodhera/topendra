@@ -9,6 +9,7 @@ The app is now backed by Supabase for:
 - comment storage
 - session persistence
 - OAuth sign-in with Google and Facebook
+- email/password sign-in fallback
 
 ## Repo
 
@@ -107,6 +108,7 @@ npm run ios
 npm run android
 npm run test -- --runInBand
 npx expo-doctor
+npm run supabase:test-user
 ```
 
 ## How The App Behaves
@@ -122,10 +124,20 @@ npx expo-doctor
 ### Logged-in user
 
 - can sign in with Google or Facebook
+- can sign in with email/password
 - can read comments
 - can add comments
 - can upvote or downvote
 - can save a new pinned place
+
+### Test account
+
+The home screen is prefilled with a working test login:
+
+```text
+Email: testuser@topey.app
+Password: TopeyTest123!
+```
 
 ## OAuth Notes
 

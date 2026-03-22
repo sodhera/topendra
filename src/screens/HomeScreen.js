@@ -1,8 +1,9 @@
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import React, { useState } from 'react';
+import { Alert, StyleSheet, Text, View } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AuthButtons } from '../components/AuthButtons';
+import { EmailAuthCard } from '../components/EmailAuthCard';
 import { ShadButton } from '../components/ShadButton';
 import { useAppContext } from '../context/AppContext';
 import { getUserLabel, isLoggedIn } from '../lib/auth';
@@ -10,15 +11,26 @@ import { colors, radius, shadows, spacing, typography } from '../lib/theme';
 import { useLiveLocation } from '../hooks/useLiveLocation';
 
 export function HomeScreen({ navigation }) {
-  const { state, authBusyProvider, errorMessage, signInWithOAuth, signOut } = useAppContext();
+  const { state, authBusyProvider, isPasswordAuthLoading, errorMessage, signInWithOAuth, signInWithPassword, signOut } =
+    useAppContext();
   const { region, errorMessage: locationError } = useLiveLocation();
   const isAuthenticated = isLoggedIn(state.session);
+  const [email, setEmail] = useState('testuser@topey.app');
+  const [password, setPassword] = useState('TopeyTest123!');
 
   async function handleProviderPress(provider) {
     try {
       await signInWithOAuth(provider);
     } catch (error) {
       return;
+    }
+  }
+
+  async function handleEmailSignIn() {
+    try {
+      await signInWithPassword({ email, password });
+    } catch (error) {
+      Alert.alert('Sign-in failed', error.message);
     }
   }
 
@@ -51,11 +63,22 @@ export function HomeScreen({ navigation }) {
             <Text style={styles.statusCopy}>
               {isAuthenticated
                 ? 'Comments, votes, and new place submissions are unlocked.'
-                : 'Browse as a guest, then sign in with Google or Facebook to vote, comment, and add places.'}
+                : 'Browse as a guest, then sign in with Google, Facebook, or the test email account to vote, comment, and add places.'}
             </Text>
 
             {!isAuthenticated ? (
-              <AuthButtons busyProvider={authBusyProvider} onProviderPress={handleProviderPress} />
+              <>
+                <AuthButtons busyProvider={authBusyProvider} onProviderPress={handleProviderPress} />
+                <EmailAuthCard
+                  email={email}
+                  password={password}
+                  onEmailChange={setEmail}
+                  onPasswordChange={setPassword}
+                  onSignIn={handleEmailSignIn}
+                  authBusy={isPasswordAuthLoading}
+                  helperText="Seeded test credentials: testuser@topey.app / TopeyTest123!"
+                />
+              </>
             ) : null}
 
             {errorMessage ? <Text style={styles.meta}>{errorMessage}</Text> : null}

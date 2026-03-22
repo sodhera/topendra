@@ -17,6 +17,7 @@ export function AppProvider({ children }) {
   const [isHydrated, setIsHydrated] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [authBusyProvider, setAuthBusyProvider] = useState('');
+  const [isPasswordAuthLoading, setIsPasswordAuthLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
   const refreshData = useCallback(async (activeSession) => {
@@ -137,6 +138,27 @@ export function AppProvider({ children }) {
     }
   }, []);
 
+  const signInWithPassword = useCallback(async ({ email, password }) => {
+    setIsPasswordAuthLoading(true);
+    setErrorMessage('');
+
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
+
+      if (error) {
+        throw error;
+      }
+    } catch (error) {
+      setErrorMessage(getReadableError(error, 'Email sign-in failed.'));
+      throw error;
+    } finally {
+      setIsPasswordAuthLoading(false);
+    }
+  }, []);
+
   const addPlace = useCallback(
     async ({ name, description, latitude, longitude }) => {
       if (!session?.user) {
@@ -204,9 +226,11 @@ export function AppProvider({ children }) {
       isHydrated,
       isRefreshing,
       authBusyProvider,
+      isPasswordAuthLoading,
       errorMessage,
       refreshData,
       signInWithOAuth,
+      signInWithPassword,
       signOut,
       addPlace,
       votePlace,
@@ -221,9 +245,11 @@ export function AppProvider({ children }) {
       isHydrated,
       isRefreshing,
       authBusyProvider,
+      isPasswordAuthLoading,
       errorMessage,
       refreshData,
       signInWithOAuth,
+      signInWithPassword,
       signOut,
       addPlace,
       votePlace,

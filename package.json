@@ -10,7 +10,8 @@
     "test": "jest",
     "supabase:auth": "node scripts/sync-supabase-auth-config.mjs",
     "supabase:migrate": "node scripts/apply-supabase-sql.mjs supabase/migrations/20260322114500_init_topey.sql",
-    "supabase:seed": "node scripts/apply-supabase-sql.mjs supabase/seed.sql"
+    "supabase:seed": "node scripts/apply-supabase-sql.mjs supabase/seed.sql",
+    "supabase:test-user": "node scripts/create-test-user.mjs"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "2.2.0",

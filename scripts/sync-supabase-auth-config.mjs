@@ -25,6 +25,7 @@ async function main() {
     body: JSON.stringify({
       site_url: 'topey://auth/callback',
       uri_allow_list: 'topey://auth/callback',
+      mailer_autoconfirm: true,
     }),
   });
 

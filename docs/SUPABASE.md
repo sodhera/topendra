@@ -23,6 +23,7 @@ Supabase is responsible for:
 - storing comments
 - persisting auth sessions
 - brokering Google and Facebook OAuth
+- handling email/password auth
 
 The app uses the publishable key at runtime. The management access token is only for local admin scripts.
 
@@ -123,6 +124,7 @@ This updates:
 
 - `site_url`
 - `uri_allow_list`
+- `mailer_autoconfirm`
 
 ## Admin Scripts
 
@@ -135,9 +137,23 @@ Examples:
 ```bash
 npm run supabase:migrate
 npm run supabase:seed
+npm run supabase:test-user
 ```
 
 This path was chosen because the current repo does not have the remote Postgres password available, but it does have a Supabase management token.
+
+### Create the seeded test user
+
+File: [scripts/create-test-user.mjs](/Users/sirishjoshi/Desktop/Topey/scripts/create-test-user.mjs)
+
+Credentials:
+
+```text
+Email: testuser@topey.app
+Password: TopeyTest123!
+```
+
+This script signs the user up if needed, then verifies that password sign-in works against the live Supabase project.
 
 ## Provider Caveat
 
