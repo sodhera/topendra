@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import MapView, { Marker } from 'react-native-maps';
+import MapView from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AuthButtons } from '../components/AuthButtons';
+import { MapPlaceMarker } from '../components/MapPlaceMarker';
 import { ShadButton } from '../components/ShadButton';
 import { useAppContext } from '../context/AppContext';
 import { isLoggedIn } from '../lib/auth';
@@ -24,15 +25,16 @@ export function BrowseScreen({ navigation }) {
   const { region: userRegion, errorMessage: locationError } = useLiveLocation({ watch: false });
   const [mapRegion, setMapRegion] = useState(DEFAULT_REGION);
   const [hasCenteredMap, setHasCenteredMap] = useState(false);
+  const [isMapMoving, setIsMapMoving] = useState(false);
   const [selectedPlaceId, setSelectedPlaceId] = useState('');
   const [commentDraft, setCommentDraft] = useState('');
 
   useEffect(() => {
     if (!hasCenteredMap) {
-      setMapRegion(userRegion);
+      setMapRegion(DEFAULT_REGION);
       setHasCenteredMap(true);
     }
-  }, [hasCenteredMap, userRegion]);
+  }, [hasCenteredMap]);
 
   useEffect(() => {
     if (!state.places.length) {
@@ -100,19 +102,25 @@ export function BrowseScreen({ navigation }) {
       <MapView
         style={StyleSheet.absoluteFill}
         region={mapRegion}
-        onRegionChangeComplete={setMapRegion}
+        onRegionChangeStart={() => setIsMapMoving(true)}
+        onRegionChangeComplete={(nextRegion) => {
+          setMapRegion(nextRegion);
+          setIsMapMoving(false);
+        }}
         showsUserLocation
       >
         {state.places.map((place) => (
-          <Marker
+          <MapPlaceMarker
             key={place.id}
             coordinate={{ latitude: place.latitude, longitude: place.longitude }}
-            pinColor={place.id === selectedPlace?.id ? '#FFFFFF' : colors.accent}
+            selected={place.id === selectedPlace?.id}
+            moving={isMapMoving}
+            title={place.name}
             onPress={() => setSelectedPlaceId(place.id)}
           />
         ))}
       </MapView>
-      <View style={styles.scrim} />
+      <View style={styles.scrim} pointerEvents="none" />
 
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.topBar}>
@@ -249,7 +257,7 @@ const styles = StyleSheet.create({
   },
   scrim: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.12)',
+    backgroundColor: 'rgba(0, 0, 0, 0.18)',
   },
   safeArea: {
     flex: 1,

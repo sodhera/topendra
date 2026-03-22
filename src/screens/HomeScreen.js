@@ -1,22 +1,26 @@
 import React, { useState } from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
-import MapView, { Marker } from 'react-native-maps';
+import MapView from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AuthButtons } from '../components/AuthButtons';
 import { EmailAuthCard } from '../components/EmailAuthCard';
 import { ShadButton } from '../components/ShadButton';
+import { MapPlaceMarker } from '../components/MapPlaceMarker';
 import { useAppContext } from '../context/AppContext';
 import { getUserLabel, isLoggedIn } from '../lib/auth';
+import { DEFAULT_REGION } from '../lib/constants';
 import { colors, radius, shadows, spacing, typography } from '../lib/theme';
 import { useLiveLocation } from '../hooks/useLiveLocation';
 
 export function HomeScreen({ navigation }) {
   const { state, authBusyProvider, isPasswordAuthLoading, errorMessage, signInWithOAuth, signInWithPassword, signOut } =
     useAppContext();
-  const { region, errorMessage: locationError } = useLiveLocation();
+  const { errorMessage: locationError } = useLiveLocation({ watch: false });
   const isAuthenticated = isLoggedIn(state.session);
   const [email, setEmail] = useState('testuser@topey.app');
   const [password, setPassword] = useState('TopeyTest123!');
+  const [mapRegion, setMapRegion] = useState(DEFAULT_REGION);
+  const [isMapMoving, setIsMapMoving] = useState(false);
 
   async function handleProviderPress(provider) {
     try {
@@ -36,17 +40,26 @@ export function HomeScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <MapView style={StyleSheet.absoluteFill} region={region} showsUserLocation>
+      <MapView
+        style={StyleSheet.absoluteFill}
+        region={mapRegion}
+        onRegionChangeStart={() => setIsMapMoving(true)}
+        onRegionChangeComplete={(nextRegion) => {
+          setMapRegion(nextRegion);
+          setIsMapMoving(false);
+        }}
+        showsUserLocation
+      >
         {state.places.map((place) => (
-          <Marker
+          <MapPlaceMarker
             key={place.id}
             coordinate={{ latitude: place.latitude, longitude: place.longitude }}
             title={place.name}
-            description={place.description}
+            moving={isMapMoving}
           />
         ))}
       </MapView>
-      <View style={styles.scrim} />
+      <View style={styles.scrim} pointerEvents="none" />
 
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.topRow}>
@@ -103,7 +116,7 @@ const styles = StyleSheet.create({
   },
   scrim: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: colors.mapOverlay,
+    backgroundColor: 'rgba(9, 9, 11, 0.24)',
   },
   safeArea: {
     flex: 1,

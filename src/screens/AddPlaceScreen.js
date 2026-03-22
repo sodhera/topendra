@@ -11,9 +11,10 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import MapView, { Marker } from 'react-native-maps';
+import MapView from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AuthButtons } from '../components/AuthButtons';
+import { MapPlaceMarker } from '../components/MapPlaceMarker';
 import { ShadButton } from '../components/ShadButton';
 import { useAppContext } from '../context/AppContext';
 import { isLoggedIn } from '../lib/auth';
@@ -31,11 +32,11 @@ export function AddPlaceScreen({ navigation }) {
   } = useLiveLocation({ watch: false });
   const [mapRegion, setMapRegion] = useState(DEFAULT_REGION);
   const [hasCenteredMap, setHasCenteredMap] = useState(false);
+  const [isMapMoving, setIsMapMoving] = useState(false);
   const [pin, setPin] = useState({
     latitude: DEFAULT_REGION.latitude,
     longitude: DEFAULT_REGION.longitude,
   });
-  const [hasPinnedManually, setHasPinnedManually] = useState(false);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [isDetailsModalVisible, setIsDetailsModalVisible] = useState(false);
@@ -53,13 +54,11 @@ export function AddPlaceScreen({ navigation }) {
   }, [hasCenteredMap, hasResolvedInitialRegion, userRegion]);
 
   useEffect(() => {
-    if (!hasPinnedManually) {
-      setPin({
-        latitude: mapRegion.latitude,
-        longitude: mapRegion.longitude,
-      });
-    }
-  }, [hasPinnedManually, mapRegion.latitude, mapRegion.longitude]);
+    setPin({
+      latitude: mapRegion.latitude,
+      longitude: mapRegion.longitude,
+    });
+  }, [mapRegion.latitude, mapRegion.longitude]);
 
   async function handleProviderPress(provider) {
     try {
@@ -100,11 +99,6 @@ export function AddPlaceScreen({ navigation }) {
     }
   }
 
-  function handlePinUpdate(coordinate) {
-    setHasPinnedManually(true);
-    setPin(coordinate);
-  }
-
   const isAuthenticated = isLoggedIn(state.session);
   const locationStatusCopy =
     permissionStatus === 'loading' && !hasResolvedInitialRegion
@@ -116,17 +110,19 @@ export function AddPlaceScreen({ navigation }) {
       <MapView
         style={StyleSheet.absoluteFill}
         region={mapRegion}
-        onRegionChangeComplete={setMapRegion}
-        onPress={(event) => handlePinUpdate(event.nativeEvent.coordinate)}
+        onRegionChangeStart={() => setIsMapMoving(true)}
+        onRegionChangeComplete={(nextRegion) => {
+          setMapRegion(nextRegion);
+          setIsMapMoving(false);
+        }}
         showsUserLocation
       >
-        <Marker
+        <MapPlaceMarker
           coordinate={pin}
-          draggable
-          onDragEnd={(event) => handlePinUpdate(event.nativeEvent.coordinate)}
+          moving={isMapMoving}
         />
       </MapView>
-      <View style={styles.scrim} />
+      <View style={styles.scrim} pointerEvents="none" />
 
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.topBar}>
@@ -240,7 +236,7 @@ const styles = StyleSheet.create({
   },
   scrim: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.12)',
+    backgroundColor: 'rgba(0, 0, 0, 0.18)',
   },
   safeArea: {
     flex: 1,
