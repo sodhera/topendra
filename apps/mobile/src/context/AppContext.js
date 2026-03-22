@@ -7,6 +7,7 @@ import { createComment, createPlace, createPlaceOpenEvent, fetchAppData, voteFor
 import { VIEWER_SESSION_KEY } from '@topey/shared/lib/constants';
 import Constants from 'expo-constants';
 import * as WebBrowser from 'expo-web-browser';
+import { getAuthRedirectUrl, getSafeSession, restoreSessionFromUrl, supabase } from '../lib/supabase';
 
 const AppContext = createContext(null);
 const demoData = buildKathmanduDemoData();
