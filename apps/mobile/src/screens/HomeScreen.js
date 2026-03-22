@@ -35,7 +35,6 @@ export function HomeScreen({ navigation }) {
     signUpWithPassword,
     signInWithPassword,
     signInWithGoogle,
-    signInWithApple,
     signOut,
     addComment,
     votePlace,
@@ -101,15 +100,6 @@ export function HomeScreen({ navigation }) {
       setIsAuthModalVisible(false);
     } catch (error) {
       Alert.alert('Google Sign-in failed', error.message);
-    }
-  }
-
-  async function handleAppleSignIn() {
-    try {
-      await signInWithApple();
-      setIsAuthModalVisible(false);
-    } catch (error) {
-      Alert.alert('Apple Sign-in failed', error.message);
     }
   }
 
@@ -339,7 +329,6 @@ export function HomeScreen({ navigation }) {
                     onSignUp={handleSignUp}
                     onSignIn={handleSignIn}
                     onGoogleSignIn={handleGoogleSignIn}
-                    onAppleSignIn={handleAppleSignIn}
                     authBusy={isEmailAuthLoading}
                     helperText={authNoticeMessage}
                   />

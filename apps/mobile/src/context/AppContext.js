@@ -5,8 +5,6 @@ import { buildKathmanduDemoData } from '@topey/shared/data/demoCatalog';
 import { getUserIdentity, normalizeAnonymousUsername } from '@topey/shared/lib/auth';
 import { createComment, createPlace, createPlaceOpenEvent, fetchAppData, voteForPlace } from '../lib/backend';
 import { VIEWER_SESSION_KEY } from '@topey/shared/lib/constants';
-import * as AppleAuthentication from 'expo-apple-authentication';
-import * as Crypto from 'expo-crypto';
 import Constants from 'expo-constants';
 import {
   GoogleSignin,
@@ -324,74 +322,6 @@ export function AppProvider({ children }) {
     }
   }, []);
 
-  const signInWithApple = useCallback(async () => {
-    setIsEmailAuthLoading(true);
-    setErrorMessage('');
-    setAuthNoticeMessage('');
-
-    try {
-      const isAvailable = await AppleAuthentication.isAvailableAsync();
-      if (!isAvailable) {
-        throw new Error('Sign in with Apple is not available on this device.');
-      }
-
-      const nonce = String.fromCharCode.apply(
-        null,
-        Array.from(await Crypto.getRandomBytesAsync(32))
-      );
-      const hashedNonce = await Crypto.digestStringAsync(
-        Crypto.CryptoDigestAlgorithm.SHA256,
-        nonce
-      );
-
-      const credential = await AppleAuthentication.signInAsync({
-        requestedScopes: [
-          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
-          AppleAuthentication.AppleAuthenticationScope.EMAIL,
-        ],
-        nonce: hashedNonce,
-      });
-
-      if (!credential.identityToken) {
-        throw new Error('Apple Sign-In failed: No identity token returned');
-      }
-
-      const { error } = await supabase.auth.signInWithIdToken({
-        provider: 'apple',
-        token: credential.identityToken,
-        nonce: nonce,
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      if (credential.fullName?.givenName || credential.fullName?.familyName) {
-        const givenName = credential.fullName.givenName || '';
-        const familyName = credential.fullName.familyName || '';
-        const fullName = `${givenName} ${familyName}`.trim();
-        
-        await supabase.auth.updateUser({
-          data: {
-            full_name: fullName,
-            given_name: givenName,
-            family_name: familyName,
-            preferred_username: normalizeAnonymousUsername(fullName) || undefined,
-          },
-        });
-      }
-
-    } catch (error) {
-      if (error.code === 'ERR_REQUEST_CANCELED') {
-        // Handle user cancellation silently
-      } else {
-        setErrorMessage(getReadableError(error, 'Apple Sign-In failed.'));
-      }
-    } finally {
-      setIsEmailAuthLoading(false);
-    }
-  }, []);
-
 
   const signOut = useCallback(async () => {
     const { error } = await supabase.auth.signOut();
@@ -499,7 +429,6 @@ export function AppProvider({ children }) {
       signUpWithPassword,
       signInWithPassword,
       signInWithGoogle,
-      signInWithApple,
       signOut,
       addPlace,
       votePlace,
@@ -523,7 +452,6 @@ export function AppProvider({ children }) {
       signUpWithPassword,
       signInWithPassword,
       signInWithGoogle,
-      signInWithApple,
       signOut,
       addPlace,
       votePlace,

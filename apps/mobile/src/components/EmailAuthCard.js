@@ -9,7 +9,6 @@ export function EmailAuthCard({
   onSignUp,
   onSignIn,
   onGoogleSignIn,
-  onAppleSignIn,
   authBusy,
   helperText,
 }) {
@@ -45,16 +44,6 @@ export function EmailAuthCard({
             disabled={authBusy}
             style={styles.socialButton}
             variant="outline"
-          />
-        )}
-        {Platform.OS === 'ios' && onAppleSignIn && (
-          <ShadButton
-            icon={<Ionicons name="logo-apple" size={20} color={colors.primaryText} />}
-            label={authBusy ? 'Please wait...' : 'Continue with Apple'}
-            onPress={onAppleSignIn}
-            disabled={authBusy}
-            style={styles.socialButton}
-            variant="primary"
           />
         )}
       </View>
