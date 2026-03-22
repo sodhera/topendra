@@ -13,6 +13,13 @@ export const DEFAULT_REGION = {
   longitudeDelta: 0.06,
 };
 
+export const KATHMANDU_EXPLORE_REGION = {
+  latitude: 27.7172,
+  longitude: 85.324,
+  latitudeDelta: 0.12,
+  longitudeDelta: 0.12,
+};
+
 export const OAUTH_PROVIDERS = {
   GOOGLE: 'google',
   FACEBOOK: 'facebook',

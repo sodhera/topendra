@@ -10,7 +10,9 @@
 
 - The home screen must stay simple:
   - live map in the background
-  - edge-mounted controls only
+  - `Add a place` at the top left
+  - `Profile` or `Sign in` at the top right
+  - one large `Find a place` button at the bottom
   - no center-floating action row or oversized homepage widget
 - Browsing happens inside the Topey app, not by kicking the user out to Apple Maps or Google Maps.
 - Logged-in users can upvote, downvote, and comment.
@@ -18,17 +20,18 @@
 - The add-place flow should land on a live map first, then open a details modal from an explicit `Add here` action.
 - Home and browse maps must stay pannable; they should not lock to GPS after load.
 - Home and browse maps also must not be controlled with `region={...}` in a way that fights native drag gestures.
-- Dragging the home map should enter browse mode automatically, and browse mode must have a back path to home.
-- In browse mode, the nearest place to the visible map center should drive the compact bottom preview.
+- Browse mode should have only `Back` at the top left and `Add a place` at the top right.
+- Browse previews should open from explicit dot taps, not automatic map-center tracking.
 - Demo Kathmandu pins should stay visible by default so the map behavior is easy to verify.
-- Button and overlay treatment should stay translucent/glassy with springy motion instead of flat rectangles.
+- The runtime demo dataset should include up to 50 Kathmandu places with multiple comment threads for testing.
+- Button and overlay treatment should stay simple black/white shadcn-style instead of glassy effects.
 - Each place open should be tracked so later notification work has real event history.
 - The app is Expo native and written in JavaScript.
 
 ## Design Direction
 
 - Use a simple shadcn-style visual language:
-  - neutral dark surfaces
+  - white cards and black primary actions
   - clean borders
   - rounded cards
   - straightforward typography

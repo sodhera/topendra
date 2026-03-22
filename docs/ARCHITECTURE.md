@@ -46,11 +46,11 @@ Defined in [src/screens/HomeScreen.js](/Users/sirishjoshi/Desktop/Topey/src/scre
 
 Responsibilities:
 
-- show the live map background and keep it directly pannable
-- resolve the initial map viewport from foreground location without locking the map to React state during drag gestures
-- render only edge-mounted liquid-glass controls instead of a large status widget or center button row
-- switch into browse mode as soon as the map starts moving
-- expose a back path from browse mode back to the home chrome
+- show the Kathmandu demo map immediately
+- keep the map directly pannable without any full-screen overlay layer
+- render `Add a place` at the top left and `Profile` or `Sign in` at the top right
+- keep a single large `Find a place` button anchored at the bottom
+- allow marker taps to jump straight into the browse screen for a selected place
 
 The large center hero card, test-user widget, and center-floating action row are intentionally gone.
 
@@ -60,12 +60,12 @@ Defined in [src/screens/BrowseScreen.js](/Users/sirishjoshi/Desktop/Topey/src/sc
 
 Responsibilities:
 
-- reuse the same map foundation as home
-- keep the initial viewport on the resolved live location or Kathmandu fallback
-- display multiple place markers from Supabase
-- pick the nearest place to the visible map center as the active browse preview target
-- collapse markers into a smaller capsule while the map is moving, then expand them after 2 seconds of idle time
-- show a compact place preview and an explicit details modal
+- render the same Kathmandu demo map foundation as home
+- show only two top controls: `Back` and `Add a place`
+- display up to 50 place markers from Supabase plus the runtime demo fallback
+- open a compact place preview only when a dot is tapped
+- show rating, vote ratio, and thread count in that preview
+- open an explicit details modal from `View more`
 - gate comments and votes behind login inside the modal
 
 ### AddPlace
@@ -161,6 +161,7 @@ Backend data helpers live in [src/lib/backend.js](/Users/sirishjoshi/Desktop/Top
 - all users fetch `places`
 - all users fetch `place_votes`
 - only authenticated users fetch `place_comments`
+- the app merges in a deterministic 50-place Kathmandu demo dataset when the backend is thin or unavailable
 
 ### Writes
 
@@ -195,7 +196,7 @@ Behavior:
 4. Fall back to Kathmandu when location is unavailable.
 5. Allow screens to opt out of live recentering so the browse map can be explored freely.
 
-The screens now use the live region for distance and add-place setup, but the browse and home maps are not locked to it. That keeps the Kathmandu demo markers visible and still lets the user move the map by hand.
+Only `AddPlace` uses live recentering now. `Home` and `Browse` intentionally start on the Kathmandu demo region so the 50 seeded dots are visible immediately.
 
 ## Map Gesture Model
 
@@ -203,13 +204,13 @@ The map screens intentionally avoid controlling `react-native-maps` with `region
 
 Mechanism:
 
-1. The screen mounts the map with `initialRegion`.
-2. Once foreground location resolves, the screen recenters once for setup.
-3. User drags happen directly inside the native map view.
-4. `onRegionChangeStart` switches the chrome into browse mode and collapses markers.
-5. `onRegionChangeComplete` stores the new viewport, chooses the nearest place to the map center, and schedules the preview expansion after 2 seconds of idle.
+1. Each map screen mounts the map with `initialRegion`.
+2. `Home` and `Browse` stay on the Kathmandu demo region.
+3. `AddPlace` recenters once from foreground location.
+4. User drags happen directly inside the native map view because only the actual buttons intercept touches.
+5. `Browse` previews come from explicit marker taps instead of automatic map-center selection.
 
-This is the key fix for the earlier bug where the map felt locked and only tiny untouched areas seemed draggable.
+This keeps the interaction simple and avoids the earlier bug where the map felt locked and only tiny untouched areas seemed draggable.
 
 ## Legacy Prototype Code
 

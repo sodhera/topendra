@@ -25,29 +25,29 @@ cd topey
 ## Current Product Shape
 
 - Home screen:
-  - live map that resolves to the user location once foreground location finishes loading
-  - edge-mounted liquid-glass controls only, so most of the map stays directly draggable
-  - no large profile widget, center button row, or permanent homepage card over the map
-  - dragging the map enters `Find a place` mode automatically
+  - opens on the Kathmandu demo region so the place dots are visible immediately
+  - `Add a place` button at the top left
+  - `Profile` or `Sign in` button at the top right
+  - one large `Find a place` button at the bottom
 - Browse screen:
-  - same map system as home, but starts in browse mode with a back button
-  - multiple seeded place pins in Kathmandu
-  - the nearest place to the visible map center drives the browse preview
-  - map pins stay minimized while the map is moving and expand after 2 seconds of idle time
-  - compact liquid-glass place preview expands after 2 seconds of idle time, then opens a details modal on demand
+  - starts on the Kathmandu demo region with up to 50 demo location dots
+  - `Back` button at the top left and `Add a place` at the top right
+  - tapping a dot opens a small black/white place preview card with rating, votes, and thread count
+  - `View more` opens the full thread view for logged-in users or a login gate for guests
 - Add-place screen:
   - opens on the user’s current location once foreground location resolves
   - movable map with a centered pin that follows the visible location
   - `Add here` action that opens a details modal
   - modal form with name, description, and final `Add` submit for logged-in users
-- Buttons and overlays now use a translucent liquid-glass treatment and springy motion.
+- Buttons and sheets now use a simple black/white shadcn-style treatment.
 - Place opens are tracked in Supabase so later area-notification work has usage history to build on.
+- Demo mode now ships with 50 deterministic Kathmandu places plus multiple seeded comment threads per place.
 
 ## Map Interaction Model
 
-- The map screens use `initialRegion` plus imperative recentering for setup. They do not keep `react-native-maps` locked to a controlled `region` prop during drag gestures.
-- `Home` and `Browse` switch into browse mode on `onRegionChangeStart`, collapse marker labels while the map is moving, then expand the preview card after 2 seconds of idle time.
-- The browse preview follows the nearest seeded place to the visible map center instead of a stale last-selected marker.
+- `Home` and `Browse` mount the map with `initialRegion`; they do not keep `react-native-maps` locked to a controlled `region` prop during drag gestures.
+- Home and browse both stay directly draggable because only the actual buttons intercept touch events.
+- The browse preview opens only when the user taps a location dot.
 - `AddPlace` updates the pending pin from map movement and keeps the details form behind an explicit modal instead of a permanent card.
 
 ## Tech Stack
@@ -101,7 +101,7 @@ What these do:
 
 - `supabase:auth`: sets the mobile redirect URL to `topey://auth/callback`
 - `supabase:migrate`: creates the `places`, `place_votes`, and `place_comments` tables with RLS
-- `supabase:seed`: inserts the starter pins, votes, and comments
+- `supabase:seed`: replaces the demo dataset with 50 Kathmandu places, votes, and comment threads
 
 ## Running The App
 
@@ -128,6 +128,7 @@ npm run supabase:test-user
 
 - can open the map and roam around pins
 - can read place metadata
+- can open the small place preview card from any demo dot
 - cannot read comments
 - cannot vote
 - cannot save new places

@@ -19,7 +19,7 @@ import { MapPlaceMarker } from '../components/MapPlaceMarker';
 import { ShadButton } from '../components/ShadButton';
 import { useAppContext } from '../context/AppContext';
 import { isLoggedIn } from '../lib/auth';
-import { DEFAULT_REGION } from '../lib/constants';
+import { DEFAULT_REGION, KATHMANDU_EXPLORE_REGION } from '../lib/constants';
 import { getCommentsForPlace, getVoteBreakdown } from '../lib/geo';
 import { colors, radius, shadows, spacing, typography } from '../lib/theme';
 
@@ -147,7 +147,7 @@ export function BrowseScreen({ navigation, route }) {
     <View style={styles.container}>
       <MapView
         ref={mapRef}
-        initialRegion={DEFAULT_REGION}
+        initialRegion={KATHMANDU_EXPLORE_REGION}
         onPress={() => setSelectedPlaceId('')}
         style={StyleSheet.absoluteFill}
         testID="browse-map"

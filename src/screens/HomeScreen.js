@@ -17,7 +17,7 @@ import { MapPlaceMarker } from '../components/MapPlaceMarker';
 import { ShadButton } from '../components/ShadButton';
 import { useAppContext } from '../context/AppContext';
 import { getUserIdentity, isLoggedIn } from '../lib/auth';
-import { DEFAULT_REGION } from '../lib/constants';
+import { KATHMANDU_EXPLORE_REGION } from '../lib/constants';
 import { colors, radius, shadows, spacing, typography } from '../lib/theme';
 
 export function HomeScreen({ navigation }) {
@@ -69,7 +69,7 @@ export function HomeScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <MapView initialRegion={DEFAULT_REGION} style={StyleSheet.absoluteFill} testID="home-map">
+      <MapView initialRegion={KATHMANDU_EXPLORE_REGION} style={StyleSheet.absoluteFill} testID="home-map">
         {state.places.map((place) => (
           <MapPlaceMarker
             key={place.id}

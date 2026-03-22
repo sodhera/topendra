@@ -94,11 +94,11 @@ Seed data lives in [supabase/seed.sql](/Users/sirishjoshi/Desktop/Topey/supabase
 
 The seed inserts:
 
-- 4 places
-- 5 vote rows
-- 2 comment rows
+- 50 Kathmandu demo places
+- multiple anonymous vote rows per place
+- 3 to 4 comment threads per place
 
-These rows are enough to render multiple pins immediately after the first backend sync.
+The seed first clears old `Topey team` and `Topey demo` rows, then rebuilds the full demo browse dataset.
 
 ## App-Side Data Flow
 
