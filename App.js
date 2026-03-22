@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import { DarkTheme, NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -30,19 +30,21 @@ function AppNavigator() {
     return <LoadingScreen />;
   }
 
+  const navigationTheme = {
+    ...DarkTheme,
+    colors: {
+      ...DarkTheme.colors,
+      primary: colors.primary,
+      background: colors.background,
+      card: colors.card,
+      text: colors.text,
+      border: colors.border,
+      notification: colors.accent,
+    },
+  };
+
   return (
-    <NavigationContainer
-      theme={{
-        colors: {
-          primary: colors.primary,
-          background: colors.background,
-          card: colors.card,
-          text: colors.text,
-          border: colors.border,
-          notification: colors.accent,
-        },
-      }}
-    >
+    <NavigationContainer theme={navigationTheme}>
       <StatusBar style="light" />
       <Stack.Navigator
         screenOptions={{
