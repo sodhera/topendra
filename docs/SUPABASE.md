@@ -23,8 +23,8 @@ Supabase is responsible for:
 - storing comments
 - storing place-open tracking events
 - persisting auth sessions
-- brokering Google and Facebook OAuth
-- handling email/password auth
+- brokering email-link auth
+- storing anonymous usernames in auth metadata
 
 The app uses the publishable key at runtime. The management access token is only for local admin scripts.
 
@@ -107,17 +107,18 @@ The app context lives in [src/context/AppContext.js](/Users/sirishjoshi/Desktop/
 Flow:
 
 1. Restore the saved Supabase session.
-2. Restore or create a local anonymous viewer session id.
-3. Fetch places and votes for every user.
-4. Fetch comments only when a session exists.
-5. Expose auth, write actions, and place-open tracking to the screens.
+2. Restore a session from `topey://auth/callback` when the app is opened from an email link.
+3. Restore or create a local anonymous viewer session id.
+4. Fetch places and votes for every user.
+5. Fetch comments only when a session exists.
+6. Expose auth, write actions, and place-open tracking to the screens.
 
 Backend helper code lives in:
 
 - [src/lib/supabase.js](/Users/sirishjoshi/Desktop/Topey/src/lib/supabase.js)
 - [src/lib/backend.js](/Users/sirishjoshi/Desktop/Topey/src/lib/backend.js)
 
-## Mobile OAuth
+## Mobile Email Auth
 
 The mobile redirect target is:
 
@@ -138,6 +139,12 @@ This updates:
 - `site_url`
 - `uri_allow_list`
 - `mailer_autoconfirm`
+
+Runtime auth behavior:
+
+- the app calls `supabase.auth.signInWithOtp`
+- new users send `preferred_username` in auth metadata
+- tapping the email link routes back into the app and the session is restored from the callback URL
 
 ## Admin Scripts
 
@@ -166,10 +173,6 @@ Email: testuser@topey.app
 Password: TopeyTest123!
 ```
 
-This script signs the user up if needed, then verifies that password sign-in works against the live Supabase project.
+This script signs the user up if needed, then verifies a legacy password-based backend login path for developer QA.
 
-## Provider Caveat
-
-The app UI is wired for Google and Facebook sign-in, but successful OAuth still depends on valid provider credentials being configured in the Supabase project dashboard.
-
-If sign-in opens the provider page and then fails there, check the provider credentials and callback setup in Supabase before debugging the mobile app code.
+This script is now developer-only backend QA. The shipped product flow uses email-link auth, not password entry in the app UI.

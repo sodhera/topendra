@@ -8,8 +8,9 @@ The app is now backed by Supabase for:
 - vote storage
 - comment storage
 - session persistence
-- OAuth sign-in with Google and Facebook
-- email/password sign-in fallback
+- email-link sign-in
+- anonymous public usernames
+- place-open tracking
 
 ## Repo
 
@@ -40,10 +41,13 @@ cd topey
   - movable map with a centered pin that follows the visible location
   - `Add here` action that opens a details modal
   - modal form with name, description, and final `Add` submit for logged-in users
+  - guest add attempts expose the same email-link auth path used by voting and comments
 - Buttons and sheets now use an Apple-like iOS treatment with solid white surfaces, system-blue actions, larger sheet geometry, and clearer action hierarchy inside modals.
 - Place discussions now behave more like Reddit: the place sheet shows a short preview stack, while the full conversation opens in a separate modal with per-comment reply controls.
 - Place opens are tracked in Supabase so later area-notification work has usage history to build on.
 - Demo mode now ships with 50 deterministic Kathmandu places plus multiple seeded comment threads per place.
+- Account creation is email-only and asks the user to choose an anonymous public username for places and comments.
+- Location data is used to center the map, show nearby place drops, and save the coordinates of places the user adds.
 
 ## Map Interaction Model
 
@@ -60,7 +64,7 @@ cd topey
 - `react-native-maps`
 - `expo-location`
 - Supabase JS
-- Expo Auth Session / Web Browser
+- Expo Auth Session / Linking
 - Jest
 
 ## Environment Setup
@@ -121,7 +125,6 @@ npm run ios
 npm run android
 npm run test -- --runInBand
 npx expo-doctor
-npm run supabase:test-user
 ```
 
 ## How The App Behaves
@@ -138,31 +141,29 @@ npm run supabase:test-user
 
 ### Logged-in user
 
-- can sign in with Google or Facebook
-- can sign in with email/password
+- can sign in or make an account using only email plus an anonymous username
 - can read comments
 - can add comments
 - can upvote or downvote
 - can see who added each place directly in the place sheet
 - can pin the current map location, open the add-details modal, and save a new place
 
-### Test account
-
-The home screen is prefilled with a working test login:
-
-```text
-Email: testuser@topey.app
-Password: TopeyTest123!
-```
-
-## OAuth Notes
+## Email Access Notes
 
 The mobile app uses the custom scheme `topey://auth/callback`.
 
 Important:
 
-- mobile OAuth should be tested in a dev build or standalone build, not treated as guaranteed inside every Expo Go setup
-- the repo is wired for Google and Facebook buttons, but the Supabase dashboard must still contain valid provider credentials for those providers to succeed end-to-end
+- the app sends a Supabase email sign-in link to the address the user enters
+- new accounts also store the chosen anonymous username in auth metadata
+- returning to the app through the email link restores the session in-app
+
+## Privacy Notes
+
+- Topey only asks end users for email plus an anonymous username
+- place and comment authorship is shown using the anonymous username, not the raw email address
+- foreground location is used to center the add-place map, show nearby map context, and save place coordinates when a user adds a drop
+- each place open is tracked with a viewer session id for future area notifications
 
 ## Supabase Notes
 
@@ -180,6 +181,7 @@ Detailed backend notes are in [docs/SUPABASE.md](/Users/sirishjoshi/Desktop/Tope
 - [README.md](/Users/sirishjoshi/Desktop/Topey/README.md)
 - [docs/ARCHITECTURE.md](/Users/sirishjoshi/Desktop/Topey/docs/ARCHITECTURE.md)
 - [docs/SUPABASE.md](/Users/sirishjoshi/Desktop/Topey/docs/SUPABASE.md)
+- [docs/PRIVACY.md](/Users/sirishjoshi/Desktop/Topey/docs/PRIVACY.md)
 - [CONTRIBUTING.md](/Users/sirishjoshi/Desktop/Topey/CONTRIBUTING.md)
 - [DESIGN.md](/Users/sirishjoshi/Desktop/Topey/DESIGN.md)
 - [CLAUDE.md](/Users/sirishjoshi/Desktop/Topey/CLAUDE.md)

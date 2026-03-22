@@ -10,6 +10,7 @@ The current documentation spine is:
 - [docs/README.md](/Users/sirishjoshi/Desktop/Topey/docs/README.md)
 - [docs/ARCHITECTURE.md](/Users/sirishjoshi/Desktop/Topey/docs/ARCHITECTURE.md)
 - [docs/SUPABASE.md](/Users/sirishjoshi/Desktop/Topey/docs/SUPABASE.md)
+- [docs/PRIVACY.md](/Users/sirishjoshi/Desktop/Topey/docs/PRIVACY.md)
 - [DESIGN.md](/Users/sirishjoshi/Desktop/Topey/DESIGN.md)
 - [CLAUDE.md](/Users/sirishjoshi/Desktop/Topey/CLAUDE.md)
 - [TODOS.md](/Users/sirishjoshi/Desktop/Topey/TODOS.md)
@@ -114,6 +115,7 @@ document that clearly in:
 - [README.md](/Users/sirishjoshi/Desktop/Topey/README.md)
 - [docs/ARCHITECTURE.md](/Users/sirishjoshi/Desktop/Topey/docs/ARCHITECTURE.md)
 - [docs/SUPABASE.md](/Users/sirishjoshi/Desktop/Topey/docs/SUPABASE.md) when the change touches backend or auth integration
+- [docs/PRIVACY.md](/Users/sirishjoshi/Desktop/Topey/docs/PRIVACY.md) when the change touches identity, tracking, or location use
 
 ## Current Quality Bar
 

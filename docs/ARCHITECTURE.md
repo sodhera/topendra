@@ -31,6 +31,7 @@ Shared app state lives in [src/context/AppContext.js](/Users/sirishjoshi/Desktop
 The context is responsible for:
 
 - restoring the Supabase session
+- restoring email-link auth sessions from deep links
 - loading places and votes
 - loading comments only for authenticated users
 - exposing auth actions
@@ -58,7 +59,7 @@ Responsibilities:
 - open the full discussion in a second modal with per-comment vote/reply affordances
 - use a floating add-comment action instead of an inline composer in the place modal
 - expose `See More` as the large preview affordance inside the faded comment tail
-- route guests into auth instead of exposing thread content
+- route guests into the email-link auth path instead of exposing thread content
 
 The large center hero card, test-user widget, and center-floating action row are intentionally gone.
 
@@ -77,6 +78,7 @@ Responsibilities:
 - expose `Open location`, simple arrow voting, and the same Reddit-style thread preview inside the details modal
 - open the full conversation in a second modal from the preview stack
 - gate thread content behind login and auth-gate voting/comment actions for guests
+- expose the same email-plus-anonymous-username auth card when a guest tries to participate
 
 ### AddPlace
 
@@ -89,6 +91,7 @@ Responsibilities:
 - open a details modal from the map-first `Add here` action
 - capture the place name and description inside the modal
 - require login before save
+- expose email-link access directly inside the add-place details modal for guests
 - insert the place into Supabase
 
 ## Auth Model
@@ -102,9 +105,10 @@ Mechanism:
 
 1. The app asks Supabase for the saved session.
 2. Guests can browse without a session.
-3. Google and Facebook buttons call `signInWithOAuth`.
-4. The OAuth redirect returns to `topey://auth/callback`.
-5. The session is persisted in AsyncStorage through Supabase’s React Native storage integration.
+3. Guests who try to add, vote, or comment see an email access card instead of OAuth or password UI.
+4. The card collects only email plus an anonymous username.
+5. Supabase sends a sign-in link back to `topey://auth/callback`.
+6. The app restores the session from that deep link and persists it in AsyncStorage through Supabase’s React Native storage integration.
 
 ## Data Model
 
@@ -189,6 +193,16 @@ The place details modal now exposes place participation in one compact row:
 
 This keeps authorship visible at the same moment the user chooses whether to vote, comment, or open the full discussion.
 
+### Anonymous Public Identity
+
+Places and comments use the session user’s anonymous username from auth metadata.
+
+Rules:
+
+- the app asks for email plus an anonymous username when creating access
+- public surfaces use that anonymous username
+- when metadata is missing, the UI falls back to `Anonymous member` instead of exposing an email-derived name
+
 ### Place Open Tracking
 
 Open tracking now writes into `place_open_events`.
@@ -214,6 +228,7 @@ Behavior:
 3. Use the live position when permission is granted.
 4. Fall back to Kathmandu when location is unavailable.
 5. Allow screens to opt out of live recentering so the browse map can be explored freely.
+6. Show explicit copy that location is used to center the map, show nearby places, and save added place coordinates.
 
 Only `AddPlace` uses live recentering now. `Home` and `Browse` intentionally start on the Kathmandu demo region so the 50 seeded dots are visible immediately.
 
@@ -250,6 +265,6 @@ Current verification steps:
 
 What is still not fully automated:
 
-- device-level OAuth success on both providers
+- device-level email-link auth on a real phone
 - native map interaction on a real phone
 - end-to-end comment gating smoke tests in a dev build

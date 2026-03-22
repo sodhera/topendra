@@ -17,6 +17,7 @@
 - Browsing happens inside the Topey app, not by kicking the user out to Apple Maps or Google Maps.
 - Logged-in users can upvote, downvote, and comment.
 - Guests can browse places, but adding a place remains login-gated.
+- Account creation and sign-in should use email only plus an anonymous public username.
 - Place modals should expose `Open location` plus compact arrow voting instead of large stacked vote buttons.
 - Place modals should keep creator attribution visible beside the place-level vote controls as `Added by: <Username>`.
 - Sheet actions should have Apple-like hierarchy: one clearly dominant CTA, smaller supporting controls, and compact composer actions.
@@ -30,6 +31,7 @@
 - The runtime demo dataset should include up to 50 Kathmandu places with multiple comment threads for testing.
 - Button and overlay treatment should follow an Apple-like iOS direction: system-blue primary actions, solid white surfaces, generous radii, and clear hierarchy without overdone glass effects.
 - Each place open should be tracked so later notification work has real event history.
+- Location usage should stay explicit: it centers the map, supports nearby exploration, and stores added place coordinates.
 - The app is Expo native and written in JavaScript.
 
 ## Design Direction
@@ -47,6 +49,7 @@
 - [README.md](/Users/sirishjoshi/Desktop/Topey/README.md)
 - [DESIGN.md](/Users/sirishjoshi/Desktop/Topey/DESIGN.md)
 - [docs/ARCHITECTURE.md](/Users/sirishjoshi/Desktop/Topey/docs/ARCHITECTURE.md)
+- [docs/PRIVACY.md](/Users/sirishjoshi/Desktop/Topey/docs/PRIVACY.md)
 - [TODOS.md](/Users/sirishjoshi/Desktop/Topey/TODOS.md)
 
 ## Historical Planning Docs
