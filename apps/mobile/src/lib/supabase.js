@@ -3,12 +3,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { makeRedirectUri } from 'expo-auth-session';
 import * as Linking from 'expo-linking';
 import { createClient } from '@supabase/supabase-js';
+import { resolveSupabaseConfig } from './runtimeConfig';
 
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
-const supabasePublishableKey = process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+const { supabaseUrl, supabasePublishableKey } = resolveSupabaseConfig();
 
 if (!supabaseUrl || !supabasePublishableKey) {
-  throw new Error('Supabase environment variables are missing. Check your local .env file.');
+  throw new Error('Supabase environment variables are missing. Check the repo-root .env file.');
 }
 
 export const supabase = createClient(supabaseUrl, supabasePublishableKey, {

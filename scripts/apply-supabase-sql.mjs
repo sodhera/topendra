@@ -1,6 +1,12 @@
 #!/usr/bin/env node
 
 import { readFile } from 'node:fs/promises';
+import { createRequire } from 'node:module';
+
+const require = createRequire(import.meta.url);
+const { loadRootEnv } = require('./load-root-env.cjs');
+
+loadRootEnv();
 
 function getProjectRef() {
   const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;

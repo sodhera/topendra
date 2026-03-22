@@ -1,6 +1,12 @@
 #!/usr/bin/env node
 
+import { createRequire } from 'node:module';
 import { createClient } from '@supabase/supabase-js';
+
+const require = createRequire(import.meta.url);
+const { loadRootEnv } = require('./load-root-env.cjs');
+
+loadRootEnv();
 
 const TEST_EMAIL = 'testuser@topey.app';
 const TEST_PASSWORD = 'TopeyTest123!';
