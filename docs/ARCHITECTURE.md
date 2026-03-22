@@ -81,6 +81,7 @@ Defined in [HomeScreen.js](/Users/sirishjoshi/Desktop/Topey/apps/mobile/src/scre
 Responsibilities:
 
 - show the Kathmandu demo map immediately
+- suppress native POIs/buildings/traffic chrome so only Topey place drops compete for attention
 - keep the map directly pannable without any full-screen overlay layer
 - render only `Profile` or `Sign in` at the top right
 - keep a single large `+` add-place button anchored at the bottom
@@ -103,6 +104,7 @@ Defined in [BrowseScreen.js](/Users/sirishjoshi/Desktop/Topey/apps/mobile/src/sc
 Responsibilities:
 
 - render the same Kathmandu demo map foundation as home
+- keep the same decluttered mobile map configuration so only Topey pins stand out against the base map
 - show only two top controls: `Back` and `Add a place`
 - display up to 50 place markers from Supabase plus the runtime demo fallback
 - open a compact place preview only when a dot is tapped
@@ -120,6 +122,7 @@ Defined in [AddPlaceScreen.js](/Users/sirishjoshi/Desktop/Topey/apps/mobile/src/
 Responsibilities:
 
 - center on the resolved live location before enabling submission
+- keep the base map decluttered while still showing the user location and current pin target
 - let the user move the pin by moving the map instead of dragging a controlled region prop
 - open a details modal from the map-first `Add here` action
 - capture the place name and description inside the modal

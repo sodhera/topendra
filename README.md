@@ -74,6 +74,7 @@ packages/
 
 - `Home` and `Browse` mount the map with `initialRegion`; they do not keep `react-native-maps` locked to a controlled `region` prop during drag gestures.
 - Home and browse both stay directly draggable because only the actual buttons intercept touch events.
+- Mobile map views intentionally suppress native POIs, buildings, indoor labels, traffic, and toolbar chrome so Topey pins are the only location layer that stands out.
 - Home place details open in a modal on dot tap, and browse previews also open only from explicit dot taps.
 - `AddPlace` updates the pending pin from map movement and keeps the details form behind an explicit modal instead of a permanent card.
 
