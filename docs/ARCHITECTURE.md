@@ -124,7 +124,7 @@ Responsibilities:
 - center on the resolved live location before enabling submission
 - keep the base map decluttered while still showing the user location and current pin target
 - let the user move the pin by moving the map instead of dragging a controlled region prop
-- render a fixed center pin overlay so the add target never disappears while the map moves underneath it
+- render a fixed red pin overlay in the upper half of the viewport so the add target stays visible while the map moves underneath it
 - open a details modal from the map-first `Add here` action
 - capture the place name and description inside the modal
 - require login before save
@@ -275,7 +275,7 @@ Mechanism:
 
 1. Each map screen mounts the map with `initialRegion`.
 2. `Home`, `Browse`, and `AddPlace` all recenter once from foreground location when permission is granted.
-3. `AddPlace` keeps the target coordinates synced to the visible map center and shows a fixed overlay pin.
+3. `AddPlace` keeps the target coordinates synced to the point under the fixed upper-half overlay pin instead of the literal screen center.
 4. User drags happen directly inside the native map view because only the actual buttons intercept touches.
 5. `Home` modals and `Browse` previews both come from explicit marker taps instead of automatic map-center selection.
 
