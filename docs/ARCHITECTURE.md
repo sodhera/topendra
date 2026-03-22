@@ -48,9 +48,10 @@ Responsibilities:
 
 - show the Kathmandu demo map immediately
 - keep the map directly pannable without any full-screen overlay layer
-- render `Add a place` at the top left and `Profile` or `Sign in` at the top right
-- keep a single large `Find a place` button anchored at the bottom
-- allow marker taps to jump straight into the browse screen for a selected place
+- render only `Profile` or `Sign in` at the top right
+- keep a single large `+` add-place button anchored at the bottom
+- open the place modal directly on marker taps instead of navigating into another screen
+- let authenticated users vote and comment inside that modal while guests are routed into auth
 
 The large center hero card, test-user widget, and center-floating action row are intentionally gone.
 
@@ -208,7 +209,7 @@ Mechanism:
 2. `Home` and `Browse` stay on the Kathmandu demo region.
 3. `AddPlace` recenters once from foreground location.
 4. User drags happen directly inside the native map view because only the actual buttons intercept touches.
-5. `Browse` previews come from explicit marker taps instead of automatic map-center selection.
+5. `Home` modals and `Browse` previews both come from explicit marker taps instead of automatic map-center selection.
 
 This keeps the interaction simple and avoids the earlier bug where the map felt locked and only tiny untouched areas seemed draggable.
 

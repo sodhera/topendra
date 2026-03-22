@@ -10,9 +10,9 @@
 
 - The home screen must stay simple:
   - live map in the background
-  - `Add a place` at the top left
   - `Profile` or `Sign in` at the top right
-  - one large `Find a place` button at the bottom
+  - one large `+` add button at the bottom
+  - pin taps should open the place modal directly on home
   - no center-floating action row or oversized homepage widget
 - Browsing happens inside the Topey app, not by kicking the user out to Apple Maps or Google Maps.
 - Logged-in users can upvote, downvote, and comment.

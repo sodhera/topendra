@@ -26,9 +26,9 @@ cd topey
 
 - Home screen:
   - opens on the Kathmandu demo region so the place dots are visible immediately
-  - `Add a place` button at the top left
   - `Profile` or `Sign in` button at the top right
-  - one large `Find a place` button at the bottom
+  - one large `+` button at the bottom that opens the add-place flow
+  - tapping a dot opens the place modal directly on home instead of navigating away
 - Browse screen:
   - starts on the Kathmandu demo region with up to 50 demo location dots
   - `Back` button at the top left and `Add a place` at the top right
@@ -47,7 +47,7 @@ cd topey
 
 - `Home` and `Browse` mount the map with `initialRegion`; they do not keep `react-native-maps` locked to a controlled `region` prop during drag gestures.
 - Home and browse both stay directly draggable because only the actual buttons intercept touch events.
-- The browse preview opens only when the user taps a location dot.
+- Home place details open in a modal on dot tap, and browse previews also open only from explicit dot taps.
 - `AddPlace` updates the pending pin from map movement and keeps the details form behind an explicit modal instead of a permanent card.
 
 ## Tech Stack
@@ -128,7 +128,7 @@ npm run supabase:test-user
 
 - can open the map and roam around pins
 - can read place metadata
-- can open the small place preview card from any demo dot
+- can open the place modal from any demo dot
 - cannot read comments
 - cannot vote
 - cannot save new places
