@@ -60,6 +60,11 @@ Use the tokens in [src/lib/theme.js](/Users/sirishjoshi/Desktop/Topey/src/lib/th
   - translucent secondary pills for map chrome
   - minimum 44pt tappable compact controls
   - only one dominant CTA per sheet; supporting actions should step down in size and emphasis
+- Place thread previews should feel Reddit-like:
+  - metadata sits in one line, not boxed KPI cards
+  - place-level voting uses plain arrows under the main location action
+  - the place sheet only previews the top of the thread
+  - a separate discussion modal handles the full comment stack
 - Cards and sheets should have:
   - large radii
   - thin separators

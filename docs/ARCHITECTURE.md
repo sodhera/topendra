@@ -52,8 +52,12 @@ Responsibilities:
 - keep a single large `+` add-place button anchored at the bottom
 - open the place modal directly on marker taps instead of navigating into another screen
 - expose `Open location` inside that modal for every viewer
-- use compact Reddit-style arrow voting instead of large full-width vote buttons
-- let authenticated users comment inside that modal while guests are routed into auth
+- render rating, votes, and threads as one metadata line instead of boxed stat cards
+- use simple arrow voting under `Open location`
+- show only a two-comment preview stack in the place modal
+- open the full discussion in a second modal with per-comment vote/reply affordances
+- use a floating add-comment action instead of an inline composer in the place modal
+- route guests into auth instead of exposing thread content
 
 The large center hero card, test-user widget, and center-floating action row are intentionally gone.
 
@@ -69,8 +73,9 @@ Responsibilities:
 - open a compact place preview only when a dot is tapped
 - show rating, vote ratio, and thread count in that preview
 - open an explicit details modal from `View more`
-- expose `Open location` and compact arrow voting inside the details modal
-- gate comments behind login inside the modal and auth-gate voting actions for guests
+- expose `Open location`, simple arrow voting, and the same Reddit-style thread preview inside the details modal
+- open the full conversation in a second modal from the preview stack
+- gate thread content behind login and auth-gate voting/comment actions for guests
 
 ### AddPlace
 
