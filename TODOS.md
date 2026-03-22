@@ -2,16 +2,31 @@
 
 ## Product
 
-### Duplicate Detection And Place Merge Tooling
+### Real Authentication
 
-**What:** Add duplicate-detection and merge tooling for places so moderators can reconcile near-identical listings into one canonical place.
+**What:** Replace the demo login toggle with real authentication.
 
-**Why:** Founder seeding, user submissions, optional photos, and trusted-user live edits will eventually create near-duplicate places unless moderators have a way to detect and merge them.
+**Why:** Votes and comments are currently gated only by a local demo user switch.
 
-**Context:** The eng review flagged duplicate submissions as a likely workflow issue for Topey. Thin-slice v1 can launch with manual moderator judgment, but once submissions rise the map will drift if multiple copies of the same cafe or venue accumulate with different names, pins, or conversations. The future tool should help moderators spot likely duplicates, compare structured place facts, preserve the canonical Place record, and decide what happens to attached conversation/history after a merge.
+**Effort:** M
+**Priority:** P1
+
+### Backend Sync
+
+**What:** Persist places, votes, and comments to a backend instead of AsyncStorage only.
+
+**Why:** The current app is single-device and local-only.
+
+**Effort:** L
+**Priority:** P1
+
+### Search And Filters
+
+**What:** Add simple map search and basic filtering for nearby places.
+
+**Why:** The current browse experience is marker-first and chip-first, but there is no search box yet.
 
 **Effort:** M
 **Priority:** P2
-**Depends on:** Canonical `Place` model, separate submission/revision records, and moderator workflows
 
 ## Completed

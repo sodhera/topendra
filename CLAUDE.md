@@ -1,37 +1,50 @@
 # CLAUDE
 
 ## Project Context
-- **Project:** Topey
-- **What it is:** A mobile-first trust-layered community map for finding moderator-approved smoke-friendly places.
-- **Primary user wedge:** Kathmandu students and young adults living with parents or roommates who need a reliable, lower-anxiety place to go because they cannot smoke at home.
-- **Product principle:** Discovery comes first. Community, moderation, and submissions exist to make the map trustworthy.
 
-## Current Product Shape
-- Public read, authenticated write.
-- Only moderator-approved places are publicly visible.
-- Submission state machine: `draft -> submitted -> needs_more_proof -> approved -> rejected`
-- `Place` is the canonical public object.
-- Reviews and conversation attach to each place like Google reviews.
-- Photos are optional in v1 and must never block submission.
-- Trusted users may live-edit approved places, but those edits require auditability and clear permission gates.
+- **Project:** Topey
+- **Current shape:** a minimal Expo mobile app with a live in-app map, a browse flow, and an add-place flow
+- **Important change:** earlier moderation-heavy planning docs are historical only; the current repo implements a much smaller product
+
+## Product Rules
+
+- The home screen must stay simple:
+  - small `Add a place` button near the top
+  - large `Find a place` button near the bottom
+  - live map in the background
+- Browsing happens inside the Topey app, not by kicking the user out to Apple Maps or Google Maps.
+- Logged-in users can upvote, downvote, and comment.
+- Guests can still browse and add places in the current local prototype.
+- The app is Expo native and written in JavaScript.
+
+## Design Direction
+
+- Use a simple shadcn-style visual language:
+  - neutral dark surfaces
+  - clean borders
+  - rounded cards
+  - straightforward typography
+  - minimal ornament
+- Do not bring back the earlier fantasy or consultancy-heavy design directions unless the user explicitly asks.
 
 ## Key Docs To Read First
+
+- [README.md](/Users/sirishjoshi/Desktop/Topey/README.md)
 - [DESIGN.md](/Users/sirishjoshi/Desktop/Topey/DESIGN.md)
+- [docs/ARCHITECTURE.md](/Users/sirishjoshi/Desktop/Topey/docs/ARCHITECTURE.md)
 - [TODOS.md](/Users/sirishjoshi/Desktop/Topey/TODOS.md)
-- External planning docs created before repo setup:
-  - `/Users/sirishjoshi/.gstack/projects/topey/sirishjoshi-unknown-design-20260321-144437.md`
-  - `/Users/sirishjoshi/.gstack/projects/topey/sirishjoshi-unknown-eng-review-20260321-153307.md`
-  - `/Users/sirishjoshi/.gstack/projects/topey/sirishjoshi-unknown-test-plan-20260321-152354.md`
 
-## Working Rules For Future Codex Runs
-- Read `DESIGN.md` before making any visual or UI decisions.
-- Preserve the trust model from the engineering review unless the user explicitly changes it.
-- Keep canonical place facts above conversation in the UI.
-- When new implementation decisions become real, document them in repo-local docs instead of leaving them only in conversation history.
-- If the code starts diverging from the approved product or design direction, update the docs in the same change.
+## Historical Planning Docs
 
-## Design System
-Always read DESIGN.md before making any visual or UI decisions.
-All font choices, colors, spacing, and aesthetic direction are defined there.
-Do not deviate without explicit user approval.
-In QA mode, flag any code that doesn't match DESIGN.md.
+These exist for background only and are no longer the source of truth for implementation:
+
+- `/Users/sirishjoshi/.gstack/projects/topey/sirishjoshi-unknown-design-20260321-144437.md`
+- `/Users/sirishjoshi/.gstack/projects/topey/sirishjoshi-unknown-eng-review-20260321-153307.md`
+- `/Users/sirishjoshi/.gstack/projects/topey/sirishjoshi-unknown-test-plan-20260321-152354.md`
+
+## Rules For Future Codex Runs
+
+- Keep repo docs aligned with the real code.
+- If the user changes product scope again, update repo-local docs in the same change.
+- Prefer the simplest working mobile UX over abstract product machinery.
+- Preserve the Expo-native map experience and the login-gated vote/comment behavior unless the user changes it.

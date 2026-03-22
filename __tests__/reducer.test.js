@@ -1,76 +1,51 @@
 import { buildSeedState } from '../src/data/seed';
-import { MODERATION_STATES, ROLES } from '../src/lib/constants';
+import { USER_IDS } from '../src/lib/constants';
 import { reducer } from '../src/lib/reducer';
 
 describe('app reducer', () => {
-  test('member submissions enter the moderation queue', () => {
+  test('adding a place prepends a valid place record', () => {
     const state = buildSeedState();
     const next = reducer(state, {
-      type: 'submit_place',
+      type: 'add_place',
       payload: {
-        authorId: 'maya',
-        formValues: {
-          title: 'Naya Courtyard',
-          neighborhood: 'Baneshwor',
-          summary: 'A repeatable courtyard that works after dinner when the side lane clears out.',
-          bestTime: 'After 8 PM',
-          allowedActions: ['Pre-rolls okay'],
-          restrictions: ['Buy first'],
-          evidenceType: 'trusted_user_observation',
-          evidenceNote: 'Two local users described the same tolerated corner and timing.',
-          coords: { x: 40, y: 44 },
-          photos: [],
-        },
+        name: 'New Spot',
+        description: 'Tucked away balcony.',
+        latitude: 27.7,
+        longitude: 85.3,
+        authorId: USER_IDS.GUEST,
       },
     });
 
-    const added = next.submissions.find((submission) => submission.title === 'Naya Courtyard');
-    expect(added).toBeTruthy();
-    expect(added.status).toBe(MODERATION_STATES.SUBMITTED);
+    expect(next.places[0].name).toBe('New Spot');
+    expect(next.places).toHaveLength(state.places.length + 1);
   });
 
-  test('approval creates a public place', () => {
+  test('guest votes are ignored', () => {
     const state = buildSeedState();
     const next = reducer(state, {
-      type: 'moderate_submission',
+      type: 'vote_place',
       payload: {
-        moderatorId: 'anika',
-        submissionId: 'submission-1',
-        nextState: MODERATION_STATES.APPROVED,
-        note: 'Looks defensible.',
+        placeId: state.places[0].id,
+        userId: USER_IDS.GUEST,
+        value: 1,
       },
     });
 
-    expect(next.places.some((place) => place.id === 'place-submission-1')).toBe(true);
-    expect(next.auditLog.some((entry) => entry.changeType === 'submission_approved')).toBe(true);
+    expect(next.votes).toEqual(state.votes);
   });
 
-  test('trusted live edit updates the place and writes an audit entry', () => {
+  test('logged-in users can add comments', () => {
     const state = buildSeedState();
     const next = reducer(state, {
-      type: 'live_edit_place',
+      type: 'add_comment',
       payload: {
-        actorId: 'sagar',
-        placeId: 'place-temple-view',
-        formValues: {
-          title: 'Temple View Rooftop Cafe',
-          neighborhood: 'Boudha',
-          summary: 'Airy rooftop cafe with steadier wind cover than before.',
-          bestTime: 'Best after 7 PM',
-          allowedActions: ['Pre-rolls okay', 'Quiet solo sessions'],
-          restrictions: ['No flash photos', 'Keep groups under 4'],
-          evidenceType: 'moderator_scout',
-          evidenceNote: 'Fresh weekday scout check.',
-          coords: { x: 68, y: 28 },
-          photos: [],
-        },
-        reason: 'Weekday foot traffic shifted later this month.',
+        placeId: state.places[0].id,
+        userId: USER_IDS.DEMO,
+        body: 'Solid place.',
       },
     });
 
-    const edited = next.places.find((place) => place.id === 'place-temple-view');
-
-    expect(edited.bestTime).toBe('Best after 7 PM');
-    expect(next.auditLog[0].actorRole).toBe(ROLES.TRUSTED);
+    expect(next.comments[0].body).toBe('Solid place.');
+    expect(next.comments[0].authorId).toBe(USER_IDS.DEMO);
   });
 });

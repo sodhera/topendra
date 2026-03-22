@@ -12,9 +12,16 @@
       "backgroundColor": "#121711"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Topey uses your location to center the live map around you and help you find nearby places."
+      }
     },
     "android": {
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION"
+      ],
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -26,7 +33,12 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-font"
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Topey uses your location to center the live map around you and help you find nearby places."
+        }
+      ]
     ]
   }
 }

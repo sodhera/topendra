@@ -1,56 +1,47 @@
 export const colors = {
-  nightRoot: '#121711',
-  deepPine: '#1C2B1F',
-  forestPanel: '#27311F',
-  mossCore: '#355B2F',
-  cartridgeGreen: '#6E8A3B',
-  leafHighlight: '#A7C957',
-  antiqueGold: '#B39245',
-  barkBrown: '#6B4A2B',
-  parchmentTan: '#D8C28E',
-  savePage: '#F4E7C1',
-  textPrimary: '#F3EBC6',
-  textMuted: '#D2C99C',
-  textDim: '#A89F78',
-  error: '#C06A48',
-  info: '#8CB89E',
+  background: '#09090B',
+  card: 'rgba(24, 24, 27, 0.94)',
+  elevatedCard: 'rgba(39, 39, 42, 0.96)',
+  border: 'rgba(255, 255, 255, 0.12)',
+  text: '#FAFAFA',
+  mutedText: '#A1A1AA',
+  primary: '#F4F4F5',
+  primaryText: '#09090B',
+  secondary: '#18181B',
+  accent: '#22C55E',
+  mapOverlay: 'rgba(9, 9, 11, 0.42)',
 };
 
 export const spacing = {
-  xxs: 2,
-  xs: 4,
+  xxs: 4,
+  xs: 6,
   sm: 8,
   md: 16,
   lg: 24,
-  xl: 32,
-  xxl: 48,
-  xxxl: 64,
+  xl: 28,
+  xxl: 40,
+  xxxl: 56,
 };
 
 export const radius = {
-  sm: 6,
-  md: 12,
-  lg: 18,
+  sm: 10,
+  md: 16,
+  lg: 24,
   pill: 999,
 };
 
 export const shadows = {
-  window: {
-    shadowColor: '#090B08',
-    shadowOffset: { width: 0, height: 10 },
+  floating: {
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 14 },
     shadowOpacity: 0.28,
-    shadowRadius: 18,
+    shadowRadius: 24,
     elevation: 6,
   },
 };
 
 export const typography = {
-  display: 'Silkscreen_700Bold',
-  displayRegular: 'Silkscreen_400Regular',
-  body: 'SplineSans_400Regular',
-  bodyMedium: 'SplineSans_500Medium',
-  bodySemibold: 'SplineSans_600SemiBold',
-  bodyBold: 'SplineSans_700Bold',
-  mono: 'IBMPlexMono_500Medium',
-  monoSemibold: 'IBMPlexMono_600SemiBold',
+  body: 'System',
+  medium: 'System',
+  semibold: 'System',
 };

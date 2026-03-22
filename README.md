@@ -1,70 +1,86 @@
 # Topey
 
-Topey is a mobile-first Expo app for finding moderator-approved smoke-friendly places in Kathmandu. The product is built around one core promise: reduce anxiety by showing clear rules, recent proof, and trust signals before someone leaves the house.
+Topey is a minimal Expo mobile app for finding nearby places on a live map, voting on them, commenting on them, and adding new places by dropping a pin. The app uses local demo state only. There is no backend or real authentication yet.
 
-## What Exists
+## Current Product
 
-- Map-first discover flow with approved places only
-- Place detail screens with rules, trust score, proof, reviews, and audit history
-- Place submission flow with drafts, optional photos, and tap-to-drop pin selection
-- Moderator queue with the five-state workflow
-- Demo personas for guest, member, trusted scout, and moderator
-- Trusted-user live edits with append-only audit logging
-- Local persistence through AsyncStorage so the demo survives reloads
+- Home screen with a live native map in the background
+- Small `Add a place` button near the top
+- Large `Find a place` button near the bottom
+- Browse screen with a full in-app map, map markers, vote controls, and comments
+- Add-place screen with tap-to-drop or drag-to-place pin selection
+- Guest/demo login toggle
+- Votes and comments gated to the demo logged-in user
+- Local persistence through AsyncStorage
 
-## Stack
+## Tech Stack
 
-- Expo SDK 55
+- Expo SDK `54`
 - React Native + JavaScript
-- React Navigation
+- React Navigation native stack
+- `react-native-maps` for the in-app Apple Maps / Google Maps view
+- `expo-location` for live user location
 - AsyncStorage for local persistence
-- Expo Image Picker for optional photos
-- Jest / jest-expo for logic coverage
+- Jest for reducer and helper coverage
 
-## Local Setup
-
-### 1. Install Node LTS
-
-Expo requires Node LTS. This build was created against Node `24.14.0`.
-
-If Node is already available:
-
-```bash
-node -v
-npm -v
-```
-
-If not, install an official Node LTS release from [nodejs.org](https://nodejs.org/).
-
-### 2. Install dependencies
+## Install
 
 ```bash
 npm install
 ```
 
-On this machine specifically, Node was bootstrapped into `~/.local/node-v24.14.0-darwin-arm64/` because no system Node was installed. If your shell still cannot find `node` or `npm`, use the wrapper script from the repo root:
+If `node` or `npm` is not on your shell path in this workspace:
 
 ```bash
 ./scripts/with-local-node.sh npm install
 ```
 
-### 3. Run the app
+## Run
 
 ```bash
 npm run start
 ```
 
-If `npm` is not on your shell path:
+If you need the local Node wrapper:
 
 ```bash
 ./scripts/with-local-node.sh npm run start
 ```
 
-Then choose one of:
+Useful Expo commands:
 
-- `i` for iOS simulator
-- `a` for Android emulator
-- scan the QR code with Expo Go
+- `npm run ios`
+- `npm run android`
+- `npm run web`
+
+## Using The App
+
+### Home
+
+- The background map tries to center on the device’s current location.
+- `Add a place` opens the add flow.
+- `Find a place` opens the browse flow.
+- `Demo login` switches from guest mode to the local demo user.
+- `Use guest` switches back to read-only mode.
+
+### Browse
+
+- Pan and zoom the map like a normal maps app.
+- Tap markers or chips to focus a place.
+- Upvote and downvote a place.
+- Add comments if the app is in demo logged-in mode.
+
+### Add A Place
+
+- Tap the map or drag the marker to the exact location.
+- Fill in a name and description.
+- Save the place into the local place list.
+
+## Development Notes
+
+- This is a local-first prototype. Restarting the app preserves state because it is stored in AsyncStorage.
+- Votes and comments are deliberately local and fake-auth for now. Real auth and backend sync do not exist yet.
+- The map is provider-backed through `react-native-maps`, so iOS uses Apple Maps and Android uses Google Maps.
 
 ## Test
 
@@ -72,31 +88,15 @@ Then choose one of:
 npm run test
 ```
 
-Or, on this machine:
+Or with the local Node wrapper:
 
 ```bash
 ./scripts/with-local-node.sh npm run test
 ```
 
-## Demo Flow
-
-Use the Profile tab to switch personas:
-
-- `Guest explorer`: browse approved places only
-- `Maya`: submit places, write reviews, vote on reliability
-- `Sagar`: all member actions plus live edit approved places
-- `Anika`: moderator queue access and trust-role management
-
 ## Docs
 
-- [DESIGN.md](/Users/sirishjoshi/Desktop/Topey/DESIGN.md)
 - [CLAUDE.md](/Users/sirishjoshi/Desktop/Topey/CLAUDE.md)
+- [DESIGN.md](/Users/sirishjoshi/Desktop/Topey/DESIGN.md)
 - [docs/ARCHITECTURE.md](/Users/sirishjoshi/Desktop/Topey/docs/ARCHITECTURE.md)
-- [docs/MODERATION_RUBRIC.md](/Users/sirishjoshi/Desktop/Topey/docs/MODERATION_RUBRIC.md)
 - [TODOS.md](/Users/sirishjoshi/Desktop/Topey/TODOS.md)
-
-## Notes
-
-- The current app is a rich local prototype. There is no backend, auth provider, or production database yet.
-- The map is a stylized faux-map surface rather than a provider-backed map. That keeps the Expo prototype stable while still validating the core map-first interaction.
-- Public visibility is modeled correctly: only approved places appear in Discover.

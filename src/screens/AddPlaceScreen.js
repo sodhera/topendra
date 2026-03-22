@@ -1,141 +1,197 @@
-import React, { useMemo, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Alert, StyleSheet, Text, TextInput, View } from 'react-native';
+import MapView, { Marker } from 'react-native-maps';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { ShadButton } from '../components/ShadButton';
 import { useAppContext } from '../context/AppContext';
-import { ACTIONS, MODERATION_STATES } from '../lib/constants';
-import { can } from '../lib/auth';
-import { colors, spacing, typography } from '../lib/theme';
-import { Chip } from '../components/Chip';
-import { PlaceForm } from '../components/PlaceForm';
-import { WindowPanel } from '../components/WindowPanel';
+import { colors, radius, shadows, spacing, typography } from '../lib/theme';
+import { useLiveLocation } from '../hooks/useLiveLocation';
 
-export function AddPlaceScreen() {
+export function AddPlaceScreen({ navigation }) {
   const { state, dispatch } = useAppContext();
-  const currentUser = state.users.find((user) => user.id === state.currentUserId);
-  const [selectedDraftId, setSelectedDraftId] = useState(null);
-
-  const drafts = useMemo(
-    () =>
-      state.submissions.filter(
-        (submission) =>
-          submission.authorId === currentUser.id &&
-          [MODERATION_STATES.DRAFT, MODERATION_STATES.NEEDS_MORE_PROOF].includes(submission.status)
-      ),
-    [currentUser.id, state.submissions]
+  const { region, setRegion, errorMessage } = useLiveLocation();
+  const initialPin = useMemo(
+    () => ({
+      latitude: region.latitude,
+      longitude: region.longitude,
+    }),
+    [region.latitude, region.longitude]
   );
+  const [pin, setPin] = useState(initialPin);
+  const [hasPinnedManually, setHasPinnedManually] = useState(false);
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
 
-  if (!can(currentUser.role, ACTIONS.CREATE_SUBMISSION)) {
-    return (
-      <View style={styles.screen}>
-        <ScrollView contentContainerStyle={styles.content}>
-          <WindowPanel title="Members only" subtitle="Guest mode can browse, but submissions need an account.">
-            <Text style={styles.copy}>
-              Switch to Maya, Sagar, or Anika on the Profile tab to test submission flow, optional photos, drafts, and moderation queue behavior.
-            </Text>
-          </WindowPanel>
-        </ScrollView>
-      </View>
-    );
+  useEffect(() => {
+    if (!hasPinnedManually) {
+      setPin({
+        latitude: region.latitude,
+        longitude: region.longitude,
+      });
+    }
+  }, [hasPinnedManually, region.latitude, region.longitude]);
+
+  function handleSubmit() {
+    if (!name.trim() || !description.trim()) {
+      Alert.alert('Missing details', 'Add a name and description before saving the place.');
+      return;
+    }
+
+    dispatch({
+      type: 'add_place',
+      payload: {
+        name,
+        description,
+        latitude: pin.latitude,
+        longitude: pin.longitude,
+        authorId: state.currentUserId,
+      },
+    });
+
+    navigation.navigate('Browse');
   }
 
-  const activeDraft = drafts.find((draft) => draft.id === selectedDraftId) || null;
-
   return (
-    <View style={styles.screen}>
-      <ScrollView contentContainerStyle={styles.content}>
-        {drafts.length ? (
-          <WindowPanel title="Open drafts" subtitle="Resume unfinished scouting notes or queue resubmissions that need more proof.">
-            <View style={styles.draftStack}>
-              {drafts.map((draft) => (
-                <Pressable key={draft.id} onPress={() => setSelectedDraftId(draft.id)} style={styles.draftCard}>
-                  <View style={styles.draftTop}>
-                    <Text style={styles.draftTitle}>{draft.title || 'Untitled draft'}</Text>
-                    <Chip label={draft.status.replaceAll('_', ' ')} tone={draft.status === MODERATION_STATES.NEEDS_MORE_PROOF ? 'warning' : 'info'} />
-                  </View>
-                  <Text style={styles.draftMeta}>{draft.neighborhood || 'No neighborhood yet'}</Text>
-                  {draft.moderatorNote ? <Text style={styles.draftNote}>{draft.moderatorNote}</Text> : null}
-                </Pressable>
-              ))}
-            </View>
-          </WindowPanel>
-        ) : null}
-
-        <PlaceForm
-          initialValues={activeDraft || {}}
-          submitLabel={activeDraft?.status === MODERATION_STATES.NEEDS_MORE_PROOF ? 'Resubmit for review' : 'Submit for review'}
-          onSaveDraft={(formValues) => {
-            dispatch({
-              type: 'save_submission_draft',
-              payload: {
-                authorId: currentUser.id,
-                formValues,
-                submissionId: activeDraft?.id,
-              },
-            });
-            Alert.alert('Draft saved', 'The place is saved locally and can be reopened from this screen.');
-          }}
-          onSubmit={(formValues) => {
-            dispatch({
-              type: 'submit_place',
-              payload: {
-                authorId: currentUser.id,
-                formValues,
-                submissionId: activeDraft?.id,
-              },
-            });
-            setSelectedDraftId(null);
-            Alert.alert('Submitted', 'The place is now in the moderation queue.');
+    <View style={styles.container}>
+      <MapView
+        style={StyleSheet.absoluteFill}
+        region={region}
+        onRegionChangeComplete={setRegion}
+        onPress={(event) => {
+          setHasPinnedManually(true);
+          setPin(event.nativeEvent.coordinate);
+        }}
+        showsUserLocation
+      >
+        <Marker
+          coordinate={pin}
+          draggable
+          onDragEnd={(event) => {
+            setHasPinnedManually(true);
+            setPin(event.nativeEvent.coordinate);
           }}
         />
-      </ScrollView>
+      </MapView>
+      <View style={styles.scrim} />
+
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.topBar}>
+          <ShadButton label="Back" size="compact" variant="secondary" onPress={() => navigation.goBack()} />
+        </View>
+
+        <View style={styles.sheet}>
+          <Text style={styles.title}>Add a place</Text>
+          <Text style={styles.copy}>Tap the map or drag the pin, then add a short name and description.</Text>
+          {errorMessage ? <Text style={styles.subtle}>{errorMessage}</Text> : null}
+
+          <TextInput
+            placeholder="Place name"
+            placeholderTextColor={colors.mutedText}
+            style={styles.input}
+            value={name}
+            onChangeText={setName}
+          />
+          <TextInput
+            placeholder="Description"
+            placeholderTextColor={colors.mutedText}
+            style={[styles.input, styles.multiline]}
+            value={description}
+            onChangeText={setDescription}
+            multiline
+          />
+
+          <View style={styles.coordsCard}>
+            <Text style={styles.coordsLabel}>Pinned at</Text>
+            <Text style={styles.coordsValue}>
+              {pin.latitude.toFixed(5)}, {pin.longitude.toFixed(5)}
+            </Text>
+          </View>
+
+          <ShadButton label="Save place" onPress={handleSubmit} />
+        </View>
+      </SafeAreaView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: {
+  container: {
     flex: 1,
-    backgroundColor: colors.nightRoot,
+    backgroundColor: colors.background,
   },
-  content: {
+  scrim: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.12)',
+  },
+  safeArea: {
+    flex: 1,
+    justifyContent: 'space-between',
     padding: spacing.md,
-    gap: spacing.md,
+  },
+  topBar: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+  },
+  sheet: {
+    backgroundColor: colors.card,
+    borderColor: colors.border,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    padding: spacing.md,
+    ...shadows.floating,
+  },
+  title: {
+    color: colors.text,
+    fontFamily: typography.semibold,
+    fontSize: 26,
   },
   copy: {
-    color: colors.textMuted,
+    color: colors.mutedText,
     fontFamily: typography.body,
     fontSize: 14,
+    lineHeight: 20,
+    marginTop: spacing.sm,
   },
-  draftStack: {
-    gap: spacing.sm,
-  },
-  draftCard: {
-    padding: spacing.md,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(216, 194, 142, 0.14)',
-    backgroundColor: 'rgba(18, 23, 17, 0.28)',
-  },
-  draftTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: spacing.sm,
-  },
-  draftTitle: {
-    flex: 1,
-    color: colors.savePage,
-    fontFamily: typography.bodyBold,
-    fontSize: 14,
-  },
-  draftMeta: {
-    color: colors.textDim,
-    fontFamily: typography.mono,
-    fontSize: 11,
+  subtle: {
+    color: colors.mutedText,
+    fontFamily: typography.body,
+    fontSize: 12,
+    lineHeight: 18,
     marginTop: spacing.xs,
   },
-  draftNote: {
-    color: colors.textMuted,
+  input: {
+    backgroundColor: colors.secondary,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    color: colors.text,
     fontFamily: typography.body,
-    fontSize: 13,
-    marginTop: spacing.sm,
+    marginTop: spacing.md,
+    minHeight: 48,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  multiline: {
+    minHeight: 110,
+    textAlignVertical: 'top',
+  },
+  coordsCard: {
+    backgroundColor: colors.secondary,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    marginVertical: spacing.md,
+    padding: spacing.md,
+  },
+  coordsLabel: {
+    color: colors.mutedText,
+    fontFamily: typography.medium,
+    fontSize: 12,
+    marginBottom: spacing.xs,
+  },
+  coordsValue: {
+    color: colors.text,
+    fontFamily: typography.semibold,
+    fontSize: 14,
   },
 });
