@@ -12,6 +12,17 @@ This repo currently implements a small Expo-native product:
 
 There is no backend, no real auth system, and no server persistence.
 
+## Runtime Model
+
+The app is designed as a local-first prototype.
+
+- seed data is loaded on first boot
+- AsyncStorage becomes the source of truth after hydration
+- all writes happen locally in the reducer
+- the UI reads directly from reducer-backed context state
+
+This keeps the product small and fast to iterate on, but it also means data is device-local only.
+
 ## Navigation
 
 The app uses a single native stack:
@@ -21,6 +32,27 @@ The app uses a single native stack:
 - `AddPlace`
 
 The home screen is only an entry surface. The browse and add screens contain the real working flows.
+
+## Screen Responsibilities
+
+### Home
+
+- show the live background map
+- show the two primary actions
+- let the user flip between guest and demo-user mode
+
+### Browse
+
+- render the interactive in-app map
+- show existing place markers
+- let the user focus a place
+- show vote score and comments for the selected place
+
+### AddPlace
+
+- let the user place a marker on the map
+- collect a place name and description
+- dispatch a new place record into local state
 
 ## State Model
 
@@ -81,6 +113,8 @@ Auth is intentionally fake and local for now.
 - `demo-user`: can browse, add places, vote, and comment
 
 The login toggle on the home screen only switches `currentUserId` in local state.
+
+This is a deliberate product shortcut, not a hidden auth system.
 
 ## Live Location
 
@@ -153,6 +187,20 @@ Rules:
 - Seed data comes from [src/data/seed.js](/Users/sirishjoshi/Desktop/Topey/src/data/seed.js)
 - Hydration happens once on app boot
 - Any state change after hydration is written back to AsyncStorage
+
+## Test Surface
+
+The repo’s current tests cover:
+
+- reducer behavior
+- auth helper behavior
+- geo helper behavior
+
+The repo does **not** currently have automated UI tests for:
+
+- native map rendering
+- device permission flows
+- full Expo Go interaction on a real phone
 
 ## Main Source Files
 
