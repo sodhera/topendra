@@ -17,8 +17,10 @@
 - Guests can browse places, but adding a place remains login-gated.
 - The add-place flow should land on a live map first, then open a details modal from an explicit `Add here` action.
 - Home and browse maps must stay pannable; they should not lock to GPS after load.
+- Dragging the home map should enter browse mode automatically, and browse mode must have a back path to home.
 - Demo Kathmandu pins should stay visible by default so the map behavior is easy to verify.
-- Button treatment should stay translucent/glassy with springy motion instead of flat rectangles.
+- Button and overlay treatment should stay translucent/glassy with springy motion instead of flat rectangles.
+- Each place open should be tracked so later notification work has real event history.
 - The app is Expo native and written in JavaScript.
 
 ## Design Direction

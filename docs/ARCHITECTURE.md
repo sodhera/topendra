@@ -47,11 +47,11 @@ Defined in [src/screens/HomeScreen.js](/Users/sirishjoshi/Desktop/Topey/src/scre
 Responsibilities:
 
 - show the live map background and keep it pannable
-- show the current auth state
-- offer Google and Facebook sign-in to guests
-- send the user into the browse map
+- render compact liquid-glass home controls instead of a large status widget
+- switch into browse mode as soon as the map starts moving
+- expose a back path from browse mode back to the home chrome
 
-The large center hero card from the earlier prototype is intentionally gone.
+The large center hero card and test-user widget are intentionally gone.
 
 ### Browse
 
@@ -59,18 +59,12 @@ Defined in [src/screens/BrowseScreen.js](/Users/sirishjoshi/Desktop/Topey/src/sc
 
 Responsibilities:
 
-- render the free-roam map
+- reuse the same map foundation as home
 - keep the initial viewport on the Kathmandu demo region
 - display multiple place markers from Supabase
-- focus the selected place
-- collapse markers into a smaller capsule while the map is moving, then spring them back
-- show the place widget:
-  - name
-  - description
-  - distance from user
-  - upvote/downvote ratio
-  - comments
-- gate comments behind login
+- collapse markers into a smaller capsule while the map is moving, then expand them after 2 seconds of idle time
+- show a compact place preview and an explicit details modal
+- gate comments and votes behind login inside the modal
 
 ### AddPlace
 
@@ -171,6 +165,21 @@ Backend data helpers live in [src/lib/backend.js](/Users/sirishjoshi/Desktop/Top
 - `createPlace`: inserts a new place
 - `voteForPlace`: upserts or removes the current user’s vote
 - `createComment`: inserts a comment
+- `createPlaceOpenEvent`: records each place open with a viewer session id and source screen
+
+### Place Open Tracking
+
+Open tracking now writes into `place_open_events`.
+
+Each event stores:
+
+- `place_id`
+- `user_id` when logged in, otherwise `null`
+- `viewer_session_id` from AsyncStorage so anonymous sessions still have continuity
+- `source_screen`
+- `opened_at`
+
+This is the first piece of the planned area-update notification system.
 
 ## Location Handling
 

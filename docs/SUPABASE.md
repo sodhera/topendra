@@ -21,6 +21,7 @@ Supabase is responsible for:
 - storing places
 - storing votes
 - storing comments
+- storing place-open tracking events
 - persisting auth sessions
 - brokering Google and Facebook OAuth
 - handling email/password auth
@@ -64,6 +65,16 @@ Important rules:
 - insert is authenticated-only
 - guests do not receive comment rows from the backend
 
+### `public.place_open_events`
+
+Stores every explicit place open from the map UI.
+
+Important rules:
+
+- both guests and logged-in users can insert open events
+- anonymous continuity comes from a client-side `viewer_session_id`
+- authenticated reads are limited to the current user’s own rows
+
 ## Row Level Security
 
 RLS lives in [supabase/migrations/20260322114500_init_topey.sql](/Users/sirishjoshi/Desktop/Topey/supabase/migrations/20260322114500_init_topey.sql).
@@ -75,6 +86,7 @@ Policy summary:
 - only authenticated users can insert `places`
 - only authenticated users can insert/update/delete their own `place_votes`
 - only authenticated users can read and insert `place_comments`
+- anyone can insert `place_open_events`, but authenticated reads are scoped to their own rows
 
 ## Seed Data
 
@@ -95,9 +107,10 @@ The app context lives in [src/context/AppContext.js](/Users/sirishjoshi/Desktop/
 Flow:
 
 1. Restore the saved Supabase session.
-2. Fetch places and votes for every user.
-3. Fetch comments only when a session exists.
-4. Expose auth and write actions to the screens.
+2. Restore or create a local anonymous viewer session id.
+3. Fetch places and votes for every user.
+4. Fetch comments only when a session exists.
+5. Expose auth, write actions, and place-open tracking to the screens.
 
 Backend helper code lives in:
 

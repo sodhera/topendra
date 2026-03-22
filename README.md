@@ -25,22 +25,22 @@ cd topey
 ## Current Product Shape
 
 - Home screen:
-  - live map background that can be panned and zoomed
-  - no large hero card
-  - Google and Facebook sign-in buttons for guests
-  - `Find a place` button that opens the explorable browse map
+  - live Kathmandu map background that can be panned and zoomed immediately
+  - no large profile widget sitting over the map
+  - compact glass controls for sign-in, sign-out, and add-place
+  - dragging the map enters `Find a place` mode automatically
 - Browse screen:
-  - free-roam map centered on the Kathmandu demo region by default
+  - same map system as home, but starts in browse mode with a back button
   - multiple seeded place pins in Kathmandu
-  - map pins compress into a lighter capsule while the map is moving, then bounce back
-  - place widget with name, description, distance, vote ratio, and comments
-  - comments visible only to logged-in users
+  - map pins stay minimized while the map is moving and expand after 2 seconds of idle time
+  - compact liquid-glass place preview with an explicit details modal
 - Add-place screen:
   - opens on the user’s current location once foreground location resolves
   - movable map with a centered pin that follows the visible location
   - `Add here` action that opens a details modal
   - modal form with name, description, and final `Add` submit for logged-in users
-- Buttons across the app use a translucent glass-like treatment and springy press motion.
+- Buttons and overlays now use a translucent liquid-glass treatment and springy motion.
+- Place opens are tracked in Supabase so later area-notification work has usage history to build on.
 
 ## Tech Stack
 
