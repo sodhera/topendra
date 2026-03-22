@@ -1,5 +1,8 @@
+import { DEMO_PLACE_COUNT, buildKathmanduDemoData } from '../data/demoCatalog';
 import { getUserIdentity } from './auth';
 import { supabase } from './supabase';
+
+const demoData = buildKathmanduDemoData();
 
 function normalizeText(value) {
   return value?.trim() ?? '';
@@ -15,6 +18,7 @@ function mapPlace(row) {
     authorName: row.author_name,
     createdAt: row.created_at,
     createdBy: row.created_by,
+    threadCount: row.thread_count,
   };
 }
 
@@ -39,6 +43,45 @@ function mapComment(row) {
   };
 }
 
+function sortByCreatedAtDescending(left, right) {
+  return new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime();
+}
+
+function mergeById(primaryRecords, fallbackRecords) {
+  const records = new Map();
+
+  primaryRecords.forEach((record) => {
+    records.set(record.id, record);
+  });
+
+  fallbackRecords.forEach((record) => {
+    if (!records.has(record.id)) {
+      records.set(record.id, record);
+    }
+  });
+
+  return Array.from(records.values());
+}
+
+function attachDemoData(data, { includeComments }) {
+  const places = mergeById(data.places, demoData.places)
+    .sort(sortByCreatedAtDescending)
+    .slice(0, DEMO_PLACE_COUNT);
+  const visiblePlaceIds = new Set(places.map((place) => place.id));
+  const votes = mergeById(data.votes, demoData.votes).filter((vote) => visiblePlaceIds.has(vote.placeId));
+  const comments = includeComments
+    ? mergeById(data.comments, demoData.comments)
+        .filter((comment) => visiblePlaceIds.has(comment.placeId))
+        .sort(sortByCreatedAtDescending)
+    : [];
+
+  return {
+    places,
+    votes,
+    comments,
+  };
+}
+
 export async function fetchAppData({ includeComments }) {
   const [placesResult, votesResult, commentsResult] = await Promise.all([
     supabase.from('places').select('*').order('created_at', { ascending: false }),
@@ -60,11 +103,14 @@ export async function fetchAppData({ includeComments }) {
     throw commentsResult.error;
   }
 
-  return {
-    places: placesResult.data.map(mapPlace),
-    votes: votesResult.data.map(mapVote),
-    comments: commentsResult.data.map(mapComment),
-  };
+  return attachDemoData(
+    {
+      places: placesResult.data.map(mapPlace),
+      votes: votesResult.data.map(mapVote),
+      comments: commentsResult.data.map(mapComment),
+    },
+    { includeComments }
+  );
 }
 
 export async function createPlace({ user, name, description, latitude, longitude }) {

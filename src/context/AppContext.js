@@ -1,11 +1,13 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { buildKathmanduDemoData } from '../data/demoCatalog';
 import { getUserIdentity } from '../lib/auth';
 import { createComment, createPlace, createPlaceOpenEvent, fetchAppData, voteForPlace } from '../lib/backend';
 import { VIEWER_SESSION_KEY } from '../lib/constants';
 import { completeOAuthFlow, getAuthRedirectUrl, supabase } from '../lib/supabase';
 
 const AppContext = createContext(null);
+const demoData = buildKathmanduDemoData();
 
 function getReadableError(error, fallback) {
   return error?.message ?? fallback;
@@ -52,6 +54,9 @@ export function AppProvider({ children }) {
       setComments(data.comments);
       setErrorMessage('');
     } catch (error) {
+      setPlaces(demoData.places);
+      setVotes(demoData.votes);
+      setComments(activeSession?.user ? demoData.comments : []);
       setErrorMessage(getReadableError(error, 'Topey could not reach Supabase right now.'));
     } finally {
       setIsRefreshing(false);
