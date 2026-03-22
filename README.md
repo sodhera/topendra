@@ -52,7 +52,7 @@ cd topey
 - Add-place screen:
   - opens on the user’s current location once foreground location resolves
   - movable map with a fixed maps-style location bubble pin in the upper half of the viewport that still marks the exact add target
-  - `Add here` action that opens a details modal
+  - the live overlay stays minimal: just `Back` at the top and `Add here` at the bottom
   - modal form with name, description, and final `Add` submit for logged-in users
   - guest add attempts expose the same email-link auth path used by voting and comments
 - Buttons and sheets now use an Apple-like iOS treatment with a white/black/grey palette, larger sheet geometry, and clearer action hierarchy inside modals.

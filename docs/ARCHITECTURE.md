@@ -127,6 +127,7 @@ Responsibilities:
 - keep the base map decluttered while still showing the user location and current pin target
 - let the user move the pin by moving the map instead of dragging a controlled region prop
 - render a fixed maps-style location bubble pin in the upper half of the viewport so the add target stays visible while the map moves underneath it
+- keep the live overlay minimal with only `Back` and `Add here`
 - open a details modal from the map-first `Add here` action
 - capture the place name and description inside the modal
 - require login before save
