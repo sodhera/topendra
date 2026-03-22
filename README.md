@@ -29,18 +29,18 @@ cd topey
   - `Profile` or `Sign in` button at the top right
   - one large `+` button at the bottom that opens the add-place flow
   - tapping a dot opens the place modal directly on home instead of navigating away
-  - the modal uses a single metadata line, `Open location`, simple arrow voting, and a Reddit-style thread preview
+  - the modal uses a single metadata line, `Open location`, stemmed arrow voting, and a Reddit-style thread preview
 - Browse screen:
   - starts on the Kathmandu demo region with up to 50 demo location dots
   - `Back` button at the top left and `Add a place` at the top right
   - tapping a dot opens a native-feeling light preview card with rating, votes, and thread count
-  - `View more` opens a details modal with inline metadata, simple arrow voting, a stacked thread preview, and a separate discussion modal
+  - `View more` opens a details modal with inline metadata, stemmed arrow voting, a stacked thread preview, and a separate discussion modal
 - Add-place screen:
   - opens on the user’s current location once foreground location resolves
   - movable map with a centered pin that follows the visible location
   - `Add here` action that opens a details modal
   - modal form with name, description, and final `Add` submit for logged-in users
-- Buttons and sheets now use an Apple-like iOS treatment with softer materials, system-blue actions, larger sheet geometry, and clearer action hierarchy inside modals.
+- Buttons and sheets now use an Apple-like iOS treatment with solid white surfaces, system-blue actions, larger sheet geometry, and clearer action hierarchy inside modals.
 - Place discussions now behave more like Reddit: the place sheet shows a short preview stack, while the full conversation opens in a separate modal with per-comment reply controls.
 - Place opens are tracked in Supabase so later area-notification work has usage history to build on.
 - Demo mode now ships with 50 deterministic Kathmandu places plus multiple seeded comment threads per place.

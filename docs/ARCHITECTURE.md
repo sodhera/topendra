@@ -53,10 +53,11 @@ Responsibilities:
 - open the place modal directly on marker taps instead of navigating into another screen
 - expose `Open location` inside that modal for every viewer
 - render rating, votes, and threads as one metadata line instead of boxed stat cards
-- use simple arrow voting under `Open location`
+- use stemmed arrow voting under `Open location`
 - show only a two-comment preview stack in the place modal
 - open the full discussion in a second modal with per-comment vote/reply affordances
 - use a floating add-comment action instead of an inline composer in the place modal
+- expose `See More` as the large preview affordance inside the faded comment tail
 - route guests into auth instead of exposing thread content
 
 The large center hero card, test-user widget, and center-floating action row are intentionally gone.

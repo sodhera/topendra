@@ -31,7 +31,7 @@ Use Apple’s HIG as the directional guide and preserve the current product stru
 ## Color
 
 - Background: iOS grouped-light neutral
-- Cards: bright translucent white
+- Cards: solid white
 - Borders: very light separators, not hard outlines
 - Primary button: system blue
 - Primary button text: white
@@ -57,7 +57,7 @@ Use the tokens in [src/lib/theme.js](/Users/sirishjoshi/Desktop/Topey/src/lib/th
 
 - Buttons should feel like native iOS controls:
   - filled primary actions in system blue
-  - translucent secondary pills for map chrome
+  - white secondary pills for map chrome
   - minimum 44pt tappable compact controls
   - only one dominant CTA per sheet; supporting actions should step down in size and emphasis
 - Place thread previews should feel Reddit-like:
@@ -69,7 +69,7 @@ Use the tokens in [src/lib/theme.js](/Users/sirishjoshi/Desktop/Topey/src/lib/th
   - large radii
   - thin separators
   - soft depth
-  - slightly translucent white materials
+  - solid white materials with subtle depth
 - Inputs should be plain, bordered, and legible
 - Stats should read like grouped inset cards rather than dashboard tiles
 
