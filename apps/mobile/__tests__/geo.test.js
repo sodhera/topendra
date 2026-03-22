@@ -34,8 +34,14 @@ describe('geo helpers', () => {
     const closeRegion = {
       latitude: 27.7172,
       longitude: 85.324,
-      latitudeDelta: 0.08,
-      longitudeDelta: 0.08,
+      latitudeDelta: 0.12,
+      longitudeDelta: 0.12,
+    };
+    const mediumRegion = {
+      latitude: 27.7172,
+      longitude: 85.324,
+      latitudeDelta: 1.2,
+      longitudeDelta: 1.2,
     };
     const farRegion = {
       latitude: 27.7172,
@@ -44,9 +50,12 @@ describe('geo helpers', () => {
       longitudeDelta: 8,
     };
     const closePlaces = getMapPlacesForRegion(state.places, closeRegion, state.votes);
+    const mediumPlaces = getMapPlacesForRegion(state.places, mediumRegion, state.votes);
     const farPlaces = getMapPlacesForRegion(state.places, farRegion, state.votes);
 
-    expect(closePlaces.length).toBeGreaterThan(farPlaces.length);
+    expect(closePlaces.length).toBe(state.places.length);
+    expect(mediumPlaces.length).toBeLessThan(closePlaces.length);
+    expect(mediumPlaces.length).toBeGreaterThan(farPlaces.length);
     expect(farPlaces.length).toBeLessThanOrEqual(6);
   });
 
