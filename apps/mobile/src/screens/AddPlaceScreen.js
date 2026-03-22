@@ -392,7 +392,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm,
     paddingBottom: spacing.xl,
-    ...shadows.floating,
   },
   modalHandle: {
     alignSelf: 'center',

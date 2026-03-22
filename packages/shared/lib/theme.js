@@ -11,7 +11,7 @@ export const colors = {
   secondary: '#FFFFFF',
   accent: '#2C2C2E',
   mapOverlay: 'rgba(245, 245, 247, 0.5)',
-  sheetBackdrop: 'rgba(17, 17, 17, 0.26)',
+  sheetBackdrop: 'rgba(245, 245, 247, 0.98)',
   handle: '#D1D1D6',
 };
 

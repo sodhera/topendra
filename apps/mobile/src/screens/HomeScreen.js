@@ -21,7 +21,7 @@ import { getUserIdentity, isLoggedIn } from '@topey/shared/lib/auth';
 import { KATHMANDU_EXPLORE_REGION } from '@topey/shared/lib/constants';
 import { getCommentsForPlace, getVoteBreakdown } from '@topey/shared/lib/geo';
 import { openPlaceInMaps } from '../lib/locationLinks';
-import { colors, radius, shadows, spacing, typography } from '@topey/shared/lib/theme';
+import { colors, radius, spacing, typography } from '@topey/shared/lib/theme';
 
 export function HomeScreen({ navigation }) {
   const {
@@ -393,7 +393,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm,
     paddingBottom: spacing.xl,
-    ...shadows.floating,
   },
   sheetHandle: {
     alignSelf: 'center',

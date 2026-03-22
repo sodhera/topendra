@@ -11,7 +11,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { colors, radius, shadows, spacing, typography } from '@topey/shared/lib/theme';
+import { colors, radius, spacing, typography } from '@topey/shared/lib/theme';
 
 function getAuthorName(comment) {
   return comment?.authorName || 'Topey user';
@@ -420,7 +420,6 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xxl,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm,
-    ...shadows.floating,
   },
   composerSheet: {
     backgroundColor: colors.card,
@@ -432,7 +431,6 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xl,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm,
-    ...shadows.floating,
   },
   sheetHandle: {
     alignSelf: 'center',
