@@ -37,12 +37,14 @@ cd topey
   - `packages/shared` keeps cross-platform logic in one place
 - Home screen:
   - opens near the user’s current location when foreground location is available, with the Kathmandu seeded field as the fallback
+  - thins marker density as the map zooms out so wide views do not render every place pin at once
   - `Profile` or `Sign in` button at the top right
   - one large `+` button at the bottom that opens the add-place flow
   - tapping a dot opens the place modal directly on home instead of navigating away
   - the modal uses a single metadata line, `Open location`, a participation row with stemmed arrow voting plus `Added by: <Username>`, and a Reddit-style thread preview
 - Browse screen:
   - starts near the user’s current location when available, with up to 50 seeded demo dots still merged into the dataset
+  - uses the same zoom-aware marker thinning so wide map views stay readable
   - `Back` button at the top left and `Add a place` at the top right
   - tapping a dot opens a native-feeling light preview card with rating, votes, and thread count
   - `View more` opens a details modal with inline metadata, a participation row that combines stemmed arrow voting with creator attribution, a stacked thread preview, and a separate discussion modal
@@ -77,6 +79,7 @@ packages/
 - `Home`, `Browse`, and `AddPlace` all request foreground location so the app can open near the user anywhere, not only around the Kathmandu seed region.
 - Home and browse both stay directly draggable because only the actual buttons intercept touch events.
 - Mobile map views intentionally suppress native POIs, buildings, indoor labels, traffic, and toolbar chrome so Topey pins are the only location layer that stands out.
+- Home and browse derive a visible marker subset from the current viewport and reduce the total count as the map zooms out.
 - Home place details open in a modal on dot tap, and browse previews also open only from explicit dot taps.
 - `AddPlace` updates the pending coordinates from map movement and uses a fixed center pin overlay so the target never disappears.
 
