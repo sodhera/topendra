@@ -16,6 +16,9 @@
 - Logged-in users can upvote, downvote, and comment.
 - Guests can browse places, but adding a place remains login-gated.
 - The add-place flow should land on a live map first, then open a details modal from an explicit `Add here` action.
+- Home and browse maps must stay pannable; they should not lock to GPS after load.
+- Demo Kathmandu pins should stay visible by default so the map behavior is easy to verify.
+- Button treatment should stay translucent/glassy with springy motion instead of flat rectangles.
 - The app is Expo native and written in JavaScript.
 
 ## Design Direction

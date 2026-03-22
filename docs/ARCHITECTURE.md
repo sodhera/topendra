@@ -46,7 +46,7 @@ Defined in [src/screens/HomeScreen.js](/Users/sirishjoshi/Desktop/Topey/src/scre
 
 Responsibilities:
 
-- show the live map background
+- show the live map background and keep it pannable
 - show the current auth state
 - offer Google and Facebook sign-in to guests
 - send the user into the browse map
@@ -60,8 +60,10 @@ Defined in [src/screens/BrowseScreen.js](/Users/sirishjoshi/Desktop/Topey/src/sc
 Responsibilities:
 
 - render the free-roam map
+- keep the initial viewport on the Kathmandu demo region
 - display multiple place markers from Supabase
 - focus the selected place
+- collapse markers into a smaller capsule while the map is moving, then spring them back
 - show the place widget:
   - name
   - description
@@ -77,7 +79,7 @@ Defined in [src/screens/AddPlaceScreen.js](/Users/sirishjoshi/Desktop/Topey/src/
 Responsibilities:
 
 - center on the resolved live location before enabling submission
-- let the user move the pin by tapping or dragging
+- let the user move the pin by moving the map
 - open a details modal from the map-first `Add here` action
 - capture the place name and description inside the modal
 - require login before save
@@ -181,6 +183,8 @@ Behavior:
 3. Use the live position when permission is granted.
 4. Fall back to Kathmandu when location is unavailable.
 5. Allow screens to opt out of live recentering so the browse map can be explored freely.
+
+The screens now use the live region for distance and add-place setup, but the browse and home maps are not locked to it. That keeps the Kathmandu demo markers visible and still lets the user move the map by hand.
 
 ## Legacy Prototype Code
 
