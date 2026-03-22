@@ -227,22 +227,26 @@ export function HomeScreen({ navigation }) {
                   <PreviewStat label="Threads" value={`${threadCount}`} />
                 </View>
 
-                <ShadButton
-                  label="Open location"
-                  size="compact"
-                  shape="pill"
-                  onPress={handleOpenLocation}
-                  style={styles.locationButton}
-                  testID="home-open-location-button"
-                />
+                <View style={styles.actionRow}>
+                  <ShadButton
+                    label="Open location"
+                    size="default"
+                    shape="pill"
+                    onPress={handleOpenLocation}
+                    style={styles.locationButton}
+                    labelStyle={styles.locationButtonLabel}
+                    testID="home-open-location-button"
+                  />
 
-                <CompactVoteControls
-                  currentVote={currentVote}
-                  onDownvote={() => handleVote(-1)}
-                  onUpvote={() => handleVote(1)}
-                  score={voteBreakdown.score}
-                  testIDPrefix="home-vote"
-                />
+                  <CompactVoteControls
+                    currentVote={currentVote}
+                    onDownvote={() => handleVote(-1)}
+                    onUpvote={() => handleVote(1)}
+                    score={voteBreakdown.score}
+                    style={styles.voteControls}
+                    testIDPrefix="home-vote"
+                  />
+                </View>
 
                 {isAuthenticated ? (
                   <>
@@ -254,7 +258,14 @@ export function HomeScreen({ navigation }) {
                         onChangeText={setCommentDraft}
                         style={styles.input}
                       />
-                      <ShadButton label="Send" size="compact" shape="pill" onPress={handleComment} />
+                      <ShadButton
+                        label="Send"
+                        size="compact"
+                        shape="pill"
+                        onPress={handleComment}
+                        style={styles.sendButton}
+                        labelStyle={styles.sendButtonLabel}
+                      />
                     </View>
 
                     <ScrollView style={styles.commentsList} showsVerticalScrollIndicator={false}>
@@ -451,8 +462,23 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     marginTop: spacing.md,
   },
-  locationButton: {
+  actionRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing.sm,
     marginTop: spacing.md,
+  },
+  locationButton: {
+    flex: 1,
+    minHeight: 50,
+  },
+  locationButtonLabel: {
+    fontSize: 17,
+    fontWeight: '600',
+    letterSpacing: -0.35,
+  },
+  voteControls: {
+    marginTop: 0,
   },
   previewStat: {
     flex: 1,
@@ -480,7 +506,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     gap: spacing.sm,
-    marginTop: spacing.md,
+    marginTop: 14,
   },
   input: {
     backgroundColor: colors.elevatedCard,
@@ -490,9 +516,19 @@ const styles = StyleSheet.create({
     color: colors.text,
     flex: 1,
     fontFamily: typography.body,
-    minHeight: 48,
+    minHeight: 44,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    paddingVertical: spacing.xs,
+  },
+  sendButton: {
+    minHeight: 40,
+    minWidth: 78,
+    paddingHorizontal: 16,
+  },
+  sendButtonLabel: {
+    fontSize: 17,
+    fontWeight: '600',
+    letterSpacing: -0.35,
   },
   commentsList: {
     marginTop: spacing.md,

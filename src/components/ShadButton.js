@@ -54,10 +54,10 @@ const styles = StyleSheet.create({
     borderWidth: 0.75,
     justifyContent: 'center',
     shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.12,
-    shadowRadius: 20,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    elevation: 2,
   },
   primary: {
     backgroundColor: colors.primary,
@@ -68,14 +68,14 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.62)',
   },
   default: {
-    minHeight: 50,
-    paddingHorizontal: spacing.lg,
+    minHeight: 48,
+    paddingHorizontal: 20,
     paddingVertical: spacing.sm,
   },
   compact: {
     minHeight: 44,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    paddingHorizontal: 16,
+    paddingVertical: spacing.xs,
   },
   large: {
     minHeight: 62,
@@ -97,9 +97,9 @@ const styles = StyleSheet.create({
   },
   label: {
     fontFamily: typography.semibold,
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '600',
-    letterSpacing: -0.24,
+    letterSpacing: -0.35,
   },
   primaryLabel: {
     color: colors.primaryText,

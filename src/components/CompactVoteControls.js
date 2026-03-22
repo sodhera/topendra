@@ -7,12 +7,13 @@ export function CompactVoteControls({
   onDownvote,
   onUpvote,
   score = 0,
+  style,
   testIDPrefix = 'vote',
 }) {
   const scoreLabel = score > 0 ? `+${score}` : `${score}`;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, style]}>
       <Pressable
         accessibilityRole="button"
         onPress={onUpvote}
@@ -38,30 +39,25 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     alignSelf: 'flex-start',
-    backgroundColor: colors.secondary,
-    borderColor: colors.border,
+    backgroundColor: 'rgba(255, 255, 255, 0.82)',
+    borderColor: colors.separator,
     borderRadius: radius.pill,
     borderWidth: 0.75,
     flexDirection: 'row',
-    gap: spacing.xs,
+    gap: 4,
     marginTop: spacing.sm,
-    paddingHorizontal: spacing.xs,
-    paddingVertical: spacing.xs,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    elevation: 4,
+    paddingHorizontal: 4,
+    paddingVertical: 4,
   },
   arrowButton: {
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.88)',
-    borderColor: colors.border,
+    backgroundColor: colors.elevatedCard,
+    borderColor: colors.separator,
     borderRadius: radius.pill,
     borderWidth: 0.75,
-    height: 32,
+    height: 30,
     justifyContent: 'center',
-    width: 32,
+    width: 30,
   },
   arrowButtonActive: {
     backgroundColor: colors.primary,
@@ -70,9 +66,9 @@ const styles = StyleSheet.create({
   arrowLabel: {
     color: colors.text,
     fontFamily: typography.semibold,
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '700',
-    lineHeight: 12,
+    lineHeight: 11,
   },
   arrowLabelActive: {
     color: colors.primaryText,
@@ -80,10 +76,10 @@ const styles = StyleSheet.create({
   scoreLabel: {
     color: colors.text,
     fontFamily: typography.semibold,
-    fontSize: 14,
+    fontSize: 17,
     fontWeight: '600',
-    letterSpacing: -0.14,
-    minWidth: 34,
+    letterSpacing: -0.3,
+    minWidth: 42,
     textAlign: 'center',
   },
 });
