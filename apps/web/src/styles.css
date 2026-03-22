@@ -1,0 +1,343 @@
+:root {
+  color-scheme: light;
+  font-family: Inter, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+  background: #f5f5f7;
+  color: #111111;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.75), transparent 38%),
+    linear-gradient(180deg, #fafafc 0%, #f2f2f5 100%);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+a {
+  font: inherit;
+}
+
+.app-shell {
+  min-height: 100vh;
+  padding: 24px;
+  color: var(--color-text);
+}
+
+.topbar {
+  align-items: flex-start;
+  display: flex;
+  gap: 24px;
+  justify-content: space-between;
+  margin: 0 auto 24px;
+  max-width: 1440px;
+}
+
+.topbar h1 {
+  font-size: clamp(36px, 5vw, 56px);
+  letter-spacing: -0.06em;
+  line-height: 0.95;
+  margin: 8px 0 12px;
+}
+
+.topbar p {
+  color: var(--color-muted);
+  line-height: 1.6;
+  margin: 0;
+  max-width: 640px;
+}
+
+.eyebrow {
+  color: var(--color-muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+}
+
+.topbar-link,
+.primary-link {
+  align-items: center;
+  background: var(--color-primary);
+  border: 1px solid rgba(17, 17, 17, 0.92);
+  border-radius: 18px;
+  color: var(--color-primary-text);
+  display: inline-flex;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 18px;
+}
+
+.layout {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: minmax(0, 1.5fr) minmax(320px, 440px);
+  margin: 0 auto;
+  max-width: 1440px;
+}
+
+.map-panel,
+.details-panel {
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid var(--color-border);
+  border-radius: 32px;
+  box-shadow: 0 24px 48px rgba(17, 17, 17, 0.08);
+  overflow: hidden;
+}
+
+.map-panel {
+  min-height: 720px;
+  position: relative;
+}
+
+.map-chrome {
+  align-items: center;
+  color: var(--color-muted);
+  display: flex;
+  font-size: 13px;
+  justify-content: space-between;
+  padding: 20px 24px 0;
+}
+
+.map-surface {
+  background:
+    linear-gradient(120deg, rgba(17, 17, 17, 0.03), rgba(255, 255, 255, 0.28)),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.68), rgba(229, 229, 234, 0.92));
+  height: calc(100% - 48px);
+  margin: 16px;
+  overflow: hidden;
+  position: relative;
+  border-radius: 26px;
+}
+
+.map-grid {
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent 0,
+      transparent 39px,
+      rgba(17, 17, 17, 0.06) 40px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0,
+      transparent 39px,
+      rgba(17, 17, 17, 0.06) 40px
+    ),
+    radial-gradient(circle at 18% 16%, rgba(17, 17, 17, 0.08), transparent 22%),
+    radial-gradient(circle at 74% 32%, rgba(17, 17, 17, 0.07), transparent 18%),
+    radial-gradient(circle at 48% 72%, rgba(17, 17, 17, 0.05), transparent 20%);
+  inset: 0;
+  position: absolute;
+}
+
+.place-dot {
+  background: var(--color-card);
+  border: 1px solid rgba(17, 17, 17, 0.22);
+  border-radius: 999px;
+  box-shadow: 0 10px 16px rgba(17, 17, 17, 0.14);
+  cursor: pointer;
+  height: 18px;
+  position: absolute;
+  transform: translate(-50%, -50%);
+  transition: transform 160ms ease, background-color 160ms ease, border-color 160ms ease;
+  width: 18px;
+}
+
+.place-dot::after {
+  background: var(--color-text);
+  border-radius: 999px;
+  content: "";
+  height: 6px;
+  inset: 50%;
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 6px;
+}
+
+.place-dot:hover,
+.place-dot.is-selected {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  transform: translate(-50%, -50%) scale(1.2);
+}
+
+.place-dot:hover::after,
+.place-dot.is-selected::after {
+  background: var(--color-primary-text);
+}
+
+.details-panel {
+  padding: 28px;
+}
+
+.panel-header h2 {
+  font-size: clamp(28px, 4vw, 42px);
+  letter-spacing: -0.05em;
+  line-height: 1;
+  margin: 8px 0 12px;
+}
+
+.panel-header p,
+.secondary-note,
+.thread-note,
+.comment-row p {
+  color: var(--color-muted);
+}
+
+.meta-row {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 28px;
+}
+
+.meta-row span {
+  background: var(--color-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px;
+}
+
+.meta-row strong,
+.added-by {
+  color: var(--color-muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.meta-row em {
+  color: var(--color-text);
+  font-size: 22px;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+}
+
+.participation-row,
+.cta-row,
+.thread-header {
+  align-items: center;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.participation-row {
+  margin-top: 20px;
+}
+
+.vote-pill {
+  align-items: center;
+  display: inline-flex;
+  gap: 16px;
+  padding: 0 2px;
+}
+
+.vote-pill span,
+.vote-pill b {
+  display: inline-flex;
+  min-width: 18px;
+}
+
+.vote-pill span {
+  color: var(--color-muted);
+  font-size: 20px;
+  justify-content: center;
+}
+
+.vote-pill b {
+  font-size: 18px;
+  justify-content: center;
+}
+
+.added-by {
+  text-align: right;
+}
+
+.added-by span {
+  color: var(--color-text);
+}
+
+.cta-row {
+  align-items: flex-start;
+  margin-top: 24px;
+}
+
+.secondary-note {
+  font-size: 13px;
+  line-height: 1.5;
+  max-width: 180px;
+  text-align: right;
+}
+
+.thread-card {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: 28px;
+  margin-top: 28px;
+  overflow: hidden;
+}
+
+.thread-header {
+  padding: 20px 20px 0;
+}
+
+.comment-row {
+  border-top: 1px solid var(--color-separator);
+  padding: 18px 20px;
+}
+
+.comment-row strong {
+  display: block;
+  margin-bottom: 8px;
+}
+
+.comment-row p {
+  line-height: 1.6;
+  margin: 0;
+}
+
+@media (max-width: 1080px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .map-panel {
+    min-height: 520px;
+  }
+
+  .secondary-note,
+  .added-by {
+    text-align: left;
+  }
+}
+
+@media (max-width: 720px) {
+  .app-shell {
+    padding: 16px;
+  }
+
+  .topbar,
+  .participation-row,
+  .cta-row,
+  .thread-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .meta-row {
+    grid-template-columns: 1fr;
+  }
+}
