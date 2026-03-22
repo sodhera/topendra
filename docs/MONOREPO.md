@@ -67,6 +67,11 @@ Run mobile:
 ./scripts/with-local-node.sh npm run mobile:android
 ```
 
+Important:
+
+- root mobile scripts use `npm --prefix apps/mobile ...` so Expo runs with `apps/mobile` as the project root
+- the monorepo root also keeps a tiny `App.js` fallback that re-exports `apps/mobile/App.js` in case Expo resolves the default entry from the repo root
+
 Run web:
 
 ```bash

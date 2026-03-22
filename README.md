@@ -146,6 +146,8 @@ npm run mobile:test
 npm run mobile:doctor
 ```
 
+The root `npm start` command forwards into `apps/mobile`. The repo also keeps a root [App.js](/Users/sirishjoshi/Desktop/Topey/App.js) shim so Expo’s default entry resolution still lands in the mobile app if Metro is started from the monorepo root by mistake.
+
 Web:
 
 ```bash
