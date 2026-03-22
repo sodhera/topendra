@@ -120,6 +120,8 @@ Required variables:
 
 Do not commit `.env`.
 
+The monorepo keeps `.env` at the repo root. Mobile Expo config and the Supabase admin scripts load that root `.env` automatically, so you do not need to duplicate secrets into `apps/mobile`.
+
 3. Sync the Supabase project
 
 ```bash

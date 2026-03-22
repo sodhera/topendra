@@ -71,6 +71,7 @@ Important:
 
 - root mobile scripts use `npm --prefix apps/mobile ...` so Expo runs with `apps/mobile` as the project root
 - the monorepo root also keeps a tiny `App.js` fallback that re-exports `apps/mobile/App.js` in case Expo resolves the default entry from the repo root
+- the mobile app and repo scripts load environment values from the repo-root `.env`, not a duplicate `apps/mobile/.env`
 
 Run web:
 

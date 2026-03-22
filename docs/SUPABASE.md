@@ -17,7 +17,8 @@ Local development expects:
 - `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
 - `SUPABASE_ACCESS_TOKEN`
 
-These values should live in `.env`, not in committed files.
+These values should live in the repo-root `.env`, not in committed files.
+The mobile Expo config and the admin scripts both load that root file automatically.
 
 ## Runtime Responsibilities
 
