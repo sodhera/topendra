@@ -12,33 +12,32 @@ import { DEFAULT_REGION, KATHMANDU_EXPLORE_REGION } from '@topey/shared/lib/cons
 const DEFAULT_ZOOM = 13;
 const USER_LOCATION_ZOOM = 15;
 const ADD_PLACE_PIN_VERTICAL_FRACTION = 0.4;
-const PLACE_MARKER_SIZE = 20;
-const PLACE_MARKER_SELECTED_SIZE = 26;
-const USER_LOCATION_MARKER_SIZE = 26;
+const PLACE_MARKER_HIT_SIZE = 36;
+const USER_LOCATION_MARKER_HIT_SIZE = 34;
 
-function buildDivMarkerIcon({ className, containerClassName, size }) {
+function buildDivMarkerIcon({ className, containerClassName, hitSize }) {
   return L.divIcon({
     className: `leaflet-div-icon ${containerClassName}`,
     html: `<span class="${className}" aria-hidden="true"></span>`,
-    iconAnchor: [size / 2, size / 2],
-    iconSize: [size, size],
+    iconAnchor: [hitSize / 2, hitSize / 2],
+    iconSize: [hitSize, hitSize],
   });
 }
 
 const PLACE_MARKER_ICON = buildDivMarkerIcon({
   className: 'web-place-marker',
   containerClassName: 'web-place-marker-icon',
-  size: PLACE_MARKER_SIZE,
+  hitSize: PLACE_MARKER_HIT_SIZE,
 });
 const SELECTED_PLACE_MARKER_ICON = buildDivMarkerIcon({
   className: 'web-place-marker is-selected',
   containerClassName: 'web-place-marker-icon',
-  size: PLACE_MARKER_SELECTED_SIZE,
+  hitSize: PLACE_MARKER_HIT_SIZE,
 });
 const USER_LOCATION_MARKER_ICON = buildDivMarkerIcon({
   className: 'web-user-location-marker',
   containerClassName: 'web-user-location-marker-icon',
-  size: USER_LOCATION_MARKER_SIZE,
+  hitSize: USER_LOCATION_MARKER_HIT_SIZE,
 });
 
 function mapToRegion(map) {
@@ -263,6 +262,15 @@ export default function DesktopMap({
     () => [DEFAULT_REGION.latitude, DEFAULT_REGION.longitude],
     []
   );
+  const handleSelectPlace = React.useCallback(
+    (placeId) => {
+      onSelectPlace(placeId, {
+        openModal: true,
+        sourceScreen: 'web_home_pin_modal',
+      });
+    },
+    [onSelectPlace]
+  );
 
   return (
     <div className="desktop-map-shell" data-testid="map-surface">
@@ -279,8 +287,9 @@ export default function DesktopMap({
         zoomSnap={0.25}
       >
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+          subdomains="abcd"
+          url="https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png"
         />
 
         <MapRuntimeBridge
@@ -301,16 +310,15 @@ export default function DesktopMap({
 
           return (
             <Marker
+              bubblingMouseEvents={false}
               key={place.id}
               eventHandlers={{
-                click: () =>
-                  onSelectPlace(place.id, {
-                    openModal: true,
-                    sourceScreen: 'web_home_pin_modal',
-                  }),
+                click: () => handleSelectPlace(place.id),
+                touchstart: () => handleSelectPlace(place.id),
               }}
               icon={isSelected ? SELECTED_PLACE_MARKER_ICON : PLACE_MARKER_ICON}
               position={center}
+              riseOnHover
               title={place.name}
             />
           );
@@ -328,11 +336,11 @@ export default function DesktopMap({
 
       <a
         className="map-attribution"
-        href="https://www.openstreetmap.org/copyright"
+        href="https://carto.com/attributions"
         rel="noreferrer"
         target="_blank"
       >
-        Map data © OpenStreetMap
+        Map data © OpenStreetMap, © CARTO
       </a>
     </div>
   );
