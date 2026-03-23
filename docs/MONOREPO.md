@@ -30,7 +30,7 @@ Owns:
 - browser entrypoint
 - browser layout and styling
 - web-specific tile map integration and interaction
-- HTML-backed Leaflet marker rendering for browser click reliability
+- HTML-backed Leaflet marker rendering with enlarged hit targets for browser click reliability
 - browser-side Supabase session and data wiring
 - desktop camera controls and browser-only regression tests
 

@@ -57,7 +57,7 @@ cd topey
   - guest add attempts expose the same email-link auth path used by voting and comments
 - User location:
   - iOS, Android, and web now render a custom Topey location marker instead of relying on the platform default blue dot
-  - the location marker uses a rainbow-accent treatment so the user’s current position reads differently from place drops
+  - the location marker is a solid black circle with a smaller white dot inside it so current position still reads separately from place drops without introducing extra color
 - Buttons and sheets now use an Apple-like iOS treatment with a white/black/grey palette, larger sheet geometry, and clearer action hierarchy inside modals.
 - Place discussions now behave more like Reddit: the place sheet shows a short preview stack, while the full conversation opens in a separate modal with per-comment reply controls.
 - Place opens are tracked in Supabase so later area-notification work has usage history to build on.
@@ -88,7 +88,8 @@ packages/
 - Home place details open in a modal on dot tap, and browse previews also open only from explicit dot taps.
 - `AddPlace` updates the pending coordinates from map movement and uses a fixed center pin overlay so the target never disappears.
 - `apps/web` uses a real browser map surface, derives a region-like viewport from live map bounds, and feeds that viewport back into the shared place-thinning logic so desktop drag, wheel, trackpad, and keyboard inputs all stay aligned with marker density.
-- Web place drops render as HTML-backed Leaflet markers rather than SVG circle overlays so Safari click handling stays reliable and opening a place sheet behaves like the app.
+- Web place drops render as HTML-backed Leaflet markers with larger invisible hit targets rather than SVG circle overlays so Safari click handling stays reliable and opening a place sheet behaves like the app.
+- The browser base map now uses a muted no-label tile set so external landmarks, POIs, and icons do not compete with Topey pins.
 
 ## Tech Stack
 

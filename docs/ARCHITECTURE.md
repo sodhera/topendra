@@ -49,18 +49,19 @@ Responsibilities:
 
 ### Web desktop interaction model
 
-The browser app uses a Leaflet map surface with OpenStreetMap raster tiles.
+The browser app uses a Leaflet map surface with a muted CARTO no-label raster base map.
 
 Mechanism:
 
 1. the browser map owns panning, zooming, trackpad gestures, and tile rendering
 2. the app derives a region-like viewport from live Leaflet bounds after move and zoom events
 3. that viewport is fed into the shared `getMapPlacesForRegion` logic so desktop and mobile marker density stay aligned
-4. place drops render as HTML-backed Leaflet `divIcon` markers instead of SVG vector circles so marker clicks stay reliable in Safari
+4. place drops render as HTML-backed Leaflet `divIcon` markers with oversized transparent hit areas instead of SVG vector circles so marker clicks stay reliable in Safari
 5. the browser map still exposes extra keyboard affordances such as `Page Up`, `Page Down`, `Home`, `End`, `Enter`, and `0`
 6. add-place mode reads a pinned coordinate from an offset point inside the live map viewport so the browser flow matches the mobile upper-half pin behavior
-7. when browser geolocation resolves, a custom rainbow location marker is rendered separately from place drops so current position stays visually distinct
-8. the browser map stays visually hidden behind the same full-screen app shell used by the mobile experience
+7. when browser geolocation resolves, a custom black-with-white-center location marker is rendered separately from place drops so current position stays visually distinct
+8. the browser base map intentionally strips labels and most external iconography so Topey pins remain the primary landmarks
+9. the browser map stays visually hidden behind the same full-screen app shell used by the mobile experience
 
 ### Web runtime state
 
@@ -120,7 +121,7 @@ Responsibilities:
 - suppress native POIs/buildings/traffic chrome so only Topey place drops compete for attention
 - thin marker density as the viewport widens so wide-area views stay readable
 - keep the map directly pannable without any full-screen overlay layer
-- replace the platform default location dot with a custom rainbow location marker when foreground permission is granted
+- replace the platform default location dot with a custom black-with-white-center location marker when foreground permission is granted
 - render only `Profile` or `Sign in` at the top right
 - keep a single large `+` add-place button anchored at the bottom
 - open the place modal directly on marker taps instead of navigating into another screen
@@ -144,7 +145,7 @@ Responsibilities:
 - render the same live-location-first map foundation as home
 - keep the same decluttered mobile map configuration so only Topey pins stand out against the base map
 - use the same viewport-based pin thinning as home so zoomed-out maps do not render every place at once
-- render the same custom rainbow location marker used on home when foreground permission is granted
+- render the same custom black-with-white-center location marker used on home when foreground permission is granted
 - show only two top controls: `Back` and `Add a place`
 - display up to 50 place markers from Supabase plus the runtime demo fallback
 - open a compact place preview only when a dot is tapped
