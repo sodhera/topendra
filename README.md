@@ -150,9 +150,11 @@ npm run supabase:seed
 
 What these do:
 
-- `supabase:auth`: sets the mobile redirect URL to `topey://auth/callback`
+- `supabase:auth`: keeps the mobile redirect URL at `topey://auth/callback` and allow-lists local web redirects like `http://localhost:5173/**` for browser OAuth
 - `supabase:migrate`: creates the `places`, `place_votes`, and `place_comments` tables with RLS
 - `supabase:seed`: replaces the demo dataset with 50 Kathmandu places, votes, and comment threads
+
+If you need a deployed web origin in the Supabase redirect allow-list, set `WEB_AUTH_REDIRECT_URLS` in the repo-root `.env` before running `npm run supabase:auth`. Use a comma-separated list such as `https://your-web-app.example.com/**`.
 
 ## Running The Apps
 

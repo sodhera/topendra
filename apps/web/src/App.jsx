@@ -66,6 +66,14 @@ function openLocationHref(place) {
   return `https://www.google.com/maps/search/?api=1&query=${coordinates}`;
 }
 
+function getWebAuthRedirectUrl() {
+  if (typeof window === 'undefined') {
+    return undefined;
+  }
+
+  return new URL('/', window.location.origin).toString();
+}
+
 export default function App() {
   const helpId = React.useId();
   const [session, setSession] = React.useState(null);
@@ -487,10 +495,11 @@ export default function App() {
     try {
       setIsAuthBusy(true);
       setErrorMessage('');
+      const redirectTo = getWebAuthRedirectUrl();
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: window.location.href,
+          redirectTo,
         },
       });
 

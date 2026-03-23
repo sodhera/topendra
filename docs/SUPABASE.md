@@ -17,6 +17,8 @@ Local development expects:
 - `EXPO_PUBLIC_SUPABASE_URL`
 - `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
 - `SUPABASE_ACCESS_TOKEN`
+- `WEB_AUTH_REDIRECT_URLS` (optional, comma-separated extra browser redirect URLs)
+- `WEB_SITE_URL` (optional, overrides the default Supabase `site_url`)
 
 These values should live in the repo-root `.env`, not in committed files.
 The mobile Expo config, the browser Vite app, and the admin scripts all load that root file automatically.
@@ -153,6 +155,13 @@ This updates:
 - `site_url`
 - `uri_allow_list`
 - `mailer_autoconfirm`
+
+Default auth redirect behavior after sync:
+
+- keeps `site_url` at `topey://auth/callback` unless `WEB_SITE_URL` is set
+- always allow-lists `topey://auth/callback`
+- also allow-lists local browser OAuth redirects for `http://localhost:5173/**`, `http://127.0.0.1:5173/**`, `http://localhost:4173/**`, and `http://127.0.0.1:4173/**`
+- appends any extra browser redirect URLs from `WEB_AUTH_REDIRECT_URLS`
 
 Runtime auth behavior:
 

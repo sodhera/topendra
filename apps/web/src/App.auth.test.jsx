@@ -183,4 +183,19 @@ describe('App web auth', () => {
       },
     });
   });
+
+  it('starts Google auth with the web origin redirect URL', async () => {
+    render(<App />);
+
+    fireEvent.click(await screen.findByTestId('account-button'));
+    const dialog = await screen.findByRole('dialog');
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Continue with Google' }));
+
+    expect(signInWithOAuth).toHaveBeenCalledWith({
+      provider: 'google',
+      options: {
+        redirectTo: 'http://localhost:3000/',
+      },
+    });
+  });
 });
