@@ -3,6 +3,15 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import App from './App';
 
+vi.mock('./lib/supabase', () => ({
+  getSafeSession: vi.fn().mockResolvedValue({
+    session: null,
+    recoveredFromInvalidToken: false,
+  }),
+  hasSupabaseConfig: false,
+  supabase: null,
+}));
+
 vi.mock('./components/DesktopMap', () => ({
   default: function DesktopMapMock({ addMode, onSelectPlace }) {
     return (
