@@ -18,6 +18,7 @@
     "web:dev": "npm --prefix apps/web run dev --",
     "web:build": "npm --prefix apps/web run build --",
     "web:preview": "npm --prefix apps/web run preview --",
+    "web:test": "npm --prefix apps/web run test --",
     "supabase:auth": "node scripts/sync-supabase-auth-config.mjs",
     "supabase:migrate": "node scripts/apply-supabase-sql.mjs supabase/migrations/20260322114500_init_topey.sql",
     "supabase:seed": "node scripts/apply-supabase-sql.mjs supabase/seed.sql",
