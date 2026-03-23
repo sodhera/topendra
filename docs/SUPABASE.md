@@ -161,6 +161,7 @@ Default auth redirect behavior after sync:
 - keeps `site_url` at `topey://auth/callback` unless `WEB_SITE_URL` is set
 - always allow-lists `topey://auth/callback`
 - also allow-lists local browser OAuth redirects for `http://localhost:5173/**`, `http://127.0.0.1:5173/**`, `http://localhost:4173/**`, and `http://127.0.0.1:4173/**`
+- also appends the current machine's non-loopback IPv4 dev origins for ports `5173` and `4173`
 - appends any extra browser redirect URLs from `WEB_AUTH_REDIRECT_URLS`
 
 Runtime auth behavior:

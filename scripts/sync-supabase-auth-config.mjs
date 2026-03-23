@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { createRequire } from 'node:module';
+import os from 'node:os';
 
 const require = createRequire(import.meta.url);
 const { loadRootEnv } = require('./load-root-env.cjs');
@@ -43,9 +44,28 @@ function getAllowedRedirectUrls() {
     new Set([
       MOBILE_AUTH_REDIRECT_URL,
       ...DEFAULT_WEB_AUTH_REDIRECT_URLS,
+      ...getLocalNetworkRedirectUrls(),
       ...configuredRedirectUrls,
     ])
   );
+}
+
+function getLocalNetworkRedirectUrls() {
+  const interfaces = os.networkInterfaces();
+  const urls = [];
+
+  for (const entries of Object.values(interfaces)) {
+    for (const entry of entries ?? []) {
+      if (!entry || entry.internal || entry.family !== 'IPv4') {
+        continue;
+      }
+
+      urls.push(`http://${entry.address}:5173/**`);
+      urls.push(`http://${entry.address}:4173/**`);
+    }
+  }
+
+  return urls;
 }
 
 async function main() {
