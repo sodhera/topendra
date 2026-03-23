@@ -105,7 +105,10 @@ describe('HomeScreen', () => {
     navigate: jest.fn(),
   };
   const trackPlaceOpen = jest.fn();
-  const requestEmailAccess = jest.fn();
+  const signUpWithPassword = jest.fn();
+  const signInWithPassword = jest.fn();
+  const signInWithGoogle = jest.fn();
+  const setIsAuthModalVisible = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -123,11 +126,15 @@ describe('HomeScreen', () => {
       isEmailAuthLoading: false,
       authNoticeMessage: '',
       errorMessage: '',
-      requestEmailAccess,
+      signUpWithPassword,
+      signInWithPassword,
+      signInWithGoogle,
       signOut: jest.fn(),
       addComment: jest.fn(),
       votePlace: jest.fn(),
       trackPlaceOpen,
+      isAuthModalVisible: false,
+      setIsAuthModalVisible,
     });
 
     useLiveLocation.mockReturnValue({
@@ -209,11 +216,15 @@ describe('HomeScreen', () => {
       isEmailAuthLoading: false,
       authNoticeMessage: '',
       errorMessage: '',
-      requestEmailAccess,
+      signUpWithPassword,
+      signInWithPassword,
+      signInWithGoogle,
       signOut: jest.fn(),
       addComment: jest.fn(),
       votePlace: jest.fn(),
       trackPlaceOpen,
+      isAuthModalVisible: false,
+      setIsAuthModalVisible,
     });
 
     const screen = render(<HomeScreen navigation={navigation} />);
@@ -232,6 +243,6 @@ describe('HomeScreen', () => {
     fireEvent.press(screen.getByTestId(`home-marker-${visiblePlace.id}`));
     fireEvent.press(screen.getByTestId('home-vote-up-button'));
 
-    expect(screen.getByText('Email')).toBeTruthy();
+    expect(setIsAuthModalVisible).toHaveBeenCalledWith(true);
   });
 });

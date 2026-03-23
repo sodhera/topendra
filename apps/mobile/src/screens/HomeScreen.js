@@ -5,6 +5,7 @@ import {
   Modal,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -31,11 +32,15 @@ export function HomeScreen({ navigation }) {
     isEmailAuthLoading,
     authNoticeMessage,
     errorMessage,
-    requestEmailAccess,
+    signUpWithPassword,
+    signInWithPassword,
+    signInWithGoogle,
     signOut,
     addComment,
     votePlace,
     trackPlaceOpen,
+    isAuthModalVisible,
+    setIsAuthModalVisible,
   } = useAppContext();
   const currentUser = getUserIdentity(state.session?.user);
   const isAuthenticated = isLoggedIn(state.session);
@@ -43,11 +48,8 @@ export function HomeScreen({ navigation }) {
   const [mapKey, setMapKey] = useState(0);
   const [mapRegion, setMapRegion] = useState(KATHMANDU_EXPLORE_REGION);
   const [hasCenteredMap, setHasCenteredMap] = useState(false);
-  const [isAccountModalVisible, setIsAccountModalVisible] = useState(false);
   const [isPlaceModalVisible, setIsPlaceModalVisible] = useState(false);
   const [selectedPlaceId, setSelectedPlaceId] = useState('');
-  const [email, setEmail] = useState('');
-  const [username, setUsername] = useState('');
 
   useEffect(() => {
     if (!hasCenteredMap && hasResolvedInitialRegion) {
@@ -78,19 +80,37 @@ export function HomeScreen({ navigation }) {
     )?.value ?? 0;
   }, [selectedPlace, state.session?.user?.id, state.votes]);
 
-  async function handleEmailAccess() {
+  async function handleSignUp({ email, username, password }) {
     try {
-      await requestEmailAccess({ email, username });
-      Alert.alert('Check your email', 'We sent you a sign-in link. Open it on this device to unlock posting, voting, and threads.');
+      await signUpWithPassword({ email, username, password });
+      setIsAuthModalVisible(false);
+    } catch (error) {
+      Alert.alert('Sign-up failed', error.message);
+    }
+  }
+
+  async function handleSignIn({ email, password }) {
+    try {
+      await signInWithPassword({ email, password });
+      setIsAuthModalVisible(false);
     } catch (error) {
       Alert.alert('Sign-in failed', error.message);
+    }
+  }
+
+  async function handleGoogleSignIn() {
+    try {
+      await signInWithGoogle();
+      setIsAuthModalVisible(false);
+    } catch (error) {
+      Alert.alert('Google Sign-in failed', error.message);
     }
   }
 
   async function handleSignOut() {
     try {
       await signOut();
-      setIsAccountModalVisible(false);
+      setIsAuthModalVisible(false);
     } catch (error) {
       Alert.alert('Sign-out failed', error.message);
     }
@@ -114,7 +134,7 @@ export function HomeScreen({ navigation }) {
   async function handleVote(value) {
     if (!isAuthenticated || !selectedPlace) {
       setIsPlaceModalVisible(false);
-      setIsAccountModalVisible(true);
+      setIsAuthModalVisible(true);
       return;
     }
 
@@ -131,7 +151,7 @@ export function HomeScreen({ navigation }) {
   async function handleComment({ body }) {
     if (!isAuthenticated || !selectedPlace) {
       setIsPlaceModalVisible(false);
-      setIsAccountModalVisible(true);
+      setIsAuthModalVisible(true);
       return;
     }
 
@@ -147,7 +167,7 @@ export function HomeScreen({ navigation }) {
 
   function openAccountFromPlace() {
     setIsPlaceModalVisible(false);
-    setIsAccountModalVisible(true);
+    setIsAuthModalVisible(true);
   }
 
   function closePlaceModal() {
@@ -195,7 +215,7 @@ export function HomeScreen({ navigation }) {
             size="compact"
             shape="pill"
             variant="secondary"
-            onPress={() => setIsAccountModalVisible(true)}
+            onPress={() => setIsAuthModalVisible(true)}
             testID="home-account-button"
           />
         </View>
@@ -286,46 +306,46 @@ export function HomeScreen({ navigation }) {
       <Modal
         animationType="fade"
         transparent
-        visible={isAccountModalVisible}
-        onRequestClose={() => setIsAccountModalVisible(false)}
+        visible={isAuthModalVisible}
+        onRequestClose={() => setIsAuthModalVisible(false)}
       >
         <KeyboardAvoidingView
           behavior={Platform.select({ ios: 'padding', default: undefined })}
           style={styles.modalRoot}
         >
-          <Pressable style={styles.modalBackdrop} onPress={() => setIsAccountModalVisible(false)} />
+          <Pressable style={styles.modalBackdrop} onPress={() => setIsAuthModalVisible(false)} />
           <View style={styles.sheet}>
             <View style={styles.sheetHandle} />
-            {isAuthenticated ? (
-              <>
-                <Text style={styles.sheetTitle}>Profile</Text>
-                <Text style={styles.profileName}>{currentUser.name}</Text>
-                {currentUser.email ? <Text style={styles.profileMeta}>{currentUser.email}</Text> : null}
-                <ShadButton
-                  label="Sign out"
-                  shape="pill"
-                  onPress={handleSignOut}
-                  style={styles.sheetButton}
-                />
-              </>
-            ) : (
-              <>
-                <Text style={styles.sheetTitle}>Sign in</Text>
-                <Text style={styles.sheetCopy}>
-                  Use email to post, vote, and join threads.
-                </Text>
-                <EmailAuthCard
-                  email={email}
-                  username={username}
-                  onEmailChange={setEmail}
-                  onUsernameChange={setUsername}
-                  onSubmit={handleEmailAccess}
-                  authBusy={isEmailAuthLoading}
-                  helperText={authNoticeMessage}
-                />
-                {errorMessage ? <Text style={styles.sheetMeta}>{errorMessage}</Text> : null}
-              </>
-            )}
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              bounces={false}
+              contentContainerStyle={styles.sheetScrollContent}
+            >
+              {isAuthenticated ? (
+                <>
+                  <Text style={styles.sheetTitle}>Profile</Text>
+                  <Text style={styles.profileName}>{currentUser.name}</Text>
+                  {currentUser.email ? <Text style={styles.profileMeta}>{currentUser.email}</Text> : null}
+                  <ShadButton
+                    label="Sign out"
+                    shape="pill"
+                    onPress={handleSignOut}
+                    style={styles.sheetButton}
+                  />
+                </>
+              ) : (
+                <>
+                  <EmailAuthCard
+                    onSignUp={handleSignUp}
+                    onSignIn={handleSignIn}
+                    onGoogleSignIn={handleGoogleSignIn}
+                    authBusy={isEmailAuthLoading}
+                    helperText={authNoticeMessage}
+                  />
+                  {errorMessage ? <Text style={styles.sheetMeta}>{errorMessage}</Text> : null}
+                </>
+              )}
+            </ScrollView>
           </View>
         </KeyboardAvoidingView>
       </Modal>
@@ -422,7 +442,6 @@ const styles = StyleSheet.create({
     maxHeight: '80%',
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm,
-    paddingBottom: spacing.xl,
   },
   sheetHandle: {
     alignSelf: 'center',
@@ -431,6 +450,9 @@ const styles = StyleSheet.create({
     height: 5,
     marginBottom: spacing.md,
     width: 38,
+  },
+  sheetScrollContent: {
+    paddingBottom: spacing.xxl,
   },
   sheetTitle: {
     color: colors.text,

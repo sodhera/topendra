@@ -102,7 +102,9 @@ jest.mock('../src/components/EmailAuthCard', () => ({
 
 describe('BrowseScreen', () => {
   const trackPlaceOpen = jest.fn();
-  const requestEmailAccess = jest.fn();
+  const signUpWithPassword = jest.fn();
+  const signInWithPassword = jest.fn();
+  const signInWithGoogle = jest.fn();
   const navigation = {
     goBack: jest.fn(),
     navigate: jest.fn(),
@@ -124,7 +126,9 @@ describe('BrowseScreen', () => {
       isEmailAuthLoading: false,
       authNoticeMessage: '',
       errorMessage: '',
-      requestEmailAccess,
+      signUpWithPassword,
+      signInWithPassword,
+      signInWithGoogle,
       addComment: jest.fn(),
       votePlace: jest.fn(),
       trackPlaceOpen,
@@ -170,7 +174,9 @@ describe('BrowseScreen', () => {
       isEmailAuthLoading: false,
       authNoticeMessage: '',
       errorMessage: '',
-      requestEmailAccess,
+      signUpWithPassword,
+      signInWithPassword,
+      signInWithGoogle,
       addComment: jest.fn(),
       votePlace: jest.fn(),
       trackPlaceOpen,
@@ -220,7 +226,9 @@ describe('BrowseScreen', () => {
       isEmailAuthLoading: false,
       authNoticeMessage: '',
       errorMessage: '',
-      requestEmailAccess,
+      signUpWithPassword,
+      signInWithPassword,
+      signInWithGoogle,
       addComment: jest.fn(),
       votePlace: jest.fn(),
       trackPlaceOpen,

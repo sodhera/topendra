@@ -16,6 +16,7 @@ module.exports = () => ({
     backgroundColor: '#121711',
   },
   ios: {
+    bundleIdentifier: 'com.spicedupfremen.topey',
     supportsTablet: true,
     infoPlist: {
       NSLocationWhenInUseUsageDescription:
@@ -23,6 +24,7 @@ module.exports = () => ({
     },
   },
   android: {
+    package: 'com.spicedupfremen.topey',
     permissions: ['ACCESS_COARSE_LOCATION', 'ACCESS_FINE_LOCATION'],
     adaptiveIcon: {
       backgroundColor: '#E5E5EA',
@@ -46,5 +48,7 @@ module.exports = () => ({
   extra: {
     supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL ?? null,
     supabasePublishableKey: process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? null,
+    googleWebClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? null,
+    googleIosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID ?? null,
   },
 });

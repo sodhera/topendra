@@ -5,6 +5,8 @@ import { buildKathmanduDemoData } from '@topey/shared/data/demoCatalog';
 import { getUserIdentity, normalizeAnonymousUsername } from '@topey/shared/lib/auth';
 import { createComment, createPlace, createPlaceOpenEvent, fetchAppData, voteForPlace } from '../lib/backend';
 import { VIEWER_SESSION_KEY } from '@topey/shared/lib/constants';
+import Constants from 'expo-constants';
+import * as WebBrowser from 'expo-web-browser';
 import { getAuthRedirectUrl, getSafeSession, restoreSessionFromUrl, supabase } from '../lib/supabase';
 
 const AppContext = createContext(null);
@@ -39,6 +41,7 @@ export function AppProvider({ children }) {
   const [isHydrated, setIsHydrated] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isEmailAuthLoading, setIsEmailAuthLoading] = useState(false);
+  const [isAuthModalVisible, setIsAuthModalVisible] = useState(false);
   const [authNoticeMessage, setAuthNoticeMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -186,6 +189,122 @@ export function AppProvider({ children }) {
     }
   }, []);
 
+  const signUpWithPassword = useCallback(async ({ email, username, password }) => {
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedUsername = normalizeAnonymousUsername(username);
+
+    if (!normalizedEmail || !normalizedEmail.includes('@')) {
+      throw new Error('Enter a valid email address.');
+    }
+
+    if (normalizedUsername.length < 3) {
+      throw new Error('Choose an anonymous username with at least 3 characters.');
+    }
+
+    if (!password || password.length < 6) {
+      throw new Error('Password must be at least 6 characters.');
+    }
+
+    setIsEmailAuthLoading(true);
+    setErrorMessage('');
+    setAuthNoticeMessage('');
+
+    try {
+      const { error } = await supabase.auth.signUp({
+        email: normalizedEmail,
+        password,
+        options: {
+          data: {
+            preferred_username: normalizedUsername,
+          },
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+    } catch (error) {
+      setErrorMessage(getReadableError(error, 'Sign-up failed.'));
+      throw error;
+    } finally {
+      setIsEmailAuthLoading(false);
+    }
+  }, []);
+
+  const signInWithPassword = useCallback(async ({ email, password }) => {
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (!normalizedEmail || !normalizedEmail.includes('@')) {
+      throw new Error('Enter a valid email address.');
+    }
+
+    if (!password) {
+      throw new Error('Enter your password.');
+    }
+
+    setIsEmailAuthLoading(true);
+    setErrorMessage('');
+    setAuthNoticeMessage('');
+
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: normalizedEmail,
+        password,
+      });
+
+      if (error) {
+        throw error;
+      }
+    } catch (error) {
+      setErrorMessage(getReadableError(error, 'Sign-in failed.'));
+      throw error;
+    } finally {
+      setIsEmailAuthLoading(false);
+    }
+  }, []);
+
+  const signInWithGoogle = useCallback(async () => {
+    setIsEmailAuthLoading(true);
+    setErrorMessage('');
+    setAuthNoticeMessage('');
+
+    try {
+      const redirectUrl = getAuthRedirectUrl();
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: redirectUrl,
+          skipBrowserRedirect: true,
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (data?.url) {
+        const result = await WebBrowser.openAuthSessionAsync(data.url, redirectUrl);
+
+        if (result.type === 'success' && result.url) {
+          const params = Linking.parse(result.url);
+          if (params.queryParams?.error) {
+            throw new Error(params.queryParams.error_description || 'OAuth Error');
+          }
+          await restoreSessionFromUrl(result.url);
+        } else if (result.type === 'cancel') {
+          // Do nothing on cancel
+        } else {
+          throw new Error('Google Sign-In was not completed.');
+        }
+      }
+    } catch (error) {
+      setErrorMessage(getReadableError(error, 'Google Sign-In failed.'));
+    } finally {
+      setIsEmailAuthLoading(false);
+    }
+  }, []);
+
+
   const signOut = useCallback(async () => {
     const { error } = await supabase.auth.signOut();
 
@@ -283,10 +402,15 @@ export function AppProvider({ children }) {
       isHydrated,
       isRefreshing,
       isEmailAuthLoading,
+      isAuthModalVisible,
+      setIsAuthModalVisible,
       authNoticeMessage,
       errorMessage,
       refreshData,
       requestEmailAccess,
+      signUpWithPassword,
+      signInWithPassword,
+      signInWithGoogle,
       signOut,
       addPlace,
       votePlace,
@@ -302,10 +426,14 @@ export function AppProvider({ children }) {
       isHydrated,
       isRefreshing,
       isEmailAuthLoading,
+      isAuthModalVisible,
       authNoticeMessage,
       errorMessage,
       refreshData,
       requestEmailAccess,
+      signUpWithPassword,
+      signInWithPassword,
+      signInWithGoogle,
       signOut,
       addPlace,
       votePlace,

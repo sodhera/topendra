@@ -40,7 +40,9 @@ export function BrowseScreen({ navigation, route }) {
     isEmailAuthLoading,
     authNoticeMessage,
     errorMessage,
-    requestEmailAccess,
+    signUpWithPassword,
+    signInWithPassword,
+    signInWithGoogle,
     addComment,
     votePlace,
     trackPlaceOpen,
@@ -55,8 +57,6 @@ export function BrowseScreen({ navigation, route }) {
   const [selectedPlaceId, setSelectedPlaceId] = useState(initialPlaceId);
   const [isDetailsModalVisible, setIsDetailsModalVisible] = useState(false);
   const [isAuthModalVisible, setIsAuthModalVisible] = useState(false);
-  const [email, setEmail] = useState('');
-  const [username, setUsername] = useState('');
 
   useEffect(() => {
     if (!hasCenteredMap && hasResolvedInitialRegion && !initialPlaceId) {
@@ -117,12 +117,30 @@ export function BrowseScreen({ navigation, route }) {
     });
   }
 
-  async function handleEmailAccess() {
+  async function handleSignUp({ email, username, password }) {
     try {
-      await requestEmailAccess({ email, username });
-      Alert.alert('Check your email', 'We sent you a sign-in link. Open it on this device to unlock place drops, voting, and discussion.');
+      await signUpWithPassword({ email, username, password });
+      setIsAuthModalVisible(false);
+    } catch (error) {
+      Alert.alert('Sign-up failed', error.message);
+    }
+  }
+
+  async function handleSignIn({ email, password }) {
+    try {
+      await signInWithPassword({ email, password });
+      setIsAuthModalVisible(false);
     } catch (error) {
       Alert.alert('Sign-in failed', error.message);
+    }
+  }
+
+  async function handleGoogleSignIn() {
+    try {
+      await signInWithGoogle();
+      setIsAuthModalVisible(false);
+    } catch (error) {
+      Alert.alert('Google Sign-in failed', error.message);
     }
   }
 
@@ -325,16 +343,10 @@ export function BrowseScreen({ navigation, route }) {
           <Pressable style={styles.modalBackdrop} onPress={() => setIsAuthModalVisible(false)} />
           <View style={styles.sheet}>
             <View style={styles.sheetHandle} />
-            <Text style={styles.sheetTitle}>Sign in</Text>
-            <Text style={styles.sheetCopy}>
-              Use email to vote and join threads.
-            </Text>
             <EmailAuthCard
-              email={email}
-              username={username}
-              onEmailChange={setEmail}
-              onUsernameChange={setUsername}
-              onSubmit={handleEmailAccess}
+              onSignUp={handleSignUp}
+              onSignIn={handleSignIn}
+              onGoogleSignIn={handleGoogleSignIn}
               authBusy={isEmailAuthLoading}
               helperText={authNoticeMessage}
             />

@@ -85,15 +85,13 @@ jest.mock('react-native-safe-area-context', () => {
 });
 
 jest.mock('../src/components/EmailAuthCard', () => ({
-  EmailAuthCard: ({ email, username }) => {
+  EmailAuthCard: () => {
     const React = require('react');
     const { Text, View } = require('react-native');
 
     return (
       <View>
         <Text>Email</Text>
-        <Text>{email}</Text>
-        <Text>{username}</Text>
       </View>
     );
   },
@@ -101,7 +99,9 @@ jest.mock('../src/components/EmailAuthCard', () => ({
 
 describe('AddPlaceScreen', () => {
   const addPlace = jest.fn();
-  const requestEmailAccess = jest.fn();
+  const signUpWithPassword = jest.fn();
+  const signInWithPassword = jest.fn();
+  const signInWithGoogle = jest.fn();
   const navigation = {
     goBack: jest.fn(),
     navigate: jest.fn(),
@@ -121,7 +121,9 @@ describe('AddPlaceScreen', () => {
       isEmailAuthLoading: false,
       authNoticeMessage: '',
       errorMessage: '',
-      requestEmailAccess,
+      signUpWithPassword,
+      signInWithPassword,
+      signInWithGoogle,
       addPlace,
     });
 
@@ -148,7 +150,6 @@ describe('AddPlaceScreen', () => {
     };
 
     const screen = render(<AddPlaceScreen navigation={navigation} route={{ params: { startingRegion } }} />);
-
     expect(screen.getByTestId('map-region').props.children).toContain('27.7172');
     expect(screen.getByTestId('map-config').props.children).toContain('"showsPointsOfInterest":false');
     expect(screen.getByTestId('map-config').props.children).toContain('"showsBuildings":false');
@@ -193,8 +194,6 @@ describe('AddPlaceScreen', () => {
 
     const screen = render(<AddPlaceScreen navigation={navigation} />);
 
-    expect(screen.queryByText('Move the map and Add the pin')).toBeNull();
-
     fireEvent.press(screen.getByText('Add here'));
 
     expect(screen.queryByText('Place details')).toBeNull();
@@ -208,7 +207,9 @@ describe('AddPlaceScreen', () => {
       isEmailAuthLoading: false,
       authNoticeMessage: '',
       errorMessage: '',
-      requestEmailAccess,
+      signUpWithPassword,
+      signInWithPassword,
+      signInWithGoogle,
       addPlace,
     });
 
@@ -219,6 +220,6 @@ describe('AddPlaceScreen', () => {
     fireEvent.press(screen.getByText('Add here'));
 
     expect(screen.getByText('Login required before adding.')).toBeTruthy();
-    expect(screen.getByText('Email')).toBeTruthy();
+    expect(screen.getByText('Sign in')).toBeTruthy();
   });
 });

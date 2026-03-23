@@ -37,7 +37,10 @@ export function AddPlaceScreen({ navigation, route }) {
     state,
     isEmailAuthLoading,
     authNoticeMessage,
-    requestEmailAccess,
+    errorMessage,
+    signUpWithPassword,
+    signInWithPassword,
+    signInWithGoogle,
     addPlace,
   } = useAppContext();
   const {
@@ -55,9 +58,8 @@ export function AddPlaceScreen({ navigation, route }) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [isDetailsModalVisible, setIsDetailsModalVisible] = useState(false);
+  const [isAuthModalVisible, setIsAuthModalVisible] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [email, setEmail] = useState('');
-  const [username, setUsername] = useState('');
 
   useEffect(() => {
     if (!hasResolvedInitialRegion || hasAutoScrolledToUserRegion) {
@@ -70,18 +72,37 @@ export function AddPlaceScreen({ navigation, route }) {
     setHasAutoScrolledToUserRegion(true);
   }, [hasAutoScrolledToUserRegion, hasResolvedInitialRegion, userRegion]);
 
-  async function handleEmailAccess() {
+  async function handleSignUp({ email, username, password }) {
     try {
-      await requestEmailAccess({ email, username });
-      Alert.alert('Check your email', 'We sent you a sign-in link. Open it on this device, then come back to finish adding the place.');
+      await signUpWithPassword({ email, username, password });
+      setIsAuthModalVisible(false);
+    } catch (error) {
+      Alert.alert('Sign-up failed', error.message);
+    }
+  }
+
+  async function handleSignIn({ email, password }) {
+    try {
+      await signInWithPassword({ email, password });
+      setIsAuthModalVisible(false);
     } catch (error) {
       Alert.alert('Sign-in failed', error.message);
     }
   }
 
+  async function handleGoogleSignIn() {
+    try {
+      await signInWithGoogle();
+      setIsAuthModalVisible(false);
+    } catch (error) {
+      Alert.alert('Google Sign-in failed', error.message);
+    }
+  }
+
   async function handleSubmit() {
     if (!isLoggedIn(state.session)) {
-      Alert.alert('Login required', 'Use email access before saving a new place.');
+      setIsDetailsModalVisible(false);
+      setIsAuthModalVisible(true);
       return;
     }
 
@@ -111,6 +132,7 @@ export function AddPlaceScreen({ navigation, route }) {
   }
 
   const isAuthenticated = isLoggedIn(state.session);
+
   return (
     <View style={styles.container}>
       <MapView
@@ -183,16 +205,15 @@ export function AddPlaceScreen({ navigation, route }) {
                 <View style={styles.authCallout}>
                   <Text style={styles.authTitle}>Login required before adding.</Text>
                   <Text style={styles.authCopy}>
-                    Use email to add places, vote, and comment.
+                    Sign in to add a place.
                   </Text>
-                  <EmailAuthCard
-                    email={email}
-                    username={username}
-                    onEmailChange={setEmail}
-                    onUsernameChange={setUsername}
-                    onSubmit={handleEmailAccess}
-                    authBusy={isEmailAuthLoading}
-                    helperText={authNoticeMessage}
+                  <ShadButton
+                    label="Sign in"
+                    onPress={() => {
+                      setIsDetailsModalVisible(false);
+                      setIsAuthModalVisible(true);
+                    }}
+                    style={{ marginTop: spacing.md }}
                   />
                 </View>
               ) : null}
@@ -240,6 +261,31 @@ export function AddPlaceScreen({ navigation, route }) {
           </View>
         </KeyboardAvoidingView>
       </Modal>
+
+      <Modal
+        animationType="fade"
+        transparent
+        visible={isAuthModalVisible}
+        onRequestClose={() => setIsAuthModalVisible(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.select({ ios: 'padding', default: undefined })}
+          style={styles.modalRoot}
+        >
+          <Pressable style={styles.modalBackdrop} onPress={() => setIsAuthModalVisible(false)} />
+          <View style={styles.modalSheet}>
+            <View style={styles.modalHandle} />
+            <EmailAuthCard
+              onSignUp={handleSignUp}
+              onSignIn={handleSignIn}
+              onGoogleSignIn={handleGoogleSignIn}
+              authBusy={isEmailAuthLoading}
+              helperText={authNoticeMessage}
+            />
+            {errorMessage ? <Text style={styles.sheetMeta}>{errorMessage}</Text> : null}
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </View>
   );
 }
@@ -264,6 +310,21 @@ const styles = StyleSheet.create({
   actionButton: {
     ...shadows.floating,
   },
+  title: {
+    color: colors.text,
+    fontFamily: typography.semibold,
+    fontSize: 30,
+    fontWeight: '700',
+    letterSpacing: -0.9,
+    marginTop: spacing.xs,
+  },
+  copy: {
+    color: colors.mutedText,
+    fontFamily: typography.body,
+    fontSize: 15,
+    lineHeight: 22,
+    marginTop: spacing.sm,
+  },
   authCallout: {
     backgroundColor: colors.secondary,
     borderColor: colors.border,
@@ -285,21 +346,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     marginTop: spacing.xs,
-  },
-  title: {
-    color: colors.text,
-    fontFamily: typography.semibold,
-    fontSize: 30,
-    fontWeight: '700',
-    letterSpacing: -0.9,
-    marginTop: spacing.xs,
-  },
-  copy: {
-    color: colors.mutedText,
-    fontFamily: typography.body,
-    fontSize: 15,
-    lineHeight: 22,
-    marginTop: spacing.sm,
   },
   input: {
     backgroundColor: colors.elevatedCard,
@@ -367,6 +413,13 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     paddingBottom: spacing.xl,
+  },
+  sheetMeta: {
+    color: colors.mutedText,
+    fontFamily: typography.body,
+    fontSize: 13,
+    lineHeight: 18,
+    marginTop: spacing.sm,
   },
   modalActions: {
     flexDirection: 'row',
