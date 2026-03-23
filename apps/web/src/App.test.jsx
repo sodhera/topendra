@@ -1,61 +1,52 @@
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import App from './App';
 
-function extractScale(transform) {
-  const match = transform.match(/scale\(([^)]+)\)/);
-  return match ? Number(match[1]) : NaN;
-}
+vi.mock('./components/DesktopMap', () => ({
+  default: function DesktopMapMock({ addMode, onSelectPlace }) {
+    return (
+      <div data-testid="desktop-map">
+        <div data-testid="map-mode">{addMode ? 'add' : 'browse'}</div>
+        <button
+          aria-label="Select first place"
+          type="button"
+          onClick={() =>
+            onSelectPlace('demo-place-001', {
+              openModal: true,
+              sourceScreen: 'test_marker',
+            })
+          }
+        >
+          Select first place
+        </button>
+      </div>
+    );
+  },
+}));
 
 describe('App web shell', () => {
-  it('renders the app-style home map and opens a place sheet from a marker', async () => {
+  it('renders the app-style home shell and opens a place sheet from the map', async () => {
     render(<App />);
 
     expect((await screen.findByTestId('account-button')).textContent).toBe('Sign in');
     expect(screen.getByTestId('add-place-button').textContent).toBe('+');
+    expect(screen.getByTestId('map-mode').textContent).toBe('browse');
 
-    fireEvent.click(screen.getAllByLabelText('Open Thamel Courtyard')[0]);
+    fireEvent.click(screen.getByLabelText('Select first place'));
 
     expect(await screen.findByRole('heading', { name: 'Thamel Courtyard' })).toBeTruthy();
     expect(screen.getByText('Open location')).toBeTruthy();
     expect(screen.getByText(/Added by:/)).toBeTruthy();
   });
 
-  it('keeps desktop zoom and pan controls on the full-screen map', async () => {
+  it('switches into add-place mode from the floating plus button', async () => {
     render(<App />);
 
-    const mapSurface = await screen.findByTestId('map-surface');
-    const mapWorld = screen.getByTestId('map-world');
+    fireEvent.click(await screen.findByTestId('add-place-button'));
 
-    mapSurface.focus();
-    fireEvent.keyDown(mapSurface, { key: '+' });
-    expect(extractScale(mapWorld.style.transform)).toBe(1.25);
-
-    const afterKeyboardZoom = mapWorld.style.transform;
-
-    fireEvent.wheel(mapSurface, {
-      deltaMode: 0,
-      deltaX: 48,
-      deltaY: 36,
-      clientX: 480,
-      clientY: 310,
-    });
-
-    expect(mapWorld.style.transform).not.toBe(afterKeyboardZoom);
-    expect(extractScale(mapWorld.style.transform)).toBeCloseTo(1.25, 5);
-
-    fireEvent.wheel(mapSurface, {
-      ctrlKey: true,
-      deltaMode: 0,
-      deltaY: -120,
-      clientX: 480,
-      clientY: 310,
-    });
-
-    expect(extractScale(mapWorld.style.transform)).toBeGreaterThan(1.25);
-
-    fireEvent.keyDown(mapSurface, { key: '0' });
-    expect(extractScale(mapWorld.style.transform)).toBe(1);
+    expect(screen.getByTestId('map-mode').textContent).toBe('add');
+    expect(screen.getByText('Back')).toBeTruthy();
+    expect(screen.getByText('Add here')).toBeTruthy();
   });
 });

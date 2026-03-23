@@ -82,25 +82,27 @@ button {
   position: relative;
 }
 
+.desktop-map-shell,
 .map-surface {
-  --map-zoom: 1;
-  cursor: grab;
   inset: 0;
-  overflow: hidden;
-  overscroll-behavior: contain;
   position: absolute;
-  touch-action: none;
-  user-select: none;
 }
 
-.map-surface.is-dragging {
-  cursor: grabbing;
+.leaflet-map,
+.leaflet-container {
+  height: 100%;
+  width: 100%;
 }
 
-.map-surface:focus-visible,
+.leaflet-container {
+  background: #e9edf1;
+  outline: none;
+}
+
+.leaflet-container:focus,
+.leaflet-container:focus-visible,
 .app-button:focus-visible,
 .fab-button:focus-visible,
-.place-dot:focus-visible,
 .compose-fab:focus-visible,
 .text-button:focus-visible,
 .toggle-auth-button:focus-visible,
@@ -110,72 +112,30 @@ button {
   outline-offset: 3px;
 }
 
-.map-world {
-  height: 100%;
-  inset: 0;
-  position: absolute;
-  transform-origin: top left;
-  width: 100%;
-  will-change: transform;
+.leaflet-control-container {
+  display: none;
 }
 
-.map-grid {
-  background:
-    linear-gradient(180deg, rgba(245, 245, 247, 0.18), rgba(245, 245, 247, 0.48)),
-    repeating-linear-gradient(
-      0deg,
-      transparent 0,
-      transparent 53px,
-      rgba(17, 17, 17, 0.05) 54px
-    ),
-    repeating-linear-gradient(
-      90deg,
-      transparent 0,
-      transparent 53px,
-      rgba(17, 17, 17, 0.05) 54px
-    ),
-    radial-gradient(circle at 18% 16%, rgba(17, 17, 17, 0.06), transparent 21%),
-    radial-gradient(circle at 74% 32%, rgba(17, 17, 17, 0.05), transparent 19%),
-    radial-gradient(circle at 48% 72%, rgba(17, 17, 17, 0.04), transparent 18%);
-  inset: 0;
-  position: absolute;
+.leaflet-tile-pane {
+  filter: saturate(0.88) contrast(1.02) brightness(1.01);
 }
 
-.place-dot {
-  background: rgba(255, 255, 255, 0.96);
-  border: 1px solid rgba(255, 255, 255, 0.86);
-  border-radius: 999px;
-  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.18);
+.leaflet-container .leaflet-interactive {
   cursor: pointer;
-  height: 20px;
-  position: absolute;
-  transform: translate(-50%, -50%) scale(calc(1 / var(--map-zoom)));
-  transform-origin: center;
-  transition: transform 140ms ease, width 140ms ease, height 140ms ease, background-color 140ms ease;
-  width: 20px;
 }
 
-.place-dot::after {
-  background: var(--color-primary, #111111);
+.map-attribution {
+  background: rgba(255, 255, 255, 0.92);
+  border: 0.75px solid rgba(17, 17, 17, 0.08);
   border-radius: 999px;
-  content: "";
-  height: 7px;
-  inset: 50%;
+  bottom: 18px;
+  color: rgba(17, 17, 17, 0.58);
+  font-size: 11px;
+  left: 18px;
+  padding: 7px 10px;
   position: absolute;
-  transform: translate(-50%, -50%);
-  width: 7px;
-}
-
-.place-dot.is-selected {
-  background: var(--color-primary, #111111);
-  height: 26px;
-  width: 26px;
-}
-
-.place-dot.is-selected::after {
-  background: var(--color-primary-text, #ffffff);
-  height: 8px;
-  width: 8px;
+  text-decoration: none;
+  z-index: 500;
 }
 
 .map-hud {
@@ -316,6 +276,21 @@ button {
   height: 12px;
   margin: 6px auto 0;
   width: 42px;
+}
+
+.status-banner {
+  background: rgba(17, 17, 17, 0.84);
+  border-radius: 16px;
+  bottom: 136px;
+  color: rgba(255, 255, 255, 0.96);
+  font-size: 13px;
+  left: 50%;
+  max-width: min(560px, calc(100vw - 32px));
+  padding: 10px 14px;
+  position: absolute;
+  text-align: center;
+  transform: translateX(-50%);
+  z-index: 12;
 }
 
 .modal-root {
@@ -711,6 +686,12 @@ button {
     padding-right: 12px;
   }
 
+  .map-attribution {
+    bottom: 12px;
+    font-size: 10px;
+    left: 12px;
+  }
+
   .sheet {
     padding-left: 20px;
     padding-right: 20px;
@@ -740,5 +721,10 @@ button {
 
   .compose-fab-sheet {
     margin-left: auto;
+  }
+
+  .status-banner {
+    bottom: 120px;
+    width: calc(100vw - 24px);
   }
 }

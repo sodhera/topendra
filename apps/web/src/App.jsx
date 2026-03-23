@@ -25,142 +25,9 @@ import {
   voteForPlace,
 } from './lib/backend';
 import { getSafeSession, hasSupabaseConfig, supabase } from './lib/supabase';
+import DesktopMap from './components/DesktopMap';
 
 const demoData = buildKathmanduDemoData();
-const bounds = {
-  maxLatitude: KATHMANDU_EXPLORE_REGION.latitude + KATHMANDU_EXPLORE_REGION.latitudeDelta / 2,
-  minLatitude: KATHMANDU_EXPLORE_REGION.latitude - KATHMANDU_EXPLORE_REGION.latitudeDelta / 2,
-  minLongitude: KATHMANDU_EXPLORE_REGION.longitude - KATHMANDU_EXPLORE_REGION.longitudeDelta / 2,
-  maxLongitude: KATHMANDU_EXPLORE_REGION.longitude + KATHMANDU_EXPLORE_REGION.longitudeDelta / 2,
-};
-
-const MIN_ZOOM = 1;
-const MAX_ZOOM = 4;
-const KEYBOARD_ZOOM_STEP = 1.25;
-const DOUBLE_CLICK_ZOOM_STEP = 1.4;
-const WHEEL_ZOOM_SENSITIVITY = 0.0018;
-const ADD_PLACE_PIN_VERTICAL_FRACTION = 0.4;
-const DEFAULT_VIEWPORT = {
-  centerX: 0.5,
-  centerY: 0.5,
-  zoom: 1,
-};
-
-function clamp(value, min, max) {
-  return Math.min(max, Math.max(min, value));
-}
-
-function projectCoordinates(latitude, longitude) {
-  const x = (longitude - bounds.minLongitude) / (bounds.maxLongitude - bounds.minLongitude);
-  const y = (bounds.maxLatitude - latitude) / (bounds.maxLatitude - bounds.minLatitude);
-
-  return {
-    x,
-    y,
-  };
-}
-
-function viewportPointToCoordinates(viewport, anchor) {
-  const point = {
-    x: viewport.centerX + (anchor.x - 0.5) / viewport.zoom,
-    y: viewport.centerY + (anchor.y - 0.5) / viewport.zoom,
-  };
-
-  return {
-    latitude:
-      bounds.maxLatitude - point.y * (bounds.maxLatitude - bounds.minLatitude),
-    longitude:
-      bounds.minLongitude + point.x * (bounds.maxLongitude - bounds.minLongitude),
-  };
-}
-
-function viewportToRegion(viewport) {
-  const center = viewportPointToCoordinates(viewport, { x: 0.5, y: 0.5 });
-
-  return {
-    latitude: center.latitude,
-    longitude: center.longitude,
-    latitudeDelta: KATHMANDU_EXPLORE_REGION.latitudeDelta / viewport.zoom,
-    longitudeDelta: KATHMANDU_EXPLORE_REGION.longitudeDelta / viewport.zoom,
-  };
-}
-
-function clampViewport(viewport) {
-  const zoom = clamp(viewport.zoom, MIN_ZOOM, MAX_ZOOM);
-  const halfVisible = 0.5 / zoom;
-
-  return {
-    zoom,
-    centerX: clamp(viewport.centerX, halfVisible, 1 - halfVisible),
-    centerY: clamp(viewport.centerY, halfVisible, 1 - halfVisible),
-  };
-}
-
-function moveViewport(viewport, deltaX, deltaY, size) {
-  if (!size.width || !size.height) {
-    return viewport;
-  }
-
-  return clampViewport({
-    ...viewport,
-    centerX: viewport.centerX + deltaX / (size.width * viewport.zoom),
-    centerY: viewport.centerY + deltaY / (size.height * viewport.zoom),
-  });
-}
-
-function zoomViewport(viewport, nextZoom, anchor) {
-  const clampedZoom = clamp(nextZoom, MIN_ZOOM, MAX_ZOOM);
-  const worldX = viewport.centerX + (anchor.x - 0.5) / viewport.zoom;
-  const worldY = viewport.centerY + (anchor.y - 0.5) / viewport.zoom;
-
-  return clampViewport({
-    zoom: clampedZoom,
-    centerX: worldX - (anchor.x - 0.5) / clampedZoom,
-    centerY: worldY - (anchor.y - 0.5) / clampedZoom,
-  });
-}
-
-function centerViewportOnPoint(viewport, point) {
-  return clampViewport({
-    ...viewport,
-    centerX: point.x,
-    centerY: point.y,
-  });
-}
-
-function getMapTransform(viewport, size) {
-  const width = size.width || 1;
-  const height = size.height || 1;
-  // The map world stays normalized to Kathmandu bounds while the viewport acts
-  // like the camera shared by mouse, trackpad, and keyboard interactions.
-  const translateX = width / 2 - viewport.centerX * width * viewport.zoom;
-  const translateY = height / 2 - viewport.centerY * height * viewport.zoom;
-
-  return `translate3d(${translateX}px, ${translateY}px, 0) scale(${viewport.zoom})`;
-}
-
-function getPointerAnchor(event, boundsRect) {
-  if (!boundsRect.width || !boundsRect.height) {
-    return { x: 0.5, y: 0.5 };
-  }
-
-  return {
-    x: clamp((event.clientX - boundsRect.left) / boundsRect.width, 0, 1),
-    y: clamp((event.clientY - boundsRect.top) / boundsRect.height, 0, 1),
-  };
-}
-
-function isTrackpadPan(event) {
-  if (event.ctrlKey || event.metaKey) {
-    return false;
-  }
-
-  const absX = Math.abs(event.deltaX);
-  const absY = Math.abs(event.deltaY);
-  // Precision trackpads emit smaller pixel deltas; treat those as panning so
-  // desktop scrolling feels like a real map instead of a synthetic zoom wheel.
-  return event.deltaMode === 0 && (absX > 0 || absY < 80 || !Number.isInteger(event.deltaY));
-}
 
 function createViewerSessionId() {
   return `viewer-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
@@ -185,8 +52,6 @@ function openLocationHref(place) {
 
 export default function App() {
   const helpId = React.useId();
-  const mapSurfaceRef = React.useRef(null);
-  const dragStateRef = React.useRef(null);
   const [session, setSession] = React.useState(null);
   const [viewerSessionId, setViewerSessionId] = React.useState('');
   const [places, setPlaces] = React.useState(demoData.places);
@@ -199,6 +64,9 @@ export default function App() {
   );
   const [errorMessage, setErrorMessage] = React.useState('');
   const [selectedPlaceId, setSelectedPlaceId] = React.useState('');
+  const [focusedPlaceId, setFocusedPlaceId] = React.useState('');
+  const [mapRegion, setMapRegion] = React.useState(KATHMANDU_EXPLORE_REGION);
+  const [userRegion, setUserRegion] = React.useState(null);
   const [isPlaceModalVisible, setIsPlaceModalVisible] = React.useState(false);
   const [isAuthModalVisible, setIsAuthModalVisible] = React.useState(false);
   const [isDiscussionModalVisible, setIsDiscussionModalVisible] = React.useState(false);
@@ -207,14 +75,14 @@ export default function App() {
   const [replyTarget, setReplyTarget] = React.useState(null);
   const [isSubmittingComment, setIsSubmittingComment] = React.useState(false);
   const [commentVotes, setCommentVotes] = React.useState({});
-  const [viewport, setViewport] = React.useState(DEFAULT_VIEWPORT);
-  const [viewportSize, setViewportSize] = React.useState({ width: 0, height: 0 });
-  const [isDragging, setIsDragging] = React.useState(false);
-  const [hasCenteredMap, setHasCenteredMap] = React.useState(false);
   const [isAddMode, setIsAddMode] = React.useState(false);
   const [isAddSheetVisible, setIsAddSheetVisible] = React.useState(false);
   const [newPlaceName, setNewPlaceName] = React.useState('');
   const [newPlaceDescription, setNewPlaceDescription] = React.useState('');
+  const [addPinCoordinates, setAddPinCoordinates] = React.useState({
+    latitude: DEFAULT_REGION.latitude,
+    longitude: DEFAULT_REGION.longitude,
+  });
   const [isSavingPlace, setIsSavingPlace] = React.useState(false);
 
   const currentUser = React.useMemo(() => getUserIdentity(session?.user), [session]);
@@ -305,7 +173,7 @@ export default function App() {
   }, [refreshData]);
 
   React.useEffect(() => {
-    if (hasCenteredMap || typeof navigator === 'undefined' || !navigator.geolocation) {
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
       return undefined;
     }
 
@@ -316,16 +184,9 @@ export default function App() {
           return;
         }
 
-        const nextRegion = createRegionFromLocation(position.coords);
-        const point = projectCoordinates(nextRegion.latitude, nextRegion.longitude);
-        setViewport((current) => centerViewportOnPoint(current, point));
-        setHasCenteredMap(true);
+        setUserRegion(createRegionFromLocation(position.coords));
       },
-      () => {
-        if (active) {
-          setHasCenteredMap(true);
-        }
-      },
+      () => undefined,
       {
         enableHighAccuracy: false,
         timeout: 5000,
@@ -336,50 +197,19 @@ export default function App() {
     return () => {
       active = false;
     };
-  }, [hasCenteredMap]);
-
-  React.useEffect(() => {
-    const mapNode = mapSurfaceRef.current;
-
-    if (!mapNode) {
-      return undefined;
-    }
-
-    const updateViewportSize = () => {
-      const nextBounds = mapNode.getBoundingClientRect();
-      setViewportSize((current) => {
-        if (current.width === nextBounds.width && current.height === nextBounds.height) {
-          return current;
-        }
-
-        return {
-          width: nextBounds.width,
-          height: nextBounds.height,
-        };
-      });
-    };
-
-    updateViewportSize();
-
-    if (typeof ResizeObserver === 'undefined') {
-      window.addEventListener('resize', updateViewportSize);
-      return () => window.removeEventListener('resize', updateViewportSize);
-    }
-
-    const resizeObserver = new ResizeObserver(updateViewportSize);
-    resizeObserver.observe(mapNode);
-
-    return () => resizeObserver.disconnect();
   }, []);
 
-  const currentRegion = React.useMemo(() => viewportToRegion(viewport), [viewport]);
   const selectedPlace = React.useMemo(
     () => places.find((place) => place.id === selectedPlaceId) ?? null,
     [places, selectedPlaceId]
   );
+  const focusedPlace = React.useMemo(
+    () => places.find((place) => place.id === focusedPlaceId) ?? null,
+    [focusedPlaceId, places]
+  );
   const visiblePlaces = React.useMemo(
-    () => getMapPlacesForRegion(places, currentRegion, votes, selectedPlaceId),
-    [currentRegion, places, selectedPlaceId, votes]
+    () => getMapPlacesForRegion(places, mapRegion, votes, selectedPlaceId),
+    [mapRegion, places, selectedPlaceId, votes]
   );
   const comments = React.useMemo(
     () => getCommentsForPlace(allComments, selectedPlace?.id),
@@ -400,19 +230,22 @@ export default function App() {
       )?.value ?? 0
     );
   }, [selectedPlace, session, votes]);
-  const addPinCoordinates = React.useMemo(
-    () =>
-      viewportPointToCoordinates(viewport, {
-        x: 0.5,
-        y: ADD_PLACE_PIN_VERTICAL_FRACTION,
-      }),
-    [viewport]
+
+  const trackPlaceOpen = React.useCallback(
+    (placeId, sourceScreen) => {
+      if (!viewerSessionId || !hasSupabaseConfig) {
+        return;
+      }
+
+      createPlaceOpenEvent({
+        placeId,
+        userId: session?.user?.id ?? null,
+        viewerSessionId,
+        sourceScreen,
+      }).catch(() => undefined);
+    },
+    [session?.user?.id, viewerSessionId]
   );
-  const mapTransform = React.useMemo(
-    () => getMapTransform(viewport, viewportSize),
-    [viewport, viewportSize]
-  );
-  const selectedIndex = visiblePlaces.findIndex((place) => place.id === selectedPlaceId);
 
   const selectPlace = React.useCallback(
     (placeId, options = {}) => {
@@ -426,283 +259,33 @@ export default function App() {
       setIsAddMode(false);
 
       if (options.recenter) {
-        setViewport((current) =>
-          centerViewportOnPoint(current, projectCoordinates(place.latitude, place.longitude))
-        );
+        setFocusedPlaceId(place.id);
       }
 
       if (options.openModal !== false) {
         setIsPlaceModalVisible(true);
       }
 
-      if (viewerSessionId && hasSupabaseConfig) {
-        createPlaceOpenEvent({
-          placeId: place.id,
-          userId: session?.user?.id ?? null,
-          viewerSessionId,
-          sourceScreen: options.sourceScreen ?? 'web_home_pin_modal',
-        }).catch(() => undefined);
-      }
+      trackPlaceOpen(place.id, options.sourceScreen ?? 'web_home_pin_modal');
     },
-    [places, session?.user?.id, viewerSessionId]
+    [places, trackPlaceOpen]
   );
-
-  const changeSelection = React.useCallback(
-    (direction) => {
-      if (!visiblePlaces.length) {
-        return;
-      }
-
-      const initialIndex = selectedIndex >= 0 ? selectedIndex : 0;
-      const nextIndex =
-        direction === 'forward'
-          ? (initialIndex + 1) % visiblePlaces.length
-          : (initialIndex - 1 + visiblePlaces.length) % visiblePlaces.length;
-
-      selectPlace(visiblePlaces[nextIndex].id, { recenter: true, openModal: false });
-    },
-    [selectPlace, selectedIndex, visiblePlaces]
-  );
-
-  const closePlaceModal = React.useCallback(() => {
-    setIsPlaceModalVisible(false);
-  }, []);
 
   const openAuthModal = React.useCallback(() => {
     setIsAuthModalVisible(true);
   }, []);
 
-  const resetViewport = React.useCallback(() => {
-    setViewport(DEFAULT_VIEWPORT);
-  }, []);
-
-  const getInteractionSize = React.useCallback(() => {
-    if (viewportSize.width && viewportSize.height) {
-      return viewportSize;
-    }
-
-    const boundsRect = mapSurfaceRef.current?.getBoundingClientRect?.();
-
-    return {
-      width: boundsRect?.width ?? 0,
-      height: boundsRect?.height ?? 0,
-    };
-  }, [viewportSize]);
-
-  const handleWheel = React.useCallback(
-    (event) => {
-      if (!mapSurfaceRef.current) {
-        return;
-      }
-
-      event.preventDefault();
-      const boundsRect = mapSurfaceRef.current.getBoundingClientRect();
-      const interactionSize = getInteractionSize();
-
-      if (isTrackpadPan(event)) {
-        const panX = Math.abs(event.deltaX) > 0 ? event.deltaX : event.shiftKey ? event.deltaY : 0;
-        setViewport((current) => moveViewport(current, panX, event.deltaY, interactionSize));
-        return;
-      }
-
-      const anchor = getPointerAnchor(event, boundsRect);
-      setViewport((current) =>
-        zoomViewport(
-          current,
-          current.zoom * Math.exp(-event.deltaY * WHEEL_ZOOM_SENSITIVITY),
-          anchor
-        )
-      );
-    },
-    [getInteractionSize]
-  );
-
-  const handlePointerDown = React.useCallback((event) => {
-    if (event.button !== 0 || event.target.closest('.place-dot')) {
+  const handleOpenLocation = React.useCallback(() => {
+    if (!selectedPlace) {
       return;
     }
 
-    event.preventDefault();
-    event.currentTarget.focus();
-    dragStateRef.current = {
-      lastClientX: event.clientX,
-      lastClientY: event.clientY,
-      pointerId: event.pointerId,
-    };
-    setIsDragging(true);
-    event.currentTarget.setPointerCapture(event.pointerId);
-  }, []);
-
-  const handlePointerMove = React.useCallback(
-    (event) => {
-      const dragState = dragStateRef.current;
-
-      if (!dragState || dragState.pointerId !== event.pointerId) {
-        return;
-      }
-
-      const deltaX = event.clientX - dragState.lastClientX;
-      const deltaY = event.clientY - dragState.lastClientY;
-
-      dragStateRef.current = {
-        ...dragState,
-        lastClientX: event.clientX,
-        lastClientY: event.clientY,
-      };
-
-      setViewport((current) => moveViewport(current, -deltaX, -deltaY, getInteractionSize()));
-    },
-    [getInteractionSize]
-  );
-
-  const stopDragging = React.useCallback((event) => {
-    const dragState = dragStateRef.current;
-
-    if (dragState && dragState.pointerId === event.pointerId) {
-      dragStateRef.current = null;
-      setIsDragging(false);
-      event.currentTarget.releasePointerCapture(event.pointerId);
-    }
-  }, []);
-
-  const handleKeyDown = React.useCallback(
-    (event) => {
-      if (event.key === 'Escape') {
-        event.preventDefault();
-
-        if (isComposerModalVisible) {
-          setIsComposerModalVisible(false);
-          setCommentDraft('');
-          setReplyTarget(null);
-          return;
-        }
-
-        if (isDiscussionModalVisible) {
-          setIsDiscussionModalVisible(false);
-          return;
-        }
-
-        if (isAddSheetVisible) {
-          setIsAddSheetVisible(false);
-          return;
-        }
-
-        if (isAuthModalVisible) {
-          setIsAuthModalVisible(false);
-          return;
-        }
-
-        if (isPlaceModalVisible) {
-          setIsPlaceModalVisible(false);
-          return;
-        }
-
-        if (isAddMode) {
-          setIsAddMode(false);
-        }
-
-        return;
-      }
-
-      switch (event.key) {
-        case 'ArrowLeft':
-          event.preventDefault();
-          setViewport((current) => moveViewport(current, -96, 0, getInteractionSize()));
-          break;
-        case 'ArrowRight':
-          event.preventDefault();
-          setViewport((current) => moveViewport(current, 96, 0, getInteractionSize()));
-          break;
-        case 'ArrowUp':
-          event.preventDefault();
-          setViewport((current) => moveViewport(current, 0, -96, getInteractionSize()));
-          break;
-        case 'ArrowDown':
-          event.preventDefault();
-          setViewport((current) => moveViewport(current, 0, 96, getInteractionSize()));
-          break;
-        case '+':
-        case '=':
-          event.preventDefault();
-          setViewport((current) =>
-            zoomViewport(current, current.zoom * KEYBOARD_ZOOM_STEP, { x: 0.5, y: 0.5 })
-          );
-          break;
-        case '-':
-        case '_':
-          event.preventDefault();
-          setViewport((current) =>
-            zoomViewport(current, current.zoom / KEYBOARD_ZOOM_STEP, { x: 0.5, y: 0.5 })
-          );
-          break;
-        case '0':
-          event.preventDefault();
-          resetViewport();
-          break;
-        case 'Home':
-          event.preventDefault();
-          if (visiblePlaces[0]) {
-            selectPlace(visiblePlaces[0].id, { recenter: true, openModal: false });
-          }
-          break;
-        case 'End':
-          event.preventDefault();
-          if (visiblePlaces[visiblePlaces.length - 1]) {
-            selectPlace(visiblePlaces[visiblePlaces.length - 1].id, {
-              recenter: true,
-              openModal: false,
-            });
-          }
-          break;
-        case 'PageUp':
-          event.preventDefault();
-          changeSelection('backward');
-          break;
-        case 'PageDown':
-          event.preventDefault();
-          changeSelection('forward');
-          break;
-        case 'Enter':
-          if (selectedPlaceId) {
-            event.preventDefault();
-            setIsPlaceModalVisible(true);
-          }
-          break;
-        default:
-          break;
-      }
-    },
-    [
-      changeSelection,
-      isAddMode,
-      isAddSheetVisible,
-      isAuthModalVisible,
-      isComposerModalVisible,
-      isDiscussionModalVisible,
-      isPlaceModalVisible,
-      resetViewport,
-      selectPlace,
-      selectedPlaceId,
-      getInteractionSize,
-      visiblePlaces,
-    ]
-  );
-
-  const handleDoubleClick = React.useCallback((event) => {
-    if (!mapSurfaceRef.current) {
-      return;
-    }
-
-    event.preventDefault();
-    const anchor = getPointerAnchor(event, mapSurfaceRef.current.getBoundingClientRect());
-    setViewport((current) =>
-      zoomViewport(current, current.zoom * DOUBLE_CLICK_ZOOM_STEP, anchor)
-    );
-  }, []);
+    window.open(openLocationHref(selectedPlace), '_blank', 'noreferrer');
+  }, [selectedPlace]);
 
   const handleVote = React.useCallback(
     async (value) => {
-      if (!isAuthenticated || !selectedPlace) {
+      if (!isAuthenticated || !selectedPlace || !session?.user?.id) {
         setIsPlaceModalVisible(false);
         openAuthModal();
         return;
@@ -743,7 +326,7 @@ export default function App() {
       return;
     }
 
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !session?.user) {
       setIsComposerModalVisible(false);
       openAuthModal();
       return;
@@ -833,7 +416,9 @@ export default function App() {
         throw error;
       }
 
-      setAuthNoticeMessage('Account created. If email confirmation is enabled, finish it from your inbox.');
+      setAuthNoticeMessage(
+        'Account created. If email confirmation is enabled, finish it from your inbox.'
+      );
     } catch (error) {
       setErrorMessage(error?.message ?? 'Sign-up failed.');
     } finally {
@@ -923,6 +508,7 @@ export default function App() {
     setIsAddMode(true);
     setIsPlaceModalVisible(false);
     setSelectedPlaceId('');
+    setFocusedPlaceId('');
   }, []);
 
   const cancelAddPlace = React.useCallback(() => {
@@ -938,7 +524,7 @@ export default function App() {
       return;
     }
 
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !session?.user) {
       setIsAddSheetVisible(false);
       openAuthModal();
       return;
@@ -963,8 +549,9 @@ export default function App() {
       setErrorMessage('');
 
       if (newestPlace) {
+        setFocusedPlaceId(newestPlace.id);
         selectPlace(newestPlace.id, {
-          recenter: true,
+          openModal: true,
           sourceScreen: 'web_add_place',
         });
       }
@@ -985,19 +572,10 @@ export default function App() {
     session,
   ]);
 
-  const topButton = isAddMode ? (
+  const topControls = isAddMode ? (
     <div className="hud-row hud-row-split">
-      <AppButton
-        label="Back"
-        variant="secondary"
-        size="compact"
-        onClick={cancelAddPlace}
-      />
-      <AppButton
-        label="Add here"
-        size="compact"
-        onClick={() => setIsAddSheetVisible(true)}
-      />
+      <AppButton label="Back" variant="secondary" size="compact" onClick={cancelAddPlace} />
+      <AppButton label="Add here" size="compact" onClick={() => setIsAddSheetVisible(true)} />
     </div>
   ) : (
     <div className="hud-row hud-row-end">
@@ -1039,70 +617,40 @@ export default function App() {
       }}
     >
       <div className="sr-only" id={helpId}>
-        Drag or two-finger scroll to pan. Pinch, wheel, or double-click to zoom. Arrow keys pan,
-        Page Up and Page Down change places, and 0 resets the camera.
+        Drag or two-finger scroll to pan. Pinch or scroll to zoom. Arrow keys and plus or minus
+        keys work when the map is focused, and Page Up / Page Down move between visible places.
       </div>
 
       <main className={`map-screen${isAddMode ? ' is-add-mode' : ''}`}>
-        <div
-          ref={mapSurfaceRef}
-          className={`map-surface${isDragging ? ' is-dragging' : ''}`}
-          data-size-ready={viewportSize.width > 0 && viewportSize.height > 0 ? 'true' : 'false'}
-          data-testid="map-surface"
-          role="application"
-          aria-label="Topey map"
-          aria-describedby={helpId}
-          aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight PageUp PageDown Home End + - 0 Escape"
-          style={{ '--map-zoom': viewport.zoom }}
-          tabIndex={0}
-          onDoubleClick={handleDoubleClick}
-          onKeyDown={handleKeyDown}
-          onPointerCancel={stopDragging}
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={stopDragging}
-          onWheel={handleWheel}
-        >
-          <div className="map-world" data-testid="map-world" style={{ transform: mapTransform }}>
-            <div className="map-grid" />
-            {visiblePlaces.map((place) => {
-              const point = projectCoordinates(place.latitude, place.longitude);
-              const isSelected = place.id === selectedPlaceId;
+        <DesktopMap
+          addMode={isAddMode}
+          focusedPlace={focusedPlace}
+          onAddPinChange={setAddPinCoordinates}
+          onOpenSelected={() => {
+            if (selectedPlaceId) {
+              setIsPlaceModalVisible(true);
+            }
+          }}
+          onRegionChange={setMapRegion}
+          onSelectPlace={selectPlace}
+          selectedPlaceId={selectedPlaceId}
+          userRegion={userRegion}
+          visiblePlaces={visiblePlaces}
+        />
 
-              return (
-                <button
-                  key={place.id}
-                  className={`place-dot${isSelected ? ' is-selected' : ''}`}
-                  style={{
-                    left: `${(point.x * 100).toFixed(2)}%`,
-                    top: `${(point.y * 100).toFixed(2)}%`,
-                  }}
-                  type="button"
-                  onClick={() =>
-                    selectPlace(place.id, {
-                      sourceScreen: 'web_home_pin_modal',
-                    })
-                  }
-                  aria-label={`Open ${place.name}`}
-                />
-              );
-            })}
+        {isAddMode ? (
+          <div
+            className="center-pin"
+            aria-hidden="true"
+            style={{ top: '40%' }}
+          >
+            <div className="center-pin-bubble" />
+            <div className="center-pin-stem" />
+            <div className="center-pin-shadow" />
           </div>
+        ) : null}
 
-          {isAddMode ? (
-            <div
-              className="center-pin"
-              aria-hidden="true"
-              style={{ top: `${ADD_PLACE_PIN_VERTICAL_FRACTION * 100}%` }}
-            >
-              <div className="center-pin-bubble" />
-              <div className="center-pin-stem" />
-              <div className="center-pin-shadow" />
-            </div>
-          ) : null}
-        </div>
-
-        <div className="map-hud map-hud-top">{topButton}</div>
+        <div className="map-hud map-hud-top">{topControls}</div>
 
         {!isAddMode ? (
           <div className="map-hud map-hud-bottom">
@@ -1117,10 +665,12 @@ export default function App() {
             </button>
           </div>
         ) : null}
+
+        {errorMessage && !isAuthModalVisible ? <div className="status-banner">{errorMessage}</div> : null}
       </main>
 
       {selectedPlace && isPlaceModalVisible ? (
-        <SheetModal onClose={closePlaceModal}>
+        <SheetModal onClose={() => setIsPlaceModalVisible(false)}>
           <div className="sheet-header">
             <div className="sheet-handle" />
             <h2 className="sheet-title">{selectedPlace.name}</h2>
@@ -1139,7 +689,7 @@ export default function App() {
           <AppButton
             label="Open location"
             size="default"
-            onClick={() => window.open(openLocationHref(selectedPlace), '_blank', 'noreferrer')}
+            onClick={handleOpenLocation}
             styleClassName="block-button"
           />
 
@@ -1251,7 +801,13 @@ export default function App() {
       ) : null}
 
       {isComposerModalVisible ? (
-        <SheetModal onClose={() => setIsComposerModalVisible(false)}>
+        <SheetModal
+          onClose={() => {
+            setIsComposerModalVisible(false);
+            setCommentDraft('');
+            setReplyTarget(null);
+          }}
+        >
           <div className="sheet-header">
             <div className="sheet-handle" />
             <h2 className="sheet-title">
@@ -1560,7 +1116,11 @@ function AuthCard({
             : onSignIn({ email, password })
         }
       />
-      <button className="toggle-auth-button" type="button" onClick={() => setMode(isSignUp ? 'signin' : 'signup')}>
+      <button
+        className="toggle-auth-button"
+        type="button"
+        onClick={() => setMode(isSignUp ? 'signin' : 'signup')}
+      >
         {isSignUp ? 'Already have an account? Sign in' : 'Need an account? Sign up'}
       </button>
       {helperText ? <p className="sheet-meta">{helperText}</p> : null}
