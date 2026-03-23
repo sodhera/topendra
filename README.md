@@ -58,8 +58,8 @@ cd topey
 - User location:
   - iOS, Android, and web now render a custom Topey location marker instead of relying on the platform default blue dot
   - the location marker is a solid black circle with a smaller white dot inside it so current position still reads separately from place drops without introducing extra color
-- Buttons and sheets now use an Apple-like iOS treatment with a white/black/grey palette, larger sheet geometry, and clearer action hierarchy inside modals.
-- Place discussions now behave more like Reddit: the place sheet shows a short preview stack, while the full conversation opens in a separate modal with per-comment reply controls.
+- The browser shell now uses a Reddit-like desktop treatment: orange primary actions, flatter white cards, stronger metadata rails, and thread-style comment blocks across place, auth, composer, and add-place dialogs.
+- Place discussions now behave more like Reddit end-to-end: the place sheet shows a short preview stack, while the full conversation opens in a separate modal with left-side vote rails and per-comment reply controls.
 - Place opens are tracked in Supabase so later area-notification work has usage history to build on.
 - Demo mode now ships with 50 deterministic Kathmandu places plus multiple seeded comment threads per place.
 - Account creation is email-only and asks the user to choose an anonymous public username for places and comments.
@@ -88,8 +88,9 @@ packages/
 - Home and browse derive a visible marker subset from the current viewport, ease marker density down as the map zooms out, and switch back to full visible-pin rendering once the user is zoomed in far enough.
 - Home place details open in a modal on dot tap, and browse previews also open only from explicit dot taps.
 - `AddPlace` updates the pending coordinates from map movement and uses a fixed center pin overlay so the target never disappears.
-- `apps/web` uses a real browser map surface, derives a region-like viewport from live map bounds, and feeds that viewport back into the shared place-thinning logic so desktop drag, wheel, trackpad, and keyboard inputs all stay aligned with marker density.
-- Web place drops render as HTML-backed Leaflet markers with larger invisible hit targets rather than SVG circle overlays so Safari click handling stays reliable and opening a place sheet behaves like the app.
+- `apps/web` uses a real browser map surface, derives a region-like viewport from settled Leaflet bounds, and feeds that viewport back into the shared place-thinning logic so desktop drag, wheel, trackpad, and keyboard inputs all stay aligned with marker density without forcing React to repaint on every drag tick.
+- Web place drops now render as canvas-backed Leaflet circle markers instead of DOM markers so zoomed-out views stay responsive even when more places are visible at once.
+- Web add-place mode only syncs the pinned coordinates after the viewport settles, which keeps drag and zoom interactions snappy while preserving the exact upper-half pin target.
 - The browser base map now uses a muted no-label tile set so external landmarks, POIs, and icons do not compete with Topey pins.
 
 ## Tech Stack
@@ -207,7 +208,7 @@ npm run web:test
 - sees the same custom location marker language as mobile when browser geolocation is available
 - can drag the map, pan with a trackpad, zoom with wheel or pinch, and double-click to zoom in
 - can use arrow keys to pan, `Page Up` and `Page Down` to change the selected place, and `0` to reset the camera
-- can click place dots and inspect metadata, creator attribution, thread previews, and full discussion sheets
+- can click place dots and inspect Reddit-style metadata, creator attribution, widget cards, thread previews, and full discussion sheets
 - can sign in from the browser when Supabase is configured
 - can vote, post comments, and add places from the browser when signed in
 - can open the selected place in external maps

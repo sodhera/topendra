@@ -16,7 +16,6 @@ import {
   getMapPlacesForRegion,
   getVoteBreakdown,
 } from '@topey/shared/lib/geo';
-import { colors } from '@topey/shared/lib/theme';
 import {
   createComment,
   createPlace,
@@ -28,6 +27,23 @@ import { getSafeSession, hasSupabaseConfig, supabase } from './lib/supabase';
 import DesktopMap from './components/DesktopMap';
 
 const demoData = buildKathmanduDemoData();
+const WEB_SHELL_COLORS = {
+  background: '#DAE0E6',
+  card: '#FFFFFF',
+  elevatedCard: '#F6F7F8',
+  border: '#D7DADC',
+  separator: '#EDEFF1',
+  text: '#1C1C1C',
+  mutedText: '#787C7E',
+  primary: '#FF4500',
+  primaryText: '#FFFFFF',
+  accent: '#0079D3',
+  sheetBackdrop: 'rgba(28, 28, 28, 0.7)',
+  handle: '#878A8C',
+};
+const RELATIVE_TIME_FORMATTER = new Intl.RelativeTimeFormat('en', {
+  numeric: 'auto',
+});
 
 function createViewerSessionId() {
   return `viewer-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
@@ -510,6 +526,11 @@ export default function App() {
     setSelectedPlaceId('');
     setFocusedPlaceId('');
   }, []);
+  const handleOpenSelected = React.useCallback(() => {
+    if (selectedPlaceId) {
+      setIsPlaceModalVisible(true);
+    }
+  }, [selectedPlaceId]);
 
   const cancelAddPlace = React.useCallback(() => {
     setIsAddMode(false);
@@ -602,18 +623,18 @@ export default function App() {
     <div
       className="app-shell"
       style={{
-        '--color-background': colors.background,
-        '--color-card': colors.card,
-        '--color-elevated': colors.elevatedCard,
-        '--color-border': colors.border,
-        '--color-separator': colors.separator,
-        '--color-text': colors.text,
-        '--color-muted': colors.mutedText,
-        '--color-primary': colors.primary,
-        '--color-primary-text': colors.primaryText,
-        '--color-accent': colors.accent,
-        '--color-backdrop': colors.sheetBackdrop,
-        '--color-handle': colors.handle,
+        '--color-background': WEB_SHELL_COLORS.background,
+        '--color-card': WEB_SHELL_COLORS.card,
+        '--color-elevated': WEB_SHELL_COLORS.elevatedCard,
+        '--color-border': WEB_SHELL_COLORS.border,
+        '--color-separator': WEB_SHELL_COLORS.separator,
+        '--color-text': WEB_SHELL_COLORS.text,
+        '--color-muted': WEB_SHELL_COLORS.mutedText,
+        '--color-primary': WEB_SHELL_COLORS.primary,
+        '--color-primary-text': WEB_SHELL_COLORS.primaryText,
+        '--color-accent': WEB_SHELL_COLORS.accent,
+        '--color-backdrop': WEB_SHELL_COLORS.sheetBackdrop,
+        '--color-handle': WEB_SHELL_COLORS.handle,
       }}
     >
       <div className="sr-only" id={helpId}>
@@ -626,11 +647,7 @@ export default function App() {
           addMode={isAddMode}
           focusedPlace={focusedPlace}
           onAddPinChange={setAddPinCoordinates}
-          onOpenSelected={() => {
-            if (selectedPlaceId) {
-              setIsPlaceModalVisible(true);
-            }
-          }}
+          onOpenSelected={handleOpenSelected}
           onRegionChange={setMapRegion}
           onSelectPlace={selectPlace}
           selectedPlaceId={selectedPlaceId}
@@ -673,17 +690,23 @@ export default function App() {
         <SheetModal onClose={() => setIsPlaceModalVisible(false)}>
           <div className="sheet-header">
             <div className="sheet-handle" />
+            <p className="sheet-kicker">r/topeyplaces</p>
             <h2 className="sheet-title">{selectedPlace.name}</h2>
+            <div className="sheet-meta-row">
+              <span className="sheet-meta-pill">Map drop</span>
+              <span className="sheet-meta-inline">Posted by {formatUserHandle(selectedPlace.authorName)}</span>
+              <span className="sheet-meta-inline">{formatRelativeTime(selectedPlace.createdAt)}</span>
+            </div>
             <p className="sheet-copy">{selectedPlace.description}</p>
           </div>
 
           <div className="stats-row">
             <PreviewStat
-              label="Rating"
+              label="Score"
               value={`${voteBreakdown.score >= 0 ? '+' : ''}${voteBreakdown.score}`}
             />
-            <PreviewStat label="Votes" value={voteBreakdown.ratioLabel} />
-            <PreviewStat label="Threads" value={`${selectedPlace.threadCount ?? comments.length}`} />
+            <PreviewStat label="Vote ratio" value={voteBreakdown.ratioLabel} />
+            <PreviewStat label="Comments" value={`${selectedPlace.threadCount ?? comments.length}`} />
           </div>
 
           <AppButton
@@ -701,14 +724,13 @@ export default function App() {
               score={voteBreakdown.score}
             />
             <div className="added-by">
-              Added by: <span>{selectedPlace.authorName || 'Topey user'}</span>
+              Added by: <span>{formatUserHandle(selectedPlace.authorName)}</span>
             </div>
           </div>
 
           <ConversationPreview
             comments={comments}
             commentVotes={commentVotes}
-            isAuthenticated={isAuthenticated}
             onCommentVote={handleCommentVote}
             onCompose={openComposer}
             onOpenDiscussion={() => {
@@ -732,6 +754,7 @@ export default function App() {
           {isAuthenticated ? (
             <div className="sheet-header">
               <div className="sheet-handle" />
+              <p className="sheet-kicker">Account</p>
               <h2 className="sheet-title">Profile</h2>
               <div className="profile-name">{currentUser.name}</div>
               {currentUser.email ? <div className="profile-meta">{currentUser.email}</div> : null}
@@ -759,38 +782,24 @@ export default function App() {
         <SheetModal onClose={() => setIsDiscussionModalVisible(false)} tall>
           <div className="sheet-header">
             <div className="sheet-handle" />
+            <p className="sheet-kicker">r/topeyplaces</p>
             <h2 className="sheet-title">Discussion</h2>
-            <p className="sheet-subtitle">{selectedPlace.name}</p>
+            <div className="sheet-meta-row">
+              <span className="sheet-meta-pill">Top comments</span>
+              <span className="sheet-meta-inline">{selectedPlace.name}</span>
+            </div>
           </div>
 
           <div className="discussion-list">
             {comments.map((comment) => (
-              <article key={comment.id} className="discussion-comment">
-                <strong className="comment-author">{comment.authorName || 'Topey user'}</strong>
-                <p className="comment-body">{comment.body}</p>
-                <div className="comment-actions">
-                  <CommentArrowButton
-                    direction="up"
-                    isActive={(commentVotes[comment.id] ?? 0) === 1}
-                    onClick={() => handleCommentVote(comment.id, 1)}
-                  />
-                  <span className="comment-score">
-                    {formatSignedValue(commentVotes[comment.id] ?? 0)}
-                  </span>
-                  <CommentArrowButton
-                    direction="down"
-                    isActive={(commentVotes[comment.id] ?? 0) === -1}
-                    onClick={() => handleCommentVote(comment.id, -1)}
-                  />
-                  <button
-                    className="reply-button"
-                    type="button"
-                    onClick={() => openComposer(comment)}
-                  >
-                    Reply
-                  </button>
-                </div>
-              </article>
+              <CommentCard
+                key={comment.id}
+                comment={comment}
+                score={commentVotes[comment.id] ?? 0}
+                onDownvote={() => handleCommentVote(comment.id, -1)}
+                onReply={() => openComposer(comment)}
+                onUpvote={() => handleCommentVote(comment.id, 1)}
+              />
             ))}
           </div>
 
@@ -810,8 +819,9 @@ export default function App() {
         >
           <div className="sheet-header">
             <div className="sheet-handle" />
+            <p className="sheet-kicker">{replyTarget ? 'Reply' : 'New comment'}</p>
             <h2 className="sheet-title">
-              {replyTarget ? `Reply to ${replyTarget.authorName || 'Topey user'}` : 'Add a comment'}
+              {replyTarget ? `Reply to ${formatUserHandle(replyTarget.authorName)}` : 'Add a comment'}
             </h2>
           </div>
 
@@ -848,6 +858,7 @@ export default function App() {
         <SheetModal onClose={() => setIsAddSheetVisible(false)}>
           <div className="sheet-header">
             <div className="sheet-handle" />
+            <p className="sheet-kicker">Submit a place</p>
             <h2 className="sheet-title">Place details</h2>
             <p className="sheet-copy">
               Confirm this pin and fill in the details before the place is added.
@@ -952,11 +963,11 @@ function VoteControls({ currentVote, onDownvote, onUpvote, score }) {
   return (
     <div className="vote-controls">
       <button className="vote-arrow" type="button" onClick={onUpvote}>
-        <span className={currentVote === 1 ? 'is-active' : ''}>↑</span>
+        <span className={currentVote === 1 ? 'is-active' : ''}>▲</span>
       </button>
       <span className="vote-score">{formatSignedValue(score)}</span>
       <button className="vote-arrow" type="button" onClick={onDownvote}>
-        <span className={currentVote === -1 ? 'is-active' : ''}>↓</span>
+        <span className={currentVote === -1 ? 'is-active' : ''}>▼</span>
       </button>
     </div>
   );
@@ -965,7 +976,6 @@ function VoteControls({ currentVote, onDownvote, onUpvote, score }) {
 function ConversationPreview({
   comments,
   commentVotes,
-  isAuthenticated,
   onCommentVote,
   onCompose,
   onOpenDiscussion,
@@ -974,6 +984,16 @@ function ConversationPreview({
 
   return (
     <div className="conversation-preview">
+      <div className="thread-header">
+        <div>
+          <div className="thread-kicker">Top comments</div>
+          <h3 className="thread-title">Community discussion</h3>
+        </div>
+        <button className="thread-link-button" type="button" onClick={onOpenDiscussion}>
+          {comments.length ? `${comments.length} comments` : 'Start the thread'}
+        </button>
+      </div>
+
       <div className="thread-card">
         {previewComments.length ? (
           previewComments.map((comment, index) => {
@@ -981,44 +1001,18 @@ function ConversationPreview({
             const shouldFadeOut = previewComments.length > 1 && isLastPreview;
 
             return (
-              <article key={comment.id} className="preview-comment">
+              <React.Fragment key={comment.id}>
                 {index > 0 ? <div className="thread-separator" /> : null}
-                <div className="preview-comment-content">
-                  <strong className="comment-author">{comment.authorName || 'Topey user'}</strong>
-                  <p className="comment-body">{comment.body}</p>
-                  {!shouldFadeOut ? (
-                    <div className="comment-actions">
-                      <CommentArrowButton
-                        direction="up"
-                        isActive={(commentVotes[comment.id] ?? 0) === 1}
-                        onClick={() => onCommentVote(comment.id, 1)}
-                      />
-                      <span className="comment-score">
-                        {formatSignedValue(commentVotes[comment.id] ?? 0)}
-                      </span>
-                      <CommentArrowButton
-                        direction="down"
-                        isActive={(commentVotes[comment.id] ?? 0) === -1}
-                        onClick={() => onCommentVote(comment.id, -1)}
-                      />
-                      <button
-                        className="reply-button"
-                        type="button"
-                        onClick={() => onCompose(comment)}
-                      >
-                        Reply
-                      </button>
-                    </div>
-                  ) : null}
-                  {shouldFadeOut ? (
-                    <div className="preview-fade">
-                      <button className="see-more-button" type="button" onClick={onOpenDiscussion}>
-                        See More
-                      </button>
-                    </div>
-                  ) : null}
-                </div>
-              </article>
+                <CommentCard
+                  comment={comment}
+                  isPreviewTail={shouldFadeOut}
+                  onDownvote={() => onCommentVote(comment.id, -1)}
+                  onOpenDiscussion={onOpenDiscussion}
+                  onReply={() => onCompose(comment)}
+                  onUpvote={() => onCommentVote(comment.id, 1)}
+                  score={commentVotes[comment.id] ?? 0}
+                />
+              </React.Fragment>
             );
           })
         ) : (
@@ -1036,10 +1030,56 @@ function ConversationPreview({
   );
 }
 
+function CommentCard({
+  comment,
+  isPreviewTail = false,
+  onDownvote,
+  onOpenDiscussion,
+  onReply,
+  onUpvote,
+  score,
+}) {
+  return (
+    <article className={`comment-card${isPreviewTail ? ' is-preview-tail' : ''}`}>
+      <div className="comment-vote-rail">
+        <CommentArrowButton direction="up" isActive={score === 1} onClick={onUpvote} />
+        <span className="comment-score">{formatSignedValue(score)}</span>
+        <CommentArrowButton direction="down" isActive={score === -1} onClick={onDownvote} />
+      </div>
+
+      <div className="comment-content">
+        <div className="comment-meta-row">
+          <strong className="comment-author">{formatUserHandle(comment.authorName)}</strong>
+          <span className="comment-meta-divider">•</span>
+          <span className="comment-timestamp">{formatRelativeTime(comment.createdAt)}</span>
+        </div>
+
+        <p className="comment-body">{comment.body}</p>
+
+        {!isPreviewTail ? (
+          <div className="comment-actions">
+            <button className="reply-button" type="button" onClick={onReply}>
+              Reply
+            </button>
+          </div>
+        ) : null}
+
+        {isPreviewTail ? (
+          <div className="preview-fade">
+            <button className="see-more-button" type="button" onClick={onOpenDiscussion}>
+              Continue thread
+            </button>
+          </div>
+        ) : null}
+      </div>
+    </article>
+  );
+}
+
 function CommentArrowButton({ direction, isActive, onClick }) {
   return (
     <button className="comment-arrow" type="button" onClick={onClick}>
-      <span className={isActive ? 'is-active' : ''}>{direction === 'up' ? '↑' : '↓'}</span>
+      <span className={isActive ? 'is-active' : ''}>{direction === 'up' ? '▲' : '▼'}</span>
     </button>
   );
 }
@@ -1060,7 +1100,13 @@ function AuthCard({
 
   return (
     <div className="auth-card">
+      <p className="sheet-kicker">r/topeyplaces</p>
       <h2 className="sheet-title">{isSignUp ? 'Create account' : 'Sign in'}</h2>
+      <p className="sheet-copy">
+        {isSignUp
+          ? 'Choose an anonymous handle to vote, reply, and add new places.'
+          : 'Sign in to vote, reply, and add new places from the map.'}
+      </p>
 
       <AppButton
         label={authBusy ? 'Please wait...' : 'Continue with Google'}
@@ -1141,4 +1187,45 @@ function formatSignedValue(value) {
   }
 
   return `${value}`;
+}
+
+function formatUserHandle(name) {
+  const normalized = `${name || 'Topey user'}`
+    .trim()
+    .replace(/\s+/g, '_');
+
+  return `u/${normalized}`;
+}
+
+function formatRelativeTime(value) {
+  if (!value) {
+    return 'just now';
+  }
+
+  const timestamp = new Date(value).getTime();
+
+  if (Number.isNaN(timestamp)) {
+    return 'recently';
+  }
+
+  const diffInSeconds = Math.round((timestamp - Date.now()) / 1000);
+  const units = [
+    { unit: 'year', seconds: 31536000 },
+    { unit: 'month', seconds: 2592000 },
+    { unit: 'week', seconds: 604800 },
+    { unit: 'day', seconds: 86400 },
+    { unit: 'hour', seconds: 3600 },
+    { unit: 'minute', seconds: 60 },
+  ];
+
+  for (const { unit, seconds } of units) {
+    if (Math.abs(diffInSeconds) >= seconds) {
+      return RELATIVE_TIME_FORMATTER.format(
+        Math.round(diffInSeconds / seconds),
+        unit
+      );
+    }
+  }
+
+  return 'just now';
 }

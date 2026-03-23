@@ -49,19 +49,20 @@ Responsibilities:
 
 ### Web desktop interaction model
 
-The browser app uses a Leaflet map surface with a muted CARTO no-label raster base map.
+The browser app uses a Leaflet map surface with a muted CARTO no-label raster base map and a Reddit-like desktop shell for all comment-heavy UI.
 
 Mechanism:
 
 1. the browser map owns panning, zooming, trackpad gestures, and tile rendering
-2. the app derives a region-like viewport from live Leaflet bounds after move and zoom events
+2. the app derives a region-like viewport from settled Leaflet bounds after move-end and zoom-end events instead of streaming every drag tick into React state
 3. that viewport is fed into the shared `getMapPlacesForRegion` logic so desktop and mobile marker density stay aligned
-4. place drops render as HTML-backed Leaflet `divIcon` markers with oversized transparent hit areas instead of SVG vector circles so marker clicks stay reliable in Safari
+4. place drops render as canvas-backed Leaflet `CircleMarker` paths instead of DOM-backed marker icons so wider desktop views remain responsive as the visible place count grows
 5. the browser map still exposes extra keyboard affordances such as `Page Up`, `Page Down`, `Home`, `End`, `Enter`, and `0`
-6. add-place mode reads a pinned coordinate from an offset point inside the live map viewport so the browser flow matches the mobile upper-half pin behavior, with a red teardrop add-pin overlay instead of a generic dot
+6. add-place mode reads a pinned coordinate from an offset point inside the settled map viewport so the browser flow matches the mobile upper-half pin behavior without dragging the React tree through every movement frame
 7. when browser geolocation resolves, a custom black-with-white-center location marker is rendered separately from place drops so current position stays visually distinct
 8. the browser base map intentionally strips labels and most external iconography so Topey pins remain the primary landmarks
 9. the browser map stays visually hidden behind the same full-screen app shell used by the mobile experience
+10. place, auth, composer, and add-place dialogs intentionally reuse the same Reddit-style card language so metadata, voting, and threading feel consistent across the browser flow
 
 ### Web runtime state
 

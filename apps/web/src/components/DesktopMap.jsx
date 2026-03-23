@@ -1,8 +1,8 @@
 import React from 'react';
 import L from 'leaflet';
 import {
+  CircleMarker,
   MapContainer,
-  Marker,
   TileLayer,
   useMap,
   useMapEvents,
@@ -12,32 +12,32 @@ import { DEFAULT_REGION, KATHMANDU_EXPLORE_REGION } from '@topey/shared/lib/cons
 const DEFAULT_ZOOM = 13;
 const USER_LOCATION_ZOOM = 15;
 const ADD_PLACE_PIN_VERTICAL_FRACTION = 0.4;
-const PLACE_MARKER_HIT_SIZE = 36;
-const USER_LOCATION_MARKER_HIT_SIZE = 34;
-
-function buildDivMarkerIcon({ className, containerClassName, hitSize }) {
-  return L.divIcon({
-    className: `leaflet-div-icon ${containerClassName}`,
-    html: `<span class="${className}" aria-hidden="true"></span>`,
-    iconAnchor: [hitSize / 2, hitSize / 2],
-    iconSize: [hitSize, hitSize],
-  });
-}
-
-const PLACE_MARKER_ICON = buildDivMarkerIcon({
-  className: 'web-place-marker',
-  containerClassName: 'web-place-marker-icon',
-  hitSize: PLACE_MARKER_HIT_SIZE,
+const MAP_FLY_DURATION = 0.24;
+const MAP_FLY_DURATION_SLOW = 0.3;
+const CANVAS_RENDERER = L.canvas({ padding: 0.4 });
+const PLACE_MARKER_RADIUS = 7;
+const SELECTED_PLACE_MARKER_RADIUS = 10;
+const USER_LOCATION_MARKER_RADIUS = 8;
+const PLACE_MARKER_STYLE = Object.freeze({
+  color: '#FFFFFF',
+  fillColor: '#FF4500',
+  fillOpacity: 1,
+  opacity: 1,
+  weight: 2,
 });
-const SELECTED_PLACE_MARKER_ICON = buildDivMarkerIcon({
-  className: 'web-place-marker is-selected',
-  containerClassName: 'web-place-marker-icon',
-  hitSize: PLACE_MARKER_HIT_SIZE,
+const SELECTED_PLACE_MARKER_STYLE = Object.freeze({
+  color: '#1A1A1B',
+  fillColor: '#FF4500',
+  fillOpacity: 1,
+  opacity: 1,
+  weight: 3,
 });
-const USER_LOCATION_MARKER_ICON = buildDivMarkerIcon({
-  className: 'web-user-location-marker',
-  containerClassName: 'web-user-location-marker-icon',
-  hitSize: USER_LOCATION_MARKER_HIT_SIZE,
+const USER_LOCATION_MARKER_STYLE = Object.freeze({
+  color: '#FFFFFF',
+  fillColor: '#0079D3',
+  fillOpacity: 1,
+  opacity: 1,
+  weight: 3,
 });
 
 function mapToRegion(map) {
@@ -66,6 +66,30 @@ function buildCenterPinCoordinates(map) {
   };
 }
 
+function areCoordinatesEquivalent(left, right) {
+  if (!left || !right) {
+    return false;
+  }
+
+  return (
+    Math.abs(left.latitude - right.latitude) < 0.00001 &&
+    Math.abs(left.longitude - right.longitude) < 0.00001
+  );
+}
+
+function areRegionsEquivalent(left, right) {
+  if (!left || !right) {
+    return false;
+  }
+
+  return (
+    Math.abs(left.latitude - right.latitude) < 0.00001 &&
+    Math.abs(left.longitude - right.longitude) < 0.00001 &&
+    Math.abs(left.latitudeDelta - right.latitudeDelta) < 0.00001 &&
+    Math.abs(left.longitudeDelta - right.longitudeDelta) < 0.00001
+  );
+}
+
 function MapRuntimeBridge({
   addMode,
   focusedPlace,
@@ -77,40 +101,58 @@ function MapRuntimeBridge({
   userRegion,
   visiblePlaces,
 }) {
-  const map = useMapEvents({
-    move() {
-      if (addMode) {
-        onAddPinChange(buildCenterPinCoordinates(map));
-      }
-    },
-    moveend() {
-      onRegionChange(mapToRegion(map));
+  const map = useMap();
+  const hasAppliedUserRegionRef = React.useRef(false);
+  const lastAddPinRef = React.useRef(null);
+  const lastFocusedPlaceIdRef = React.useRef('');
+  const lastRegionRef = React.useRef(null);
 
-      if (addMode) {
-        onAddPinChange(buildCenterPinCoordinates(map));
-      }
-    },
-    zoom() {
-      if (addMode) {
-        onAddPinChange(buildCenterPinCoordinates(map));
-      }
+  const emitRegion = React.useCallback(() => {
+    const nextRegion = mapToRegion(map);
+
+    if (areRegionsEquivalent(lastRegionRef.current, nextRegion)) {
+      return;
+    }
+
+    lastRegionRef.current = nextRegion;
+    onRegionChange(nextRegion);
+  }, [map, onRegionChange]);
+
+  const emitAddPin = React.useCallback(() => {
+    if (!addMode) {
+      return;
+    }
+
+    const nextCoordinates = buildCenterPinCoordinates(map);
+
+    if (areCoordinatesEquivalent(lastAddPinRef.current, nextCoordinates)) {
+      return;
+    }
+
+    lastAddPinRef.current = nextCoordinates;
+    onAddPinChange(nextCoordinates);
+  }, [addMode, map, onAddPinChange]);
+
+  useMapEvents({
+    moveend() {
+      emitRegion();
+      emitAddPin();
     },
     zoomend() {
-      onRegionChange(mapToRegion(map));
-
-      if (addMode) {
-        onAddPinChange(buildCenterPinCoordinates(map));
-      }
+      emitRegion();
+      emitAddPin();
     },
   });
-  const hasAppliedUserRegionRef = React.useRef(false);
-  const lastFocusedPlaceIdRef = React.useRef('');
 
   React.useEffect(() => {
     map.invalidateSize();
-    onRegionChange(mapToRegion(map));
-    onAddPinChange(buildCenterPinCoordinates(map));
-  }, [map, onAddPinChange, onRegionChange]);
+    emitRegion();
+    emitAddPin();
+  }, [emitAddPin, emitRegion, map]);
+
+  React.useEffect(() => {
+    emitAddPin();
+  }, [addMode, emitAddPin]);
 
   React.useEffect(() => {
     if (!userRegion || hasAppliedUserRegionRef.current) {
@@ -123,7 +165,7 @@ function MapRuntimeBridge({
       Math.max(map.getZoom(), USER_LOCATION_ZOOM),
       {
         animate: true,
-        duration: 0.45,
+        duration: MAP_FLY_DURATION_SLOW,
       }
     );
   }, [map, userRegion]);
@@ -136,7 +178,7 @@ function MapRuntimeBridge({
     lastFocusedPlaceIdRef.current = focusedPlace.id;
     map.flyTo([focusedPlace.latitude, focusedPlace.longitude], Math.max(map.getZoom(), 15), {
       animate: true,
-      duration: 0.35,
+      duration: MAP_FLY_DURATION,
     });
   }, [focusedPlace, map]);
 
@@ -150,7 +192,7 @@ function MapRuntimeBridge({
           map.flyTo(
             [KATHMANDU_EXPLORE_REGION.latitude, KATHMANDU_EXPLORE_REGION.longitude],
             DEFAULT_ZOOM,
-            { animate: true, duration: 0.35 }
+            { animate: true, duration: MAP_FLY_DURATION }
           );
         }
 
@@ -164,7 +206,7 @@ function MapRuntimeBridge({
         map.flyTo(
           [KATHMANDU_EXPLORE_REGION.latitude, KATHMANDU_EXPLORE_REGION.longitude],
           DEFAULT_ZOOM,
-          { animate: true, duration: 0.35 }
+          { animate: true, duration: MAP_FLY_DURATION }
         );
         return;
       }
@@ -182,7 +224,7 @@ function MapRuntimeBridge({
         if (firstPlace) {
           map.flyTo([firstPlace.latitude, firstPlace.longitude], Math.max(map.getZoom(), 15), {
             animate: true,
-            duration: 0.35,
+            duration: MAP_FLY_DURATION,
           });
           onSelectPlace(firstPlace.id, {
             openModal: false,
@@ -200,7 +242,7 @@ function MapRuntimeBridge({
         if (lastPlace) {
           map.flyTo([lastPlace.latitude, lastPlace.longitude], Math.max(map.getZoom(), 15), {
             animate: true,
-            duration: 0.35,
+            duration: MAP_FLY_DURATION,
           });
           onSelectPlace(lastPlace.id, {
             openModal: false,
@@ -229,7 +271,7 @@ function MapRuntimeBridge({
 
       map.flyTo([nextPlace.latitude, nextPlace.longitude], Math.max(map.getZoom(), 15), {
         animate: true,
-        duration: 0.35,
+        duration: MAP_FLY_DURATION,
       });
       onSelectPlace(nextPlace.id, {
         openModal: false,
@@ -247,7 +289,32 @@ function MapRuntimeBridge({
   return null;
 }
 
-export default function DesktopMap({
+const PlaceMarkersLayer = React.memo(function PlaceMarkersLayer({
+  onSelectPlace,
+  selectedPlaceId,
+  visiblePlaces,
+}) {
+  return visiblePlaces.map((place) => {
+    const isSelected = place.id === selectedPlaceId;
+
+    return (
+      <CircleMarker
+        bubblingMouseEvents={false}
+        center={[place.latitude, place.longitude]}
+        eventHandlers={{
+          click: () => onSelectPlace(place.id),
+          touchstart: () => onSelectPlace(place.id),
+        }}
+        key={place.id}
+        pathOptions={isSelected ? SELECTED_PLACE_MARKER_STYLE : PLACE_MARKER_STYLE}
+        radius={isSelected ? SELECTED_PLACE_MARKER_RADIUS : PLACE_MARKER_RADIUS}
+        renderer={CANVAS_RENDERER}
+      />
+    );
+  });
+});
+
+const DesktopMap = React.memo(function DesktopMap({
   addMode,
   focusedPlace,
   onAddPinChange,
@@ -278,7 +345,10 @@ export default function DesktopMap({
         center={initialCenter}
         className="leaflet-map"
         doubleClickZoom
+        fadeAnimation={false}
         keyboard
+        markerZoomAnimation={false}
+        preferCanvas
         scrollWheelZoom
         style={{ height: '100%', width: '100%' }}
         zoom={DEFAULT_ZOOM}
@@ -304,32 +374,20 @@ export default function DesktopMap({
           visiblePlaces={visiblePlaces}
         />
 
-        {visiblePlaces.map((place) => {
-          const isSelected = place.id === selectedPlaceId;
-          const center = [place.latitude, place.longitude];
-
-          return (
-            <Marker
-              bubblingMouseEvents={false}
-              key={place.id}
-              eventHandlers={{
-                click: () => handleSelectPlace(place.id),
-                touchstart: () => handleSelectPlace(place.id),
-              }}
-              icon={isSelected ? SELECTED_PLACE_MARKER_ICON : PLACE_MARKER_ICON}
-              position={center}
-              riseOnHover
-              title={place.name}
-            />
-          );
-        })}
+        <PlaceMarkersLayer
+          onSelectPlace={handleSelectPlace}
+          selectedPlaceId={selectedPlaceId}
+          visiblePlaces={visiblePlaces}
+        />
 
         {userRegion ? (
-          <Marker
-            icon={USER_LOCATION_MARKER_ICON}
+          <CircleMarker
+            center={[userRegion.latitude, userRegion.longitude]}
             interactive={false}
             keyboard={false}
-            position={[userRegion.latitude, userRegion.longitude]}
+            pathOptions={USER_LOCATION_MARKER_STYLE}
+            radius={USER_LOCATION_MARKER_RADIUS}
+            renderer={CANVAS_RENDERER}
           />
         ) : null}
       </MapContainer>
@@ -344,4 +402,6 @@ export default function DesktopMap({
       </a>
     </div>
   );
-}
+});
+
+export default DesktopMap;
