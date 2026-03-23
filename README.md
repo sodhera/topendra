@@ -66,6 +66,7 @@ cd topey
 - Location data is used to center the map, show nearby place drops, and save the coordinates of places the user adds.
 - Web now exists as a dedicated app in `apps/web`; it mirrors the app shell in the browser with the same map overlays, sheets, comments, and add-place flow on top of a real tile map.
 - The browser map now has desktop-first controls under that same shell: drag panning, two-finger trackpad panning, wheel/pinch zoom, double-click zoom, keyboard map movement, and keyboard place traversal.
+- On web, place details, auth, discussion, composer, and add-place content now open as centered desktop dialogs rather than mobile bottom sheets.
 
 ## Workspace Layout
 

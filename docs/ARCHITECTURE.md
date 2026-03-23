@@ -44,7 +44,7 @@ Responsibilities:
 - render a real browser tile map underneath that shell
 - derive a region-like viewport from the browser map bounds
 - translate drag, trackpad, wheel, pinch, double-click, and keyboard input through the browser map engine
-- expose the same place sheet, auth sheet, discussion sheet, and add-place flow in the browser
+- expose the same place, auth, discussion, composer, and add-place flows in the browser, but as centered desktop dialogs rather than mobile bottom sheets
 - talk to Supabase directly when browser env config exists, while still falling back to the shared demo dataset
 
 ### Web desktop interaction model
