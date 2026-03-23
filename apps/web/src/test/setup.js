@@ -6,7 +6,18 @@ afterEach(() => {
 });
 
 class ResizeObserverStub {
-  observe() {}
+  constructor(callback) {
+    this.callback = callback;
+  }
+
+  observe(target) {
+    this.callback([
+      {
+        contentRect: target.getBoundingClientRect(),
+        target,
+      },
+    ]);
+  }
 
   disconnect() {}
 }
