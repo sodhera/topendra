@@ -42,8 +42,29 @@ Responsibilities:
 
 - render the Kathmandu place field in a browser-friendly layout
 - project the same shared place coordinates onto a web map canvas
+- maintain a clamped desktop viewport over that normalized map world
+- translate drag, trackpad, wheel, pinch, double-click, and keyboard input into viewport changes
 - expose metadata, vote summary, creator attribution, and thread previews
 - keep browser behavior read-only for now while mobile remains the full participation surface
+
+### Web desktop interaction model
+
+The browser map keeps every place projected into a normalized Kathmandu coordinate space.
+
+On top of that world, the app stores a browser-only viewport with:
+
+- `centerX`
+- `centerY`
+- `zoom`
+
+Mechanism:
+
+1. the world stays fixed to the Kathmandu bounds
+2. the viewport translates and scales that world to render the visible map
+3. the viewport is clamped so desktop panning never drifts beyond the dataset bounds
+4. pointer drag updates the camera directly
+5. precision wheel deltas are treated as trackpad pans, while coarse wheel movement and pinch gestures are treated as zoom
+6. keyboard shortcuts mutate the same viewport state, so mouse, trackpad, and keyboard all stay behaviorally aligned
 
 ### Shared package
 

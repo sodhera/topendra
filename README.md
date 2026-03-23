@@ -62,6 +62,7 @@ cd topey
 - Account creation is email-only and asks the user to choose an anonymous public username for places and comments.
 - Location data is used to center the map, show nearby place drops, and save the coordinates of places the user adds.
 - Web now exists as a dedicated app in `apps/web`; it reuses the shared Kathmandu dataset and lets users inspect place metadata, votes, and thread previews in the browser.
+- The browser map now has desktop-first controls: drag panning, two-finger trackpad panning, wheel/pinch zoom, double-click zoom, keyboard camera movement, and keyboard place traversal.
 
 ## Workspace Layout
 
@@ -82,6 +83,7 @@ packages/
 - Home and browse derive a visible marker subset from the current viewport, ease marker density down as the map zooms out, and switch back to full visible-pin rendering once the user is zoomed in far enough.
 - Home place details open in a modal on dot tap, and browse previews also open only from explicit dot taps.
 - `AddPlace` updates the pending coordinates from map movement and uses a fixed center pin overlay so the target never disappears.
+- `apps/web` projects every place into a normalized Kathmandu world and applies a clamped desktop camera on top of it so drag, wheel, trackpad, and keyboard inputs all move the same view state.
 
 ## Tech Stack
 
@@ -161,6 +163,7 @@ Web:
 npm run web:dev
 npm run web:build
 npm run web:preview
+npm run web:test
 ```
 
 ## How The App Behaves
@@ -190,6 +193,8 @@ npm run web:preview
 ### Web user
 
 - can browse the Kathmandu place field in the browser
+- can drag the map, pan with a trackpad, zoom with wheel or pinch, and double-click to zoom in
+- can use arrow keys to pan, `Page Up` and `Page Down` to change the selected place, and `0` to reset the camera
 - can click place dots and inspect metadata, creator attribution, and thread previews
 - can open the selected place in external maps
 - does not yet submit places or post comments from the browser

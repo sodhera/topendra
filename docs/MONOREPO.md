@@ -29,6 +29,7 @@ Owns:
 - browser entrypoint
 - browser layout and styling
 - web-specific map projection and interaction
+- desktop camera controls and browser-only regression tests
 
 Current product scope:
 
@@ -78,6 +79,7 @@ Run web:
 ```bash
 ./scripts/with-local-node.sh npm run web:dev
 ./scripts/with-local-node.sh npm run web:build
+./scripts/with-local-node.sh npm run web:test
 ```
 
 Verify:
@@ -86,6 +88,7 @@ Verify:
 ./scripts/with-local-node.sh npm run mobile:test
 ./scripts/with-local-node.sh npm run mobile:doctor
 ./scripts/with-local-node.sh npm run web:build
+./scripts/with-local-node.sh npm run web:test
 ```
 
 ## Dependency Rules
