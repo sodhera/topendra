@@ -313,6 +313,7 @@ button {
   justify-content: center;
   line-height: 38px;
   margin-bottom: 8px;
+  pointer-events: auto;
   width: 88px;
 }
 
