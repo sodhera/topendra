@@ -41,31 +41,24 @@ The browser app shell is defined in [App.jsx](/Users/sirishjoshi/Desktop/Topey/a
 Responsibilities:
 
 - render the same map-first Topey shell as the app, but for desktop browsers
-- project the same shared place coordinates onto a web map canvas
-- maintain a clamped desktop viewport over that normalized map world
-- translate drag, trackpad, wheel, pinch, double-click, and keyboard input into viewport changes
+- render a real browser tile map underneath that shell
+- derive a region-like viewport from the browser map bounds
+- translate drag, trackpad, wheel, pinch, double-click, and keyboard input through the browser map engine
 - expose the same place sheet, auth sheet, discussion sheet, and add-place flow in the browser
 - talk to Supabase directly when browser env config exists, while still falling back to the shared demo dataset
 
 ### Web desktop interaction model
 
-The browser map keeps every place projected into a normalized Kathmandu coordinate space.
-
-On top of that world, the app stores a browser-only viewport with:
-
-- `centerX`
-- `centerY`
-- `zoom`
+The browser app uses a Leaflet map surface with OpenStreetMap raster tiles.
 
 Mechanism:
 
-1. the world stays fixed to the Kathmandu bounds
-2. the viewport translates and scales that world to render the visible map
-3. the viewport is clamped so desktop panning never drifts beyond the dataset bounds
-4. pointer drag updates the camera directly
-5. precision wheel deltas are treated as trackpad pans, while coarse wheel movement and pinch gestures are treated as zoom
-6. keyboard shortcuts mutate the same viewport state, so mouse, trackpad, and keyboard all stay behaviorally aligned
-7. the desktop camera stays visually hidden behind the same full-screen app shell used by the mobile experience
+1. the browser map owns panning, zooming, trackpad gestures, and tile rendering
+2. the app derives a region-like viewport from live Leaflet bounds after move and zoom events
+3. that viewport is fed into the shared `getMapPlacesForRegion` logic so desktop and mobile marker density stay aligned
+4. the browser map still exposes extra keyboard affordances such as `Page Up`, `Page Down`, `Home`, `End`, `Enter`, and `0`
+5. add-place mode reads a pinned coordinate from an offset point inside the live map viewport so the browser flow matches the mobile upper-half pin behavior
+6. the browser map stays visually hidden behind the same full-screen app shell used by the mobile experience
 
 ### Web runtime state
 
@@ -84,6 +77,7 @@ Browser-specific backend helpers live in:
 - [supabase.js](/Users/sirishjoshi/Desktop/Topey/apps/web/src/lib/supabase.js)
 - [backend.js](/Users/sirishjoshi/Desktop/Topey/apps/web/src/lib/backend.js)
 - [runtimeConfig.js](/Users/sirishjoshi/Desktop/Topey/apps/web/src/lib/runtimeConfig.js)
+- [DesktopMap.jsx](/Users/sirishjoshi/Desktop/Topey/apps/web/src/components/DesktopMap.jsx)
 
 ### Shared package
 

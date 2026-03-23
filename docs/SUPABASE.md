@@ -129,6 +129,8 @@ Backend helper code lives in:
 - [apps/web/src/lib/backend.js](/Users/sirishjoshi/Desktop/Topey/apps/web/src/lib/backend.js)
 - [apps/web/src/lib/runtimeConfig.js](/Users/sirishjoshi/Desktop/Topey/apps/web/src/lib/runtimeConfig.js)
 
+The browser map surface itself lives in [DesktopMap.jsx](/Users/sirishjoshi/Desktop/Topey/apps/web/src/components/DesktopMap.jsx) and emits the viewport bounds that drive the shared map-place filtering logic.
+
 ## Mobile Email Auth
 
 The mobile redirect target is:

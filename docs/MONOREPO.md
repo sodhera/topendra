@@ -28,7 +28,7 @@ Owns:
 
 - browser entrypoint
 - browser layout and styling
-- web-specific map projection and interaction
+- web-specific tile map integration and interaction
 - browser-side Supabase session and data wiring
 - desktop camera controls and browser-only regression tests
 

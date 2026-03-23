@@ -61,8 +61,8 @@ cd topey
 - Demo mode now ships with 50 deterministic Kathmandu places plus multiple seeded comment threads per place.
 - Account creation is email-only and asks the user to choose an anonymous public username for places and comments.
 - Location data is used to center the map, show nearby place drops, and save the coordinates of places the user adds.
-- Web now exists as a dedicated app in `apps/web`; it reuses the shared Kathmandu dataset and mirrors the app shell in the browser with the same map overlays, sheets, comments, and add-place flow.
-- The browser map now has desktop-first controls under that same shell: drag panning, two-finger trackpad panning, wheel/pinch zoom, double-click zoom, keyboard camera movement, and keyboard place traversal.
+- Web now exists as a dedicated app in `apps/web`; it mirrors the app shell in the browser with the same map overlays, sheets, comments, and add-place flow on top of a real tile map.
+- The browser map now has desktop-first controls under that same shell: drag panning, two-finger trackpad panning, wheel/pinch zoom, double-click zoom, keyboard map movement, and keyboard place traversal.
 
 ## Workspace Layout
 
@@ -83,7 +83,7 @@ packages/
 - Home and browse derive a visible marker subset from the current viewport, ease marker density down as the map zooms out, and switch back to full visible-pin rendering once the user is zoomed in far enough.
 - Home place details open in a modal on dot tap, and browse previews also open only from explicit dot taps.
 - `AddPlace` updates the pending coordinates from map movement and uses a fixed center pin overlay so the target never disappears.
-- `apps/web` projects every place into a normalized Kathmandu world and applies a clamped desktop camera underneath the app shell so drag, wheel, trackpad, and keyboard inputs all move the same view state.
+- `apps/web` uses a real browser map surface, derives a region-like viewport from live map bounds, and feeds that viewport back into the shared place-thinning logic so desktop drag, wheel, trackpad, and keyboard inputs all stay aligned with marker density.
 
 ## Tech Stack
 
@@ -91,6 +91,8 @@ packages/
 - React Native
 - React DOM
 - React Navigation native stack
+- Leaflet
+- React Leaflet
 - `react-native-maps`
 - `expo-location`
 - Supabase JS
@@ -193,6 +195,7 @@ npm run web:test
 ### Web user
 
 - can open the same full-screen Topey map shell in the browser
+- sees real map tiles behind the app shell instead of the old placeholder browser canvas
 - can drag the map, pan with a trackpad, zoom with wheel or pinch, and double-click to zoom in
 - can use arrow keys to pan, `Page Up` and `Page Down` to change the selected place, and `0` to reset the camera
 - can click place dots and inspect metadata, creator attribution, thread previews, and full discussion sheets
