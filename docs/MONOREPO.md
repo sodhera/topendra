@@ -20,6 +20,7 @@ Owns:
 - Supabase session restore
 - add place, vote, and comment flows
 - location permission handling
+- custom mobile map markers, including the rainbow current-location marker
 - mobile-specific UI and Expo config
 
 ### `apps/web`
@@ -29,6 +30,7 @@ Owns:
 - browser entrypoint
 - browser layout and styling
 - web-specific tile map integration and interaction
+- HTML-backed Leaflet marker rendering for browser click reliability
 - browser-side Supabase session and data wiring
 - desktop camera controls and browser-only regression tests
 

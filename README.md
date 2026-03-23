@@ -55,6 +55,9 @@ cd topey
   - the live overlay stays minimal: just `Back` at the top and `Add here` at the bottom
   - modal form with name, description, and final `Add` submit for logged-in users
   - guest add attempts expose the same email-link auth path used by voting and comments
+- User location:
+  - iOS, Android, and web now render a custom Topey location marker instead of relying on the platform default blue dot
+  - the location marker uses a rainbow-accent treatment so the user’s current position reads differently from place drops
 - Buttons and sheets now use an Apple-like iOS treatment with a white/black/grey palette, larger sheet geometry, and clearer action hierarchy inside modals.
 - Place discussions now behave more like Reddit: the place sheet shows a short preview stack, while the full conversation opens in a separate modal with per-comment reply controls.
 - Place opens are tracked in Supabase so later area-notification work has usage history to build on.
@@ -78,12 +81,14 @@ packages/
 
 - `Home` and `Browse` mount the map with `initialRegion`; they do not keep `react-native-maps` locked to a controlled `region` prop during drag gestures.
 - `Home`, `Browse`, and `AddPlace` all request foreground location so the app can open near the user anywhere, not only around the Kathmandu seed region.
+- Mobile screens render a custom rainbow location marker when permission is granted, instead of the native `showsUserLocation` dot.
 - Home and browse both stay directly draggable because only the actual buttons intercept touch events.
 - Mobile map views intentionally suppress native POIs, buildings, indoor labels, traffic, and toolbar chrome so Topey pins are the only location layer that stands out.
 - Home and browse derive a visible marker subset from the current viewport, ease marker density down as the map zooms out, and switch back to full visible-pin rendering once the user is zoomed in far enough.
 - Home place details open in a modal on dot tap, and browse previews also open only from explicit dot taps.
 - `AddPlace` updates the pending coordinates from map movement and uses a fixed center pin overlay so the target never disappears.
 - `apps/web` uses a real browser map surface, derives a region-like viewport from live map bounds, and feeds that viewport back into the shared place-thinning logic so desktop drag, wheel, trackpad, and keyboard inputs all stay aligned with marker density.
+- Web place drops render as HTML-backed Leaflet markers rather than SVG circle overlays so Safari click handling stays reliable and opening a place sheet behaves like the app.
 
 ## Tech Stack
 
@@ -196,6 +201,7 @@ npm run web:test
 
 - can open the same full-screen Topey map shell in the browser
 - sees real map tiles behind the app shell instead of the old placeholder browser canvas
+- sees the same custom location marker language as mobile when browser geolocation is available
 - can drag the map, pan with a trackpad, zoom with wheel or pinch, and double-click to zoom in
 - can use arrow keys to pan, `Page Up` and `Page Down` to change the selected place, and `0` to reset the camera
 - can click place dots and inspect metadata, creator attribution, thread previews, and full discussion sheets
