@@ -137,6 +137,7 @@ Required variables:
 Do not commit `.env`.
 
 The monorepo keeps `.env` at the repo root. Mobile Expo config and the Supabase admin scripts load that root `.env` automatically, so you do not need to duplicate secrets into `apps/mobile`.
+The browser Vite app also reads that same repo-root `.env`, so web auth and browser-side Supabase calls should not require a second env file under `apps/web`.
 
 3. Sync the Supabase project
 

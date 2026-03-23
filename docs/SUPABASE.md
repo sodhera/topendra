@@ -20,6 +20,7 @@ Local development expects:
 
 These values should live in the repo-root `.env`, not in committed files.
 The mobile Expo config, the browser Vite app, and the admin scripts all load that root file automatically.
+The web app achieves this by pointing Vite `envDir` back to the monorepo root, so browser auth uses the same Supabase variables as mobile and the local admin scripts.
 
 ## Runtime Responsibilities
 

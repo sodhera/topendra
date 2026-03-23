@@ -58,7 +58,7 @@ Mechanism:
 3. that viewport is fed into the shared `getMapPlacesForRegion` logic so desktop and mobile marker density stay aligned
 4. place drops render as HTML-backed Leaflet `divIcon` markers with oversized transparent hit areas instead of SVG vector circles so marker clicks stay reliable in Safari
 5. the browser map still exposes extra keyboard affordances such as `Page Up`, `Page Down`, `Home`, `End`, `Enter`, and `0`
-6. add-place mode reads a pinned coordinate from an offset point inside the live map viewport so the browser flow matches the mobile upper-half pin behavior
+6. add-place mode reads a pinned coordinate from an offset point inside the live map viewport so the browser flow matches the mobile upper-half pin behavior, with a red teardrop add-pin overlay instead of a generic dot
 7. when browser geolocation resolves, a custom black-with-white-center location marker is rendered separately from place drops so current position stays visually distinct
 8. the browser base map intentionally strips labels and most external iconography so Topey pins remain the primary landmarks
 9. the browser map stays visually hidden behind the same full-screen app shell used by the mobile experience
@@ -164,7 +164,7 @@ Responsibilities:
 
 - center on the resolved live location before enabling submission
 - inherit the current home or browse viewport on entry so existing place pins disappear without a hard map jump
-- keep the base map decluttered while still showing the custom user location marker and current pin target
+- keep the base map decluttered while still showing the custom user location marker and a red teardrop add-pin target
 - let the user move the pin by moving the map instead of dragging a controlled region prop
 - render a fixed maps-style location bubble pin in the upper half of the viewport so the add target stays visible while the map moves underneath it
 - keep the live overlay minimal with only `Back` and `Add here`
