@@ -725,33 +725,33 @@ export default function App() {
       ) : null}
 
       {isAuthModalVisible ? (
-        <SheetModal onClose={() => setIsAuthModalVisible(false)}>
-          <div className="sheet-header">
-            <div className="sheet-handle" />
-            {isAuthenticated ? (
-              <>
-                <h2 className="sheet-title">Profile</h2>
-                <div className="profile-name">{currentUser.name}</div>
-                {currentUser.email ? <div className="profile-meta">{currentUser.email}</div> : null}
-                <AppButton
-                  label="Sign out"
-                  size="default"
-                  onClick={handleSignOut}
-                  styleClassName="auth-signout-button"
-                />
-              </>
-            ) : (
-              <AuthCard
-                authBusy={isAuthBusy}
-                errorMessage={errorMessage}
-                helperText={authNoticeMessage}
-                onGoogleSignIn={handleGoogleSignIn}
-                onSignIn={handleSignIn}
-                onSignUp={handleSignUp}
+        <SheetModal
+          dialogClassName={isAuthenticated ? '' : 'sheet-auth'}
+          onClose={() => setIsAuthModalVisible(false)}
+        >
+          {isAuthenticated ? (
+            <div className="sheet-header">
+              <div className="sheet-handle" />
+              <h2 className="sheet-title">Profile</h2>
+              <div className="profile-name">{currentUser.name}</div>
+              {currentUser.email ? <div className="profile-meta">{currentUser.email}</div> : null}
+              <AppButton
+                label="Sign out"
+                size="default"
+                onClick={handleSignOut}
+                styleClassName="auth-signout-button"
               />
-            )}
-            {!isAuthenticated && errorMessage ? <p className="sheet-meta">{errorMessage}</p> : null}
-          </div>
+            </div>
+          ) : (
+            <AuthCard
+              authBusy={isAuthBusy}
+              errorMessage={errorMessage}
+              helperText={authNoticeMessage}
+              onGoogleSignIn={handleGoogleSignIn}
+              onSignIn={handleSignIn}
+              onSignUp={handleSignUp}
+            />
+          )}
         </SheetModal>
       ) : null}
 
@@ -905,11 +905,16 @@ export default function App() {
   );
 }
 
-function SheetModal({ children, onClose, tall = false }) {
+function SheetModal({ children, dialogClassName = '', onClose, tall = false }) {
   return (
     <div className="modal-root" role="dialog" aria-modal="true">
       <button className="modal-backdrop" type="button" aria-label="Close" onClick={onClose} />
-      <div className={`sheet${tall ? ' sheet-tall' : ''}`}>{children}</div>
+      <div className={`sheet${tall ? ' sheet-tall' : ''}${dialogClassName ? ` ${dialogClassName}` : ''}`}>
+        <button className="modal-close-button" type="button" aria-label="Close" onClick={onClose}>
+          ×
+        </button>
+        {children}
+      </div>
     </div>
   );
 }
@@ -1110,6 +1115,7 @@ function AuthCard({
               : 'Sign in'
         }
         size="default"
+        styleClassName="auth-submit-button"
         onClick={() =>
           isSignUp
             ? onSignUp({ email, username, password })
