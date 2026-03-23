@@ -49,7 +49,7 @@ Responsibilities:
 
 ### Web desktop interaction model
 
-The browser app uses a Leaflet map surface with a muted CARTO no-label raster base map and a Reddit-like desktop shell for all comment-heavy UI.
+The browser app uses a Leaflet map surface with a muted CARTO no-label raster base map and a minimal low-resource shell for all comment-heavy UI.
 
 Mechanism:
 
@@ -62,7 +62,7 @@ Mechanism:
 7. when browser geolocation resolves, a custom black-with-white-center location marker is rendered separately from place drops so current position stays visually distinct
 8. the browser base map intentionally strips labels and most external iconography so Topey pins remain the primary landmarks
 9. the browser map stays visually hidden behind the same full-screen app shell used by the mobile experience
-10. place, auth, composer, and add-place dialogs intentionally reuse the same Reddit-style card language so metadata, voting, and threading feel consistent across the browser flow
+10. place, auth, composer, and add-place dialogs intentionally reuse the same flat bordered card language so metadata, voting, and threading feel consistent across the browser flow
 
 ### Web runtime state
 
@@ -154,7 +154,7 @@ Responsibilities:
 - open a compact place preview only when a dot is tapped
 - show rating, vote ratio, and thread count in that preview
 - open an explicit details modal from `View more`
-- expose `Open location`, simple arrow voting, and the same Reddit-style thread preview inside the details modal
+- expose `Open location`, simple arrow voting, and the same compact thread preview inside the details modal
 - open the full conversation in a second modal from the preview stack
 - keep the two-comment preview visible for guests while auth-gating the full discussion and participation actions
 - expose the same email-plus-anonymous-username auth card when a guest tries to participate

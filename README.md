@@ -41,7 +41,7 @@ cd topey
   - `Profile` or `Sign in` button at the top right
   - one large `+` button at the bottom that opens the add-place flow
   - tapping a dot opens the place modal directly on home instead of navigating away
-  - the modal uses a single metadata line, `Open location`, a participation row with stemmed arrow voting plus `Added by: <Username>`, and a Reddit-style thread preview
+  - the modal uses a single metadata line, `Open location`, a participation row with stemmed arrow voting plus `Added by: <Username>`, and a compact thread preview
 - Browse screen:
   - starts near the user’s current location when available, with up to 50 seeded demo dots still merged into the dataset
   - uses the same zoom-aware marker thinning so wide map views stay readable
@@ -58,8 +58,8 @@ cd topey
 - User location:
   - iOS, Android, and web now render a custom Topey location marker instead of relying on the platform default blue dot
   - the location marker is a solid black circle with a smaller white dot inside it so current position still reads separately from place drops without introducing extra color
-- The browser shell now uses a Reddit-like desktop treatment: orange primary actions, flatter white cards, stronger metadata rails, and thread-style comment blocks across place, auth, composer, and add-place dialogs.
-- Place discussions now behave more like Reddit end-to-end: the place sheet shows a short preview stack, while the full conversation opens in a separate modal with left-side vote rails and per-comment reply controls.
+- Mobile and web now share a flatter, low-resource shell: dark primary buttons, bordered white cards, compact dialogs, and simpler marker chrome with no glow-heavy treatment.
+- Place discussions now stay compact end-to-end: the place sheet shows a short preview stack, while the full conversation opens in a separate modal with lightweight vote rails and reply controls.
 - Place opens are tracked in Supabase so later area-notification work has usage history to build on.
 - Demo mode now ships with 50 deterministic Kathmandu places plus multiple seeded comment threads per place.
 - Account creation is email-only and asks the user to choose an anonymous public username for places and comments.
@@ -213,7 +213,7 @@ npm run web:test
 - sees the same custom location marker language as mobile when browser geolocation is available
 - can drag the map, pan with a trackpad, zoom with wheel or pinch, and double-click to zoom in
 - can use arrow keys to pan, `Page Up` and `Page Down` to change the selected place, and `0` to reset the camera
-- can click place dots and inspect Reddit-style metadata, creator attribution, widget cards, thread previews, and full discussion sheets
+- can click place dots and inspect compact metadata, creator attribution, minimal widget cards, thread previews, and full discussion sheets
 - can sign in from the browser when Supabase is configured
 - can vote, post comments, and add places from the browser when signed in
 - can open the selected place in external maps

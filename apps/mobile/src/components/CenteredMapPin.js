@@ -10,7 +10,6 @@ export function CenteredMapPin({
   return (
     <View pointerEvents="none" style={styles.root} testID={testID}>
       <View style={[styles.pinWrap, { top: verticalPercent }, moving && styles.pinWrapMoving]}>
-        <View style={styles.shadow} />
         <View style={styles.bubble}>
           <View style={styles.core} />
         </View>
@@ -35,32 +34,21 @@ const styles = StyleSheet.create({
     transform: [{ translateX: -22 }, { translateY: -54 }],
   },
   pinWrapMoving: {
-    transform: [{ translateX: -22 }, { translateY: -50 }, { scaleX: 0.97 }, { scaleY: 0.97 }],
-  },
-  shadow: {
-    backgroundColor: 'rgba(15, 23, 42, 0.16)',
-    borderRadius: radius.pill,
-    bottom: -12,
-    height: 12,
-    position: 'absolute',
-    transform: [{ scaleX: 1.25 }],
-    width: 36,
+    transform: [{ translateX: -22 }, { translateY: -50 }],
   },
   bubble: {
     alignItems: 'center',
-    backgroundColor: '#E32731',
+    backgroundColor: '#18181B',
+    borderColor: '#FFFFFF',
+    borderWidth: 2,
     borderRadius: 24,
     height: 46,
     justifyContent: 'center',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 14 },
-    shadowOpacity: 0.22,
-    shadowRadius: 24,
     width: 46,
     zIndex: 2,
   },
   tail: {
-    backgroundColor: '#D81F29',
+    backgroundColor: '#18181B',
     height: 26,
     marginTop: -8,
     transform: [{ rotate: '45deg' }],

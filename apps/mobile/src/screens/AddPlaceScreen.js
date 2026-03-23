@@ -321,16 +321,16 @@ const styles = StyleSheet.create({
   title: {
     color: colors.text,
     fontFamily: typography.semibold,
-    fontSize: 30,
+    fontSize: 24,
     fontWeight: '700',
-    letterSpacing: -0.9,
+    letterSpacing: -0.4,
     marginTop: spacing.xs,
   },
   copy: {
     color: colors.mutedText,
     fontFamily: typography.body,
-    fontSize: 15,
-    lineHeight: 22,
+    fontSize: 14,
+    lineHeight: 20,
     marginTop: spacing.sm,
   },
   authCallout: {

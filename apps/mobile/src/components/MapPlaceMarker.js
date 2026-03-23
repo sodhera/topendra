@@ -28,15 +28,11 @@ const styles = StyleSheet.create({
   outerDot: {
     alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.96)',
-    borderColor: 'rgba(255, 255, 255, 0.86)',
+    borderColor: '#FFFFFF',
     borderRadius: 999,
     borderWidth: 1,
     height: 20,
     justifyContent: 'center',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.18,
-    shadowRadius: 14,
     width: 20,
   },
   outerDotSelected: {

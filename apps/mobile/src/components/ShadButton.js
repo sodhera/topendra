@@ -1,5 +1,5 @@
 import React from 'react';
-import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors, radius, spacing, typography } from '@topey/shared/lib/theme';
 
 export function ShadButton({
@@ -14,38 +14,31 @@ export function ShadButton({
   testID,
   icon,
 }) {
-  const scale = React.useRef(new Animated.Value(1)).current;
-
-  function animateTo(value) {
-    Animated.spring(scale, {
-      toValue: value,
-      friction: 10,
-      tension: 210,
-      useNativeDriver: true,
-    }).start();
-  }
-
   return (
     <Pressable
       disabled={disabled}
       onPress={onPress}
-      onPressIn={() => animateTo(0.985)}
-      onPressOut={() => animateTo(1)}
-      style={[styles.base, styles[variant], styles[size], styles[shape], disabled && styles.disabled, style]}
+      style={({ pressed }) => [
+        styles.base,
+        styles[variant],
+        styles[size],
+        styles[shape],
+        disabled && styles.disabled,
+        pressed && !disabled && styles.pressed,
+        style,
+      ]}
       testID={testID}
     >
-      <Animated.View style={[styles.inner, { transform: [{ scale }] }]}>
-        {icon && <View style={styles.iconContainer}>{icon}</View>}
-        <Text
-          style={[
-            styles.label,
-            variant === 'primary' ? styles.primaryLabel : styles.secondaryLabel,
-            labelStyle,
-          ]}
-        >
-          {label}
-        </Text>
-      </Animated.View>
+      {icon && <View style={styles.iconContainer}>{icon}</View>}
+      <Text
+        style={[
+          styles.label,
+          variant === 'primary' ? styles.primaryLabel : styles.secondaryLabel,
+          labelStyle,
+        ]}
+      >
+        {label}
+      </Text>
     </Pressable>
   );
 }
@@ -53,35 +46,31 @@ export function ShadButton({
 const styles = StyleSheet.create({
   base: {
     alignItems: 'center',
-    borderWidth: 0.75,
+    borderWidth: 1,
+    flexDirection: 'row',
     justifyContent: 'center',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 10,
-    elevation: 2,
   },
   primary: {
     backgroundColor: colors.primary,
-    borderColor: 'rgba(17, 17, 17, 0.92)',
+    borderColor: colors.primary,
   },
   secondary: {
     backgroundColor: colors.secondary,
     borderColor: colors.border,
   },
   default: {
-    minHeight: 48,
-    paddingHorizontal: 20,
+    minHeight: 44,
+    paddingHorizontal: 16,
     paddingVertical: spacing.sm,
   },
   compact: {
-    minHeight: 44,
-    paddingHorizontal: 16,
+    minHeight: 40,
+    paddingHorizontal: 12,
     paddingVertical: spacing.xs,
   },
   large: {
-    minHeight: 62,
-    paddingHorizontal: spacing.lg,
+    minHeight: 52,
+    paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
   },
   rounded: {
@@ -93,19 +82,17 @@ const styles = StyleSheet.create({
   disabled: {
     opacity: 0.48,
   },
-  inner: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row',
+  pressed: {
+    opacity: 0.84,
   },
   iconContainer: {
     marginRight: spacing.sm,
   },
   label: {
     fontFamily: typography.semibold,
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '600',
-    letterSpacing: -0.35,
+    letterSpacing: -0.2,
   },
   primaryLabel: {
     color: colors.primaryText,

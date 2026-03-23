@@ -28,18 +28,18 @@ import DesktopMap from './components/DesktopMap';
 
 const demoData = buildKathmanduDemoData();
 const WEB_SHELL_COLORS = {
-  background: '#DAE0E6',
+  background: '#F4F4F5',
   card: '#FFFFFF',
-  elevatedCard: '#F6F7F8',
-  border: '#D7DADC',
-  separator: '#EDEFF1',
-  text: '#1C1C1C',
-  mutedText: '#787C7E',
-  primary: '#FF4500',
+  elevatedCard: '#FAFAFA',
+  border: '#D4D4D8',
+  separator: '#E4E4E7',
+  text: '#18181B',
+  mutedText: '#71717A',
+  primary: '#18181B',
   primaryText: '#FFFFFF',
-  accent: '#0079D3',
-  sheetBackdrop: 'rgba(28, 28, 28, 0.7)',
-  handle: '#878A8C',
+  accent: '#2563EB',
+  sheetBackdrop: 'rgba(24, 24, 27, 0.16)',
+  handle: '#A1A1AA',
 };
 const RELATIVE_TIME_FORMATTER = new Intl.RelativeTimeFormat('en', {
   numeric: 'auto',

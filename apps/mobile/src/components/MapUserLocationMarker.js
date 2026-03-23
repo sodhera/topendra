@@ -25,13 +25,11 @@ const styles = StyleSheet.create({
   outerBubble: {
     alignItems: 'center',
     backgroundColor: colors.primary,
+    borderColor: colors.primaryText,
     borderRadius: radius.pill,
+    borderWidth: 2,
     height: 24,
     justifyContent: 'center',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.18,
-    shadowRadius: 18,
     width: 24,
   },
   core: {

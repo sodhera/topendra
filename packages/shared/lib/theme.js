@@ -1,18 +1,18 @@
 export const colors = {
-  background: '#F5F5F7',
+  background: '#F4F4F5',
   card: '#FFFFFF',
-  elevatedCard: '#FCFCFD',
-  border: 'rgba(17, 17, 17, 0.1)',
-  separator: 'rgba(17, 17, 17, 0.08)',
-  text: '#111111',
-  mutedText: '#6B6B70',
-  primary: '#111111',
+  elevatedCard: '#FAFAFA',
+  border: '#D4D4D8',
+  separator: '#E4E4E7',
+  text: '#18181B',
+  mutedText: '#71717A',
+  primary: '#18181B',
   primaryText: '#FFFFFF',
   secondary: '#FFFFFF',
-  accent: '#2C2C2E',
-  mapOverlay: 'rgba(245, 245, 247, 0.5)',
-  sheetBackdrop: 'rgba(17, 17, 17, 0.42)',
-  handle: '#D1D1D6',
+  accent: '#2563EB',
+  mapOverlay: 'rgba(244, 244, 245, 0.56)',
+  sheetBackdrop: 'rgba(24, 24, 27, 0.18)',
+  handle: '#A1A1AA',
 };
 
 export const spacing = {
@@ -27,20 +27,20 @@ export const spacing = {
 };
 
 export const radius = {
-  sm: 12,
-  md: 20,
-  lg: 28,
-  xl: 32,
+  sm: 10,
+  md: 16,
+  lg: 20,
+  xl: 24,
   pill: 999,
 };
 
 export const shadows = {
   floating: {
     shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.14,
-    shadowRadius: 24,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    elevation: 0,
   },
 };
 
