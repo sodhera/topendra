@@ -7,7 +7,8 @@ This document explains the backend contract that the Topey monorepo depends on.
 Today that means:
 
 - the mobile app in `apps/mobile` uses Supabase directly
-- the web app in `apps/web` is currently browse-first and driven by shared demo data
+- the web app in `apps/web` also uses Supabase directly when browser env config is present
+- both apps fall back to the shared Kathmandu demo dataset if the backend is unavailable
 
 ## Environment Variables
 
@@ -18,7 +19,7 @@ Local development expects:
 - `SUPABASE_ACCESS_TOKEN`
 
 These values should live in the repo-root `.env`, not in committed files.
-The mobile Expo config and the admin scripts both load that root file automatically.
+The mobile Expo config, the browser Vite app, and the admin scripts all load that root file automatically.
 
 ## Runtime Responsibilities
 
@@ -124,6 +125,9 @@ Backend helper code lives in:
 
 - [supabase.js](/Users/sirishjoshi/Desktop/Topey/apps/mobile/src/lib/supabase.js)
 - [backend.js](/Users/sirishjoshi/Desktop/Topey/apps/mobile/src/lib/backend.js)
+- [apps/web/src/lib/supabase.js](/Users/sirishjoshi/Desktop/Topey/apps/web/src/lib/supabase.js)
+- [apps/web/src/lib/backend.js](/Users/sirishjoshi/Desktop/Topey/apps/web/src/lib/backend.js)
+- [apps/web/src/lib/runtimeConfig.js](/Users/sirishjoshi/Desktop/Topey/apps/web/src/lib/runtimeConfig.js)
 
 ## Mobile Email Auth
 

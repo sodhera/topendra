@@ -29,13 +29,16 @@ Owns:
 - browser entrypoint
 - browser layout and styling
 - web-specific map projection and interaction
+- browser-side Supabase session and data wiring
 - desktop camera controls and browser-only regression tests
 
 Current product scope:
 
+- render the same map-first Topey shell as the app
 - browse and inspect Kathmandu place drops
+- sign in, vote, comment, and add places when browser Supabase config is present
 - open locations externally
-- no write flows yet
+- fall back to shared demo data when Supabase is unavailable
 
 ### `packages/shared`
 

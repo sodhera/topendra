@@ -3,7 +3,7 @@
 Topey is now a monorepo with:
 
 - `apps/mobile`: the Expo app for iOS and Android
-- `apps/web`: a dedicated browser app for browsing the Kathmandu place field
+- `apps/web`: a dedicated browser app that mirrors the live Topey map experience for desktop
 - `packages/shared`: shared demo data, theme tokens, auth helpers, and map utilities
 
 The product centers on exploring nearby places on a live map, selecting pinned locations, reading discussion threads, and contributing new places after signing in.
@@ -33,7 +33,7 @@ cd topey
 
 - Monorepo:
   - `apps/mobile` ships the live mobile experience
-  - `apps/web` ships a browser version focused on browsing and inspecting place drops
+  - `apps/web` ships a browser version of the same map-first experience, adapted for desktop input
   - `packages/shared` keeps cross-platform logic in one place
 - Home screen:
   - opens near the user’s current location when foreground location is available, with the Kathmandu seeded field as the fallback
@@ -61,8 +61,8 @@ cd topey
 - Demo mode now ships with 50 deterministic Kathmandu places plus multiple seeded comment threads per place.
 - Account creation is email-only and asks the user to choose an anonymous public username for places and comments.
 - Location data is used to center the map, show nearby place drops, and save the coordinates of places the user adds.
-- Web now exists as a dedicated app in `apps/web`; it reuses the shared Kathmandu dataset and lets users inspect place metadata, votes, and thread previews in the browser.
-- The browser map now has desktop-first controls: drag panning, two-finger trackpad panning, wheel/pinch zoom, double-click zoom, keyboard camera movement, and keyboard place traversal.
+- Web now exists as a dedicated app in `apps/web`; it reuses the shared Kathmandu dataset and mirrors the app shell in the browser with the same map overlays, sheets, comments, and add-place flow.
+- The browser map now has desktop-first controls under that same shell: drag panning, two-finger trackpad panning, wheel/pinch zoom, double-click zoom, keyboard camera movement, and keyboard place traversal.
 
 ## Workspace Layout
 
@@ -83,7 +83,7 @@ packages/
 - Home and browse derive a visible marker subset from the current viewport, ease marker density down as the map zooms out, and switch back to full visible-pin rendering once the user is zoomed in far enough.
 - Home place details open in a modal on dot tap, and browse previews also open only from explicit dot taps.
 - `AddPlace` updates the pending coordinates from map movement and uses a fixed center pin overlay so the target never disappears.
-- `apps/web` projects every place into a normalized Kathmandu world and applies a clamped desktop camera on top of it so drag, wheel, trackpad, and keyboard inputs all move the same view state.
+- `apps/web` projects every place into a normalized Kathmandu world and applies a clamped desktop camera underneath the app shell so drag, wheel, trackpad, and keyboard inputs all move the same view state.
 
 ## Tech Stack
 
@@ -192,12 +192,14 @@ npm run web:test
 
 ### Web user
 
-- can browse the Kathmandu place field in the browser
+- can open the same full-screen Topey map shell in the browser
 - can drag the map, pan with a trackpad, zoom with wheel or pinch, and double-click to zoom in
 - can use arrow keys to pan, `Page Up` and `Page Down` to change the selected place, and `0` to reset the camera
-- can click place dots and inspect metadata, creator attribution, and thread previews
+- can click place dots and inspect metadata, creator attribution, thread previews, and full discussion sheets
+- can sign in from the browser when Supabase is configured
+- can vote, post comments, and add places from the browser when signed in
 - can open the selected place in external maps
-- does not yet submit places or post comments from the browser
+- falls back to the seeded Kathmandu demo dataset when Supabase is unavailable
 
 ## Email Access Notes
 

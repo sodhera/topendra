@@ -40,12 +40,12 @@ The browser app shell is defined in [App.jsx](/Users/sirishjoshi/Desktop/Topey/a
 
 Responsibilities:
 
-- render the Kathmandu place field in a browser-friendly layout
+- render the same map-first Topey shell as the app, but for desktop browsers
 - project the same shared place coordinates onto a web map canvas
 - maintain a clamped desktop viewport over that normalized map world
 - translate drag, trackpad, wheel, pinch, double-click, and keyboard input into viewport changes
-- expose metadata, vote summary, creator attribution, and thread previews
-- keep browser behavior read-only for now while mobile remains the full participation surface
+- expose the same place sheet, auth sheet, discussion sheet, and add-place flow in the browser
+- talk to Supabase directly when browser env config exists, while still falling back to the shared demo dataset
 
 ### Web desktop interaction model
 
@@ -65,6 +65,25 @@ Mechanism:
 4. pointer drag updates the camera directly
 5. precision wheel deltas are treated as trackpad pans, while coarse wheel movement and pinch gestures are treated as zoom
 6. keyboard shortcuts mutate the same viewport state, so mouse, trackpad, and keyboard all stay behaviorally aligned
+7. the desktop camera stays visually hidden behind the same full-screen app shell used by the mobile experience
+
+### Web runtime state
+
+The browser app keeps its own lightweight runtime in [App.jsx](/Users/sirishjoshi/Desktop/Topey/apps/web/src/App.jsx).
+
+Responsibilities:
+
+- restore the browser session from Supabase when configured
+- restore or create an anonymous viewer session id in local storage
+- fetch places and votes for every viewer
+- fetch comments only when a session exists
+- open the auth, place, discussion, composer, and add-place sheets directly from the app shell
+
+Browser-specific backend helpers live in:
+
+- [supabase.js](/Users/sirishjoshi/Desktop/Topey/apps/web/src/lib/supabase.js)
+- [backend.js](/Users/sirishjoshi/Desktop/Topey/apps/web/src/lib/backend.js)
+- [runtimeConfig.js](/Users/sirishjoshi/Desktop/Topey/apps/web/src/lib/runtimeConfig.js)
 
 ### Shared package
 
