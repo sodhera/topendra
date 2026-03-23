@@ -21,7 +21,7 @@ vi.mock('./components/DesktopMap', () => ({
           aria-label="Select first place"
           type="button"
           onClick={() =>
-            onSelectPlace('demo-place-001', {
+            onSelectPlace('00000000-0000-4000-8000-000000001001', {
               openModal: true,
               sourceScreen: 'test_marker',
             })

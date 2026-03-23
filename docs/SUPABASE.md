@@ -170,6 +170,12 @@ Runtime auth behavior:
 - new users send `preferred_username` in auth metadata
 - tapping the email link routes back into the app and the session is restored from the callback URL
 
+Fallback catalog behavior:
+
+- `packages/shared/data/demoCatalog.js` now uses the same deterministic UUID ids as `supabase/seed.sql`
+- this keeps browser fallback places, votes, and comments aligned with seeded Supabase rows instead of creating a second client-only id namespace
+- write actions on web can therefore target the same place ids whether the UI is reading live rows, fallback demo rows, or a merged result
+
 ## Admin Scripts
 
 ### Apply SQL over the Management API

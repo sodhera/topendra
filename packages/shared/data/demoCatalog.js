@@ -71,54 +71,53 @@ function minutesAgo(minutes) {
   return new Date(Date.now() - minutes * 60 * 1000).toISOString();
 }
 
-function mulberry32(seed) {
-  let value = seed;
-
-  return function next() {
-    value |= 0;
-    value = (value + 0x6d2b79f5) | 0;
-    let result = Math.imul(value ^ (value >>> 15), 1 | value);
-    result = (result + Math.imul(result ^ (result >>> 7), 61 | result)) ^ result;
-    return ((result ^ (result >>> 14)) >>> 0) / 4294967296;
-  };
+function formatDeterministicUuid(value) {
+  return `00000000-0000-4000-8000-${String(value).padStart(12, '0')}`;
 }
 
 function formatPlaceId(index) {
-  return `demo-place-${String(index + 1).padStart(3, '0')}`;
+  return formatDeterministicUuid(1000 + index + 1);
 }
 
 function formatVoteId(index, variant, voteIndex) {
-  return `demo-vote-${String(index + 1).padStart(3, '0')}-${variant}-${voteIndex + 1}`;
+  return formatDeterministicUuid(
+    (variant === 'up' ? 200000 : 250000) + (index + 1) * 10 + voteIndex + 1
+  );
 }
 
 function formatCommentId(index, commentIndex) {
-  return `demo-comment-${String(index + 1).padStart(3, '0')}-${commentIndex + 1}`;
+  return formatDeterministicUuid(300000 + (index + 1) * 10 + commentIndex + 1);
 }
 
 export function buildKathmanduDemoData(count = DEMO_PLACE_COUNT) {
-  const random = mulberry32(220326);
   const places = [];
   const votes = [];
   const comments = [];
 
   for (let index = 0; index < count; index += 1) {
+    const seedIndex = index + 1;
     const placeId = formatPlaceId(index);
     const neighborhood = NEIGHBORHOODS[index % NEIGHBORHOODS.length];
     const placeType = PLACE_TYPES[index % PLACE_TYPES.length];
     const descriptor = DESCRIPTORS[index % DESCRIPTORS.length];
-    const angle = random() * Math.PI * 2;
-    const latitudeRadius = 0.012 + random() * 0.035;
-    const longitudeRadius = 0.015 + random() * 0.04;
     const latitude = Number(
-      (KATHMANDU_CENTER.latitude + Math.sin(angle) * latitudeRadius + (random() - 0.5) * 0.004).toFixed(6)
+      (
+        KATHMANDU_CENTER.latitude +
+        Math.sin(seedIndex * 1.37) * 0.031 +
+        Math.cos(seedIndex * 0.71) * 0.009
+      ).toFixed(6)
     );
     const longitude = Number(
-      (KATHMANDU_CENTER.longitude + Math.cos(angle) * longitudeRadius + (random() - 0.5) * 0.006).toFixed(6)
+      (
+        KATHMANDU_CENTER.longitude +
+        Math.cos(seedIndex * 1.13) * 0.037 +
+        Math.sin(seedIndex * 0.53) * 0.011
+      ).toFixed(6)
     );
-    const createdAt = minutesAgo(90 + index * 11);
-    const positiveVotes = 3 + Math.floor(random() * 5);
-    const negativeVotes = Math.floor(random() * 3);
-    const threadCount = 3 + (index % 2);
+    const createdAt = minutesAgo(90 + seedIndex * 11);
+    const positiveVotes = 3 + ((seedIndex * 7) % 5);
+    const negativeVotes = (seedIndex * 3) % 3;
+    const threadCount = 3 + (seedIndex % 2);
 
     places.push({
       id: placeId,
@@ -138,7 +137,7 @@ export function buildKathmanduDemoData(count = DEMO_PLACE_COUNT) {
         placeId,
         userId: null,
         value: 1,
-        createdAt: minutesAgo(45 + index * 9 + voteIndex),
+        createdAt: minutesAgo(45 + seedIndex * 9 + voteIndex + 1),
       });
     }
 
@@ -148,14 +147,20 @@ export function buildKathmanduDemoData(count = DEMO_PLACE_COUNT) {
         placeId,
         userId: null,
         value: -1,
-        createdAt: minutesAgo(35 + index * 7 + voteIndex),
+        createdAt: minutesAgo(35 + seedIndex * 7 + voteIndex + 1),
       });
     }
 
     for (let commentIndex = 0; commentIndex < threadCount; commentIndex += 1) {
-      const opener = COMMENT_OPENERS[(index + commentIndex) % COMMENT_OPENERS.length];
-      const detail = COMMENT_DETAILS[(index * 2 + commentIndex) % COMMENT_DETAILS.length];
-      const authorName = COMMENTERS[(index + commentIndex) % COMMENTERS.length];
+      const opener = COMMENT_OPENERS[(seedIndex + commentIndex - 1) % COMMENT_OPENERS.length];
+      const detail = COMMENT_DETAILS[
+        ((seedIndex * 2 + commentIndex - 1) % COMMENT_DETAILS.length + COMMENT_DETAILS.length) %
+          COMMENT_DETAILS.length
+      ];
+      const authorName = COMMENTERS[
+        ((seedIndex + commentIndex - 1) % COMMENTERS.length + COMMENTERS.length) %
+          COMMENTERS.length
+      ];
 
       comments.push({
         id: formatCommentId(index, commentIndex),
@@ -163,7 +168,7 @@ export function buildKathmanduDemoData(count = DEMO_PLACE_COUNT) {
         authorId: null,
         authorName,
         body: `${opener} ${detail}`,
-        createdAt: minutesAgo(20 + index * 8 + commentIndex * 3),
+        createdAt: minutesAgo(20 + seedIndex * 8 + (commentIndex + 1) * 3),
       });
     }
   }
