@@ -161,10 +161,13 @@ export function buildKathmanduDemoData(count = DEMO_PLACE_COUNT) {
         ((seedIndex + commentIndex - 1) % COMMENTERS.length + COMMENTERS.length) %
           COMMENTERS.length
       ];
+      const parentCommentId =
+        commentIndex % 2 === 1 ? formatCommentId(index, commentIndex - 1) : null;
 
       comments.push({
         id: formatCommentId(index, commentIndex),
         placeId,
+        parentCommentId,
         authorId: null,
         authorName,
         body: `${opener} ${detail}`,

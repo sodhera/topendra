@@ -63,6 +63,7 @@ Mechanism:
 8. the browser base map intentionally strips labels and most external iconography so Topey pins remain the primary landmarks
 9. the browser map stays visually hidden behind the same full-screen app shell used by the mobile experience
 10. place, auth, composer, and add-place dialogs intentionally reuse the same flat bordered card language so metadata, voting, and threading feel consistent across the browser flow
+11. threaded comments are assembled client-side from `parent_comment_id`, with root comments sorted newest-first and replies rendered inside a nested gutter beneath the parent comment
 
 ### Web runtime state
 
@@ -77,6 +78,7 @@ Responsibilities:
 - open the auth, place, discussion, composer, and add-place sheets directly from the app shell
 - keep browser participation flows mutually exclusive so only one desktop dialog owns focus at a time
 - return the user to the correct parent surface after composer close or submit instead of leaving stacked dialogs alive underneath
+- derive nested comment threads from the flat Supabase result so web can render mobile-Reddit-style reply stacks without a second backend query shape
 
 Browser-specific backend helpers live in:
 

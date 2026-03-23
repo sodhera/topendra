@@ -22,5 +22,7 @@ describe('Kathmandu demo catalog ids', () => {
         (comment) => UUID_PATTERN.test(comment.id) && UUID_PATTERN.test(comment.placeId)
       )
     ).toBe(true);
+    expect(data.comments[0].parentCommentId).toBeNull();
+    expect(data.comments[1].parentCommentId).toBe(data.comments[0].id);
   });
 });

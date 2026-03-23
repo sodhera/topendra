@@ -557,7 +557,7 @@ button {
 }
 
 .thread-link-button {
-  color: var(--color-accent, #0079d3);
+  color: var(--color-text, #18181b);
   font-size: 13px;
   font-weight: 700;
   white-space: nowrap;
@@ -566,26 +566,49 @@ button {
 .thread-card {
   background: var(--color-card, #ffffff);
   border: 1px solid var(--color-border, #d7dadc);
-  border-radius: 10px;
+  border-radius: 12px;
   overflow: hidden;
+  padding: 6px;
 }
 
 .thread-separator {
   background: var(--color-separator, #edeff1);
   height: 1px;
-  margin: 0 20px;
+  margin: 2px 10px;
 }
 
-.comment-card {
-  display: grid;
-  gap: 12px;
-  grid-template-columns: 28px minmax(0, 1fr);
-  padding: 14px;
+.comment-thread {
   position: relative;
 }
 
-.comment-card.is-preview-tail .comment-content {
-  padding-bottom: 24px;
+.comment-replies {
+  border-left: 2px solid var(--color-separator, #e4e4e7);
+  display: grid;
+  gap: 8px;
+  margin-left: 30px;
+  margin-top: 4px;
+  padding-left: 12px;
+}
+
+.comment-card {
+  background: var(--color-card, #ffffff);
+  border: 1px solid var(--color-border, #d7dadc);
+  border-radius: 12px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 28px minmax(0, 1fr);
+  padding: 12px;
+  position: relative;
+}
+
+.comment-card.depth-1,
+.comment-card.depth-2,
+.comment-card.depth-3 {
+  background: var(--color-elevated, #fafafa);
+}
+
+.comment-thread.is-preview-tail {
+  padding-bottom: 44px;
 }
 
 .comment-vote-rail {
@@ -668,10 +691,20 @@ button {
   text-transform: uppercase;
 }
 
-.see-more-button {
-  color: var(--color-accent, #0079d3);
-  font-size: 15px;
+.comment-reply-count {
+  color: var(--color-muted, #71717a);
+  font-size: 12px;
   font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.see-more-button {
+  color: var(--color-text, #18181b);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .preview-fade {
@@ -720,6 +753,14 @@ button {
   background: var(--color-elevated, #fafafa);
   border: 1px solid var(--color-border, #d7dadc);
   border-radius: 10px;
+}
+
+.discussion-list .comment-thread.depth-0 > .comment-card {
+  background: var(--color-card, #ffffff);
+}
+
+.discussion-list .comment-replies .comment-card {
+  background: var(--color-elevated, #fafafa);
 }
 
 .composer-input,
@@ -871,6 +912,11 @@ button {
     gap: 12px;
     grid-template-columns: 28px minmax(0, 1fr);
     padding: 16px;
+  }
+
+  .comment-replies {
+    margin-left: 20px;
+    padding-left: 10px;
   }
 
   .compose-fab-sheet {

@@ -41,13 +41,13 @@ cd topey
   - `Profile` or `Sign in` button at the top right
   - one large `+` button at the bottom that opens the add-place flow
   - tapping a dot opens the place modal directly on home instead of navigating away
-  - the modal uses a single metadata line, `Open location`, a participation row with stemmed arrow voting plus `Added by: <Username>`, and a compact thread preview
+  - the modal uses a single metadata line, `Open location`, a participation row with stemmed arrow voting plus `Added by: <Username>`, and a compact threaded preview with replies nested under their parent
 - Browse screen:
   - starts near the user’s current location when available, with up to 50 seeded demo dots still merged into the dataset
   - uses the same zoom-aware marker thinning so wide map views stay readable
   - `Back` button at the top left and `Add a place` at the top right
   - tapping a dot opens a native-feeling light preview card with rating, votes, and thread count
-  - `View more` opens a details modal with inline metadata, a participation row that combines stemmed arrow voting with creator attribution, a stacked thread preview, and a separate discussion modal
+  - `View more` opens a details modal with inline metadata, a participation row that combines stemmed arrow voting with creator attribution, a stacked threaded preview, and a separate discussion modal
   - guests still see the latest two preview comments, but `See More` and comment actions route into email auth
 - Add-place screen:
   - opens from the current home or browse viewport so the transition feels continuous, then auto-scrolls to the user’s current location once foreground location resolves
@@ -59,7 +59,7 @@ cd topey
   - iOS, Android, and web now render a custom Topey location marker instead of relying on the platform default blue dot
   - the location marker is a solid black circle with a smaller white dot inside it so current position still reads separately from place drops without introducing extra color
 - Mobile and web now share a flatter, low-resource shell: dark primary buttons, bordered white cards, compact dialogs, and simpler marker chrome with no glow-heavy treatment.
-- Place discussions now stay compact end-to-end: the place sheet shows a short preview stack, while the full conversation opens in a separate modal with lightweight vote rails and reply controls.
+- Place discussions now stay compact end-to-end: the place sheet shows a short preview stack, while the full conversation opens in a separate modal with lightweight vote rails, nested replies, and reply counts grouped under the parent comment.
 - Place opens are tracked in Supabase so later area-notification work has usage history to build on.
 - Demo mode now ships with 50 deterministic Kathmandu places plus multiple seeded comment threads per place.
 - Account creation is email-only and asks the user to choose an anonymous public username for places and comments.
@@ -68,6 +68,7 @@ cd topey
 - The browser map now has desktop-first controls under that same shell: drag panning, two-finger trackpad panning, wheel/pinch zoom, double-click zoom, keyboard map movement, and keyboard place traversal.
 - On web, place details, auth, discussion, composer, and add-place content now open as centered desktop dialogs rather than mobile bottom sheets.
 - Web discussion flows now keep only one action dialog active at a time, so moving from place details to discussion to composer does not stack multiple fixed overlays on top of each other.
+- Web replies now persist a real `parent_comment_id`, so refreshes keep the same nested thread shape instead of flattening replies back into the main comment list.
 - After a successful browser add-place submit, the UI now reopens the new place from the freshly refreshed dataset instead of trying to resolve it from stale pre-refresh state.
 
 ## Workspace Layout

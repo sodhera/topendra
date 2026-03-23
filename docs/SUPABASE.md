@@ -73,6 +73,7 @@ Important rules:
 
 - select is authenticated-only
 - insert is authenticated-only
+- replies persist through nullable `parent_comment_id uuid references public.place_comments (id)`
 - guests do not receive comment rows from the backend
 - guest thread previews come from the deterministic Kathmandu demo dataset merged client-side, so unauthenticated users still see a seeded top-of-thread preview
 
@@ -107,7 +108,7 @@ The seed inserts:
 
 - 50 Kathmandu demo places
 - multiple anonymous vote rows per place
-- 3 to 4 comment threads per place
+- 3 to 4 threaded comments per place, with every second comment replying to the one directly above it
 
 The seed first clears old `Topey team` and `Topey demo` rows, then rebuilds the full demo browse dataset.
 
@@ -174,6 +175,7 @@ Fallback catalog behavior:
 
 - `packages/shared/data/demoCatalog.js` now uses the same deterministic UUID ids as `supabase/seed.sql`
 - this keeps browser fallback places, votes, and comments aligned with seeded Supabase rows instead of creating a second client-only id namespace
+- seeded and fallback comments now also carry deterministic parent links, so threaded previews and full discussions keep the same structure in demo and live modes
 - write actions on web can therefore target the same place ids whether the UI is reading live rows, fallback demo rows, or a merged result
 
 ## Admin Scripts

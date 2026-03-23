@@ -145,6 +145,11 @@ generated_comments as (
     index,
     comment_index,
     ('00000000-0000-4000-8000-' || lpad((300000 + index * 10 + comment_index)::text, 12, '0'))::uuid as id,
+    case
+      when mod(comment_index, 2) = 0
+        then ('00000000-0000-4000-8000-' || lpad((300000 + index * 10 + comment_index - 1)::text, 12, '0'))::uuid
+      else null::uuid
+    end as parent_comment_id,
     catalog.commenters[1 + mod(index + comment_index - 2, array_length(catalog.commenters, 1))] as author_name,
     (
       catalog.openers[1 + mod(index + comment_index - 2, array_length(catalog.openers, 1))]
@@ -156,6 +161,6 @@ generated_comments as (
   cross join catalog
   cross join lateral generate_series(1, 3 + mod(index, 2)) as comment_index
 )
-insert into public.place_comments (id, place_id, user_id, author_name, body, created_at)
-select id, place_id, null::uuid, author_name, body, created_at
+insert into public.place_comments (id, place_id, parent_comment_id, user_id, author_name, body, created_at)
+select id, place_id, parent_comment_id, null::uuid, author_name, body, created_at
 from generated_comments;

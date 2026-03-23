@@ -36,6 +36,7 @@ function mapComment(row) {
   return {
     id: row.id,
     placeId: row.place_id,
+    parentCommentId: row.parent_comment_id,
     authorId: row.user_id,
     authorName: row.author_name,
     body: row.body,
@@ -188,7 +189,7 @@ export async function voteForPlace({ placeId, userId, value }) {
   }
 }
 
-export async function createComment({ placeId, user, body }) {
+export async function createComment({ placeId, parentCommentId = null, user, body }) {
   const client = requireSupabase();
   const normalizedBody = normalizeText(body);
 
@@ -199,6 +200,7 @@ export async function createComment({ placeId, user, body }) {
   const author = getUserIdentity(user);
   const { error } = await client.from('place_comments').insert({
     place_id: placeId,
+    parent_comment_id: parentCommentId,
     user_id: user.id,
     author_name: author.name,
     body: normalizedBody,

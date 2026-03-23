@@ -12,6 +12,7 @@ import {
 } from '@topey/shared/lib/constants';
 import {
   createRegionFromLocation,
+  getCommentThreadsForPlace,
   getCommentsForPlace,
   getMapPlacesForRegion,
   getVoteBreakdown,
@@ -240,6 +241,10 @@ export default function App() {
     () => getCommentsForPlace(allComments, selectedPlace?.id),
     [allComments, selectedPlace]
   );
+  const commentThreads = React.useMemo(
+    () => getCommentThreadsForPlace(allComments, selectedPlace?.id),
+    [allComments, selectedPlace]
+  );
   const voteBreakdown = React.useMemo(
     () => getVoteBreakdown(votes, selectedPlace?.id),
     [votes, selectedPlace]
@@ -418,6 +423,7 @@ export default function App() {
       setIsSubmittingComment(true);
       await createComment({
         placeId: selectedPlace.id,
+        parentCommentId: replyTarget?.id ?? null,
         user: session.user,
         body: commentDraft,
       });
@@ -794,6 +800,7 @@ export default function App() {
 
           <ConversationPreview
             comments={comments}
+            commentThreads={commentThreads}
             commentVotes={commentVotes}
             onCommentVote={handleCommentVote}
             onCompose={openComposer}
@@ -847,16 +854,22 @@ export default function App() {
           </div>
 
           <div className="discussion-list">
-            {comments.map((comment) => (
-              <CommentCard
-                key={comment.id}
-                comment={comment}
-                score={commentVotes[comment.id] ?? 0}
-                onDownvote={() => handleCommentVote(comment.id, -1)}
-                onReply={() => openComposer(comment)}
-                onUpvote={() => handleCommentVote(comment.id, 1)}
-              />
-            ))}
+            {commentThreads.length ? (
+              commentThreads.map((commentThread) => (
+                <CommentThread
+                  key={commentThread.id}
+                  commentThread={commentThread}
+                  commentVotes={commentVotes}
+                  onCommentVote={handleCommentVote}
+                  onCompose={openComposer}
+                />
+              ))
+            ) : (
+              <div className="empty-state">
+                <strong>No discussion yet.</strong>
+                <p>Start the first comment for this place.</p>
+              </div>
+            )}
           </div>
 
           <button
@@ -1026,12 +1039,13 @@ function VoteControls({ currentVote, onDownvote, onUpvote, score }) {
 
 function ConversationPreview({
   comments,
+  commentThreads,
   commentVotes,
   onCommentVote,
   onCompose,
   onOpenDiscussion,
 }) {
-  const previewComments = comments.slice(0, 2);
+  const previewThreads = commentThreads.slice(0, 2);
 
   return (
     <div className="conversation-preview">
@@ -1046,22 +1060,21 @@ function ConversationPreview({
       </div>
 
       <div className="thread-card">
-        {previewComments.length ? (
-          previewComments.map((comment, index) => {
-            const isLastPreview = index === previewComments.length - 1;
-            const shouldFadeOut = previewComments.length > 1 && isLastPreview;
+        {previewThreads.length ? (
+          previewThreads.map((commentThread, index) => {
+            const isLastPreview = index === previewThreads.length - 1;
+            const shouldFadeOut = previewThreads.length > 1 && isLastPreview;
 
             return (
-              <React.Fragment key={comment.id}>
+              <React.Fragment key={commentThread.id}>
                 {index > 0 ? <div className="thread-separator" /> : null}
-                <CommentCard
-                  comment={comment}
+                <CommentThread
+                  commentThread={commentThread}
+                  commentVotes={commentVotes}
                   isPreviewTail={shouldFadeOut}
-                  onDownvote={() => onCommentVote(comment.id, -1)}
                   onOpenDiscussion={onOpenDiscussion}
-                  onReply={() => onCompose(comment)}
-                  onUpvote={() => onCommentVote(comment.id, 1)}
-                  score={commentVotes[comment.id] ?? 0}
+                  onCommentVote={onCommentVote}
+                  onCompose={onCompose}
                 />
               </React.Fragment>
             );
@@ -1081,17 +1094,65 @@ function ConversationPreview({
   );
 }
 
+function CommentThread({
+  commentThread,
+  commentVotes,
+  depth = 0,
+  isPreviewTail = false,
+  onCommentVote,
+  onOpenDiscussion,
+  onCompose,
+}) {
+  const nestedReplies = commentThread.replies ?? [];
+  const nextDepth = Math.min(depth, 3);
+
+  return (
+    <div className={`comment-thread depth-${nextDepth}${isPreviewTail ? ' is-preview-tail' : ''}`}>
+      <CommentCard
+        comment={commentThread}
+        depth={nextDepth}
+        onDownvote={() => onCommentVote(commentThread.id, -1)}
+        onReply={() => onCompose(commentThread)}
+        onUpvote={() => onCommentVote(commentThread.id, 1)}
+        score={commentVotes[commentThread.id] ?? 0}
+      />
+
+      {nestedReplies.length ? (
+        <div className="comment-replies">
+          {nestedReplies.map((reply) => (
+            <CommentThread
+              key={reply.id}
+              commentThread={reply}
+              commentVotes={commentVotes}
+              depth={nextDepth + 1}
+              onCommentVote={onCommentVote}
+              onCompose={onCompose}
+            />
+          ))}
+        </div>
+      ) : null}
+
+      {isPreviewTail ? (
+        <div className="preview-fade">
+          <button className="see-more-button" type="button" onClick={onOpenDiscussion}>
+            Continue thread
+          </button>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function CommentCard({
   comment,
-  isPreviewTail = false,
+  depth = 0,
   onDownvote,
-  onOpenDiscussion,
   onReply,
   onUpvote,
   score,
 }) {
   return (
-    <article className={`comment-card${isPreviewTail ? ' is-preview-tail' : ''}`}>
+    <article className={`comment-card depth-${Math.min(depth, 3)}`}>
       <div className="comment-vote-rail">
         <CommentArrowButton direction="up" isActive={score === 1} onClick={onUpvote} />
         <span className="comment-score">{formatSignedValue(score)}</span>
@@ -1107,21 +1168,16 @@ function CommentCard({
 
         <p className="comment-body">{comment.body}</p>
 
-        {!isPreviewTail ? (
-          <div className="comment-actions">
-            <button className="reply-button" type="button" onClick={onReply}>
-              Reply
-            </button>
-          </div>
-        ) : null}
-
-        {isPreviewTail ? (
-          <div className="preview-fade">
-            <button className="see-more-button" type="button" onClick={onOpenDiscussion}>
-              Continue thread
-            </button>
-          </div>
-        ) : null}
+        <div className="comment-actions">
+          <button className="reply-button" type="button" onClick={onReply}>
+            Reply
+          </button>
+          {comment.replies?.length ? (
+            <span className="comment-reply-count">
+              {comment.replies.length} repl{comment.replies.length === 1 ? 'y' : 'ies'}
+            </span>
+          ) : null}
+        </div>
       </div>
     </article>
   );

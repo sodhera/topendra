@@ -31,6 +31,34 @@ export function getCommentsForPlace(comments, placeId) {
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 }
 
+export function getCommentThreadsForPlace(comments, placeId) {
+  const placeComments = getCommentsForPlace(comments, placeId);
+  const commentNodes = new Map(
+    placeComments.map((comment) => [
+      comment.id,
+      {
+        ...comment,
+        replies: [],
+      },
+    ])
+  );
+  const rootThreads = [];
+
+  commentNodes.forEach((comment) => {
+    if (comment.parentCommentId && commentNodes.has(comment.parentCommentId)) {
+      commentNodes.get(comment.parentCommentId).replies.push(comment);
+      return;
+    }
+
+    rootThreads.push(comment);
+  });
+
+  rootThreads.sort(sortCommentsByCreatedAtDescending);
+  rootThreads.forEach(sortCommentRepliesByCreatedAtAscending);
+
+  return rootThreads;
+}
+
 export function createRegionFromLocation(coords) {
   return {
     latitude: coords?.latitude ?? DEFAULT_REGION.latitude,
@@ -143,6 +171,19 @@ function buildVoteScoreMap(votes) {
   }
 
   return scoreByPlaceId;
+}
+
+function sortCommentsByCreatedAtDescending(left, right) {
+  return new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime();
+}
+
+function sortCommentsByCreatedAtAscending(left, right) {
+  return new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime();
+}
+
+function sortCommentRepliesByCreatedAtAscending(comment) {
+  comment.replies.sort(sortCommentsByCreatedAtAscending);
+  comment.replies.forEach(sortCommentRepliesByCreatedAtAscending);
 }
 
 function getPaddedRegionBounds(region, paddingRatio) {

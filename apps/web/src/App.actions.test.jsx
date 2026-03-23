@@ -62,13 +62,14 @@ const {
 
   return {
     backendState: state,
-    createComment: vi.fn(async ({ placeId, user, body }) => {
+    createComment: vi.fn(async ({ placeId, parentCommentId = null, user, body }) => {
       state.appData = {
         ...state.appData,
         comments: [
           {
             id: `comment-${state.nextCommentId += 1}`,
             placeId,
+            parentCommentId,
             authorId: user.id,
             authorName: user.user_metadata?.preferred_username ?? 'Anonymous member',
             body,
@@ -216,6 +217,7 @@ describe('App web actions', () => {
     expect(createComment).toHaveBeenCalledWith(
       expect.objectContaining({
         body: 'Codex comment smoke alpha',
+        parentCommentId: null,
         placeId: 'place-1',
       })
     );
@@ -239,9 +241,13 @@ describe('App web actions', () => {
     expect(createComment).toHaveBeenCalledWith(
       expect.objectContaining({
         body: 'Codex reply smoke beta',
+        parentCommentId: 'comment-2',
         placeId: 'place-1',
       })
     );
+    const replyThread = screen.getByText('Codex comment smoke alpha').closest('.comment-thread');
+    expect(replyThread).toBeTruthy();
+    expect(within(replyThread).getByText('Codex reply smoke beta')).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'Discussion' })).toBeTruthy();
     expect(screen.getAllByRole('dialog')).toHaveLength(1);
 
