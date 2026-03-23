@@ -97,6 +97,7 @@ export default function App() {
   const [isComposerModalVisible, setIsComposerModalVisible] = React.useState(false);
   const [commentDraft, setCommentDraft] = React.useState('');
   const [replyTarget, setReplyTarget] = React.useState(null);
+  const [composerReturnSurface, setComposerReturnSurface] = React.useState('none');
   const [isSubmittingComment, setIsSubmittingComment] = React.useState(false);
   const [commentVotes, setCommentVotes] = React.useState({});
   const [isAddMode, setIsAddMode] = React.useState(false);
@@ -296,8 +297,55 @@ export default function App() {
   );
 
   const openAuthModal = React.useCallback(() => {
+    setIsPlaceModalVisible(false);
+    setIsDiscussionModalVisible(false);
+    setIsComposerModalVisible(false);
+    setIsAddSheetVisible(false);
+    setCommentDraft('');
+    setReplyTarget(null);
+    setComposerReturnSurface('none');
     setIsAuthModalVisible(true);
   }, []);
+
+  const openDiscussionModal = React.useCallback(() => {
+    if (!isAuthenticated) {
+      setIsPlaceModalVisible(false);
+      openAuthModal();
+      return;
+    }
+
+    setIsPlaceModalVisible(false);
+    setIsComposerModalVisible(false);
+    setIsDiscussionModalVisible(true);
+  }, [isAuthenticated, openAuthModal]);
+
+  const closeDiscussionModal = React.useCallback(() => {
+    setIsDiscussionModalVisible(false);
+
+    if (selectedPlace) {
+      setIsPlaceModalVisible(true);
+    }
+  }, [selectedPlace]);
+
+  const closeComposer = React.useCallback(
+    ({ reopenOrigin = true } = {}) => {
+      const nextSurface = reopenOrigin && selectedPlace ? composerReturnSurface : 'none';
+
+      setIsComposerModalVisible(false);
+      setCommentDraft('');
+      setReplyTarget(null);
+      setComposerReturnSurface('none');
+
+      if (nextSurface === 'discussion') {
+        setIsPlaceModalVisible(false);
+        setIsDiscussionModalVisible(true);
+      } else if (nextSurface === 'place') {
+        setIsDiscussionModalVisible(false);
+        setIsPlaceModalVisible(true);
+      }
+    },
+    [composerReturnSurface, selectedPlace]
+  );
 
   const handleOpenLocation = React.useCallback(() => {
     if (!selectedPlace) {
@@ -338,11 +386,16 @@ export default function App() {
         return;
       }
 
+      setComposerReturnSurface(
+        isDiscussionModalVisible ? 'discussion' : isPlaceModalVisible ? 'place' : 'none'
+      );
+      setIsPlaceModalVisible(false);
+      setIsDiscussionModalVisible(false);
       setReplyTarget(nextReplyTarget);
       setCommentDraft(nextReplyTarget ? `@${nextReplyTarget.authorName || 'Topey user'} ` : '');
       setIsComposerModalVisible(true);
     },
-    [isAuthenticated, openAuthModal]
+    [isAuthenticated, isDiscussionModalVisible, isPlaceModalVisible, openAuthModal]
   );
 
   const handleSubmitComment = React.useCallback(async () => {
@@ -351,7 +404,7 @@ export default function App() {
     }
 
     if (!isAuthenticated || !session?.user) {
-      setIsComposerModalVisible(false);
+      closeComposer({ reopenOrigin: false });
       openAuthModal();
       return;
     }
@@ -369,16 +422,14 @@ export default function App() {
         body: commentDraft,
       });
       await refreshData(session);
-      setIsComposerModalVisible(false);
-      setCommentDraft('');
-      setReplyTarget(null);
       setErrorMessage('');
+      closeComposer();
     } catch (error) {
       setErrorMessage(error?.message ?? 'Comment failed.');
     } finally {
       setIsSubmittingComment(false);
     }
-  }, [commentDraft, isAuthenticated, openAuthModal, refreshData, selectedPlace, session]);
+  }, [closeComposer, commentDraft, isAuthenticated, openAuthModal, refreshData, selectedPlace, session]);
 
   const handleCommentVote = React.useCallback(
     (commentId, value) => {
@@ -532,8 +583,13 @@ export default function App() {
   const beginAddPlace = React.useCallback(() => {
     setIsAddMode(true);
     setIsPlaceModalVisible(false);
+    setIsDiscussionModalVisible(false);
+    setIsComposerModalVisible(false);
     setSelectedPlaceId('');
     setFocusedPlaceId('');
+    setCommentDraft('');
+    setReplyTarget(null);
+    setComposerReturnSurface('none');
   }, []);
   const handleOpenSelected = React.useCallback(() => {
     if (selectedPlaceId) {
@@ -580,10 +636,9 @@ export default function App() {
 
       if (newestPlace) {
         setFocusedPlaceId(newestPlace.id);
-        selectPlace(newestPlace.id, {
-          openModal: true,
-          sourceScreen: 'web_add_place',
-        });
+        setSelectedPlaceId(newestPlace.id);
+        setIsPlaceModalVisible(true);
+        trackPlaceOpen(newestPlace.id, 'web_add_place');
       }
     } catch (error) {
       setErrorMessage(error?.message ?? 'Save failed.');
@@ -598,8 +653,8 @@ export default function App() {
     newPlaceName,
     openAuthModal,
     refreshData,
-    selectPlace,
     session,
+    trackPlaceOpen,
   ]);
 
   const topControls = isAddMode ? (
@@ -742,15 +797,7 @@ export default function App() {
             commentVotes={commentVotes}
             onCommentVote={handleCommentVote}
             onCompose={openComposer}
-            onOpenDiscussion={() => {
-              if (!isAuthenticated) {
-                setIsPlaceModalVisible(false);
-                openAuthModal();
-                return;
-              }
-
-              setIsDiscussionModalVisible(true);
-            }}
+            onOpenDiscussion={openDiscussionModal}
           />
         </SheetModal>
       ) : null}
@@ -788,7 +835,7 @@ export default function App() {
       ) : null}
 
       {isDiscussionModalVisible && selectedPlace ? (
-        <SheetModal onClose={() => setIsDiscussionModalVisible(false)} tall>
+        <SheetModal onClose={closeDiscussionModal} tall>
           <div className="sheet-header">
             <div className="sheet-handle" />
             <p className="sheet-kicker">r/topeyplaces</p>
@@ -812,20 +859,19 @@ export default function App() {
             ))}
           </div>
 
-          <button className="compose-fab compose-fab-sheet" type="button" onClick={() => openComposer()}>
+          <button
+            aria-label="Add comment"
+            className="compose-fab compose-fab-sheet"
+            type="button"
+            onClick={() => openComposer()}
+          >
             +
           </button>
         </SheetModal>
       ) : null}
 
       {isComposerModalVisible ? (
-        <SheetModal
-          onClose={() => {
-            setIsComposerModalVisible(false);
-            setCommentDraft('');
-            setReplyTarget(null);
-          }}
-        >
+        <SheetModal onClose={() => closeComposer()}>
           <div className="sheet-header">
             <div className="sheet-handle" />
             <p className="sheet-kicker">{replyTarget ? 'Reply' : 'New comment'}</p>
@@ -846,11 +892,7 @@ export default function App() {
             <button
               className="text-button"
               type="button"
-              onClick={() => {
-                setIsComposerModalVisible(false);
-                setCommentDraft('');
-                setReplyTarget(null);
-              }}
+              onClick={() => closeComposer()}
             >
               Cancel
             </button>
@@ -971,11 +1013,11 @@ function PreviewStat({ label, value }) {
 function VoteControls({ currentVote, onDownvote, onUpvote, score }) {
   return (
     <div className="vote-controls">
-      <button className="vote-arrow" type="button" onClick={onUpvote}>
+      <button className="vote-arrow" type="button" onClick={onUpvote} aria-label="Upvote place">
         <span className={currentVote === 1 ? 'is-active' : ''}>▲</span>
       </button>
       <span className="vote-score">{formatSignedValue(score)}</span>
-      <button className="vote-arrow" type="button" onClick={onDownvote}>
+      <button className="vote-arrow" type="button" onClick={onDownvote} aria-label="Downvote place">
         <span className={currentVote === -1 ? 'is-active' : ''}>▼</span>
       </button>
     </div>
@@ -1032,7 +1074,7 @@ function ConversationPreview({
         )}
       </div>
 
-      <button className="compose-fab" type="button" onClick={() => onCompose()}>
+      <button className="compose-fab" type="button" onClick={() => onCompose()} aria-label="Add comment">
         +
       </button>
     </div>
@@ -1087,7 +1129,12 @@ function CommentCard({
 
 function CommentArrowButton({ direction, isActive, onClick }) {
   return (
-    <button className="comment-arrow" type="button" onClick={onClick}>
+    <button
+      className="comment-arrow"
+      type="button"
+      onClick={onClick}
+      aria-label={direction === 'up' ? 'Upvote comment' : 'Downvote comment'}
+    >
       <span className={isActive ? 'is-active' : ''}>{direction === 'up' ? '▲' : '▼'}</span>
     </button>
   );

@@ -75,6 +75,8 @@ Responsibilities:
 - fetch places and votes for every viewer
 - fetch comments only when a session exists
 - open the auth, place, discussion, composer, and add-place sheets directly from the app shell
+- keep browser participation flows mutually exclusive so only one desktop dialog owns focus at a time
+- return the user to the correct parent surface after composer close or submit instead of leaving stacked dialogs alive underneath
 
 Browser-specific backend helpers live in:
 
@@ -264,6 +266,7 @@ Backend data helpers live in [backend.js](/Users/sirishjoshi/Desktop/Topey/apps/
 - `voteForPlace`: upserts or removes the current user’s vote
 - `createComment`: inserts a comment
 - `createPlaceOpenEvent`: records each place open with a viewer session id and source screen
+- after a successful `createPlace`, the web runtime now selects the new place from the just-refreshed dataset instead of the stale pre-refresh `places` closure
 
 ### Place Sheet Participation Row
 

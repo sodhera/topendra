@@ -67,6 +67,8 @@ cd topey
 - Web now exists as a dedicated app in `apps/web`; it mirrors the app shell in the browser with the same map overlays, sheets, comments, and add-place flow on top of a real tile map.
 - The browser map now has desktop-first controls under that same shell: drag panning, two-finger trackpad panning, wheel/pinch zoom, double-click zoom, keyboard map movement, and keyboard place traversal.
 - On web, place details, auth, discussion, composer, and add-place content now open as centered desktop dialogs rather than mobile bottom sheets.
+- Web discussion flows now keep only one action dialog active at a time, so moving from place details to discussion to composer does not stack multiple fixed overlays on top of each other.
+- After a successful browser add-place submit, the UI now reopens the new place from the freshly refreshed dataset instead of trying to resolve it from stale pre-refresh state.
 
 ## Workspace Layout
 
