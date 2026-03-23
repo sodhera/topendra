@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { CompactVoteControls } from '../components/CompactVoteControls';
 import { EmailAuthCard } from '../components/EmailAuthCard';
 import { MapPlaceMarker } from '../components/MapPlaceMarker';
+import { MapUserLocationMarker } from '../components/MapUserLocationMarker';
 import { PlaceConversationSection } from '../components/PlaceConversationSection';
 import { ShadButton } from '../components/ShadButton';
 import { useAppContext } from '../context/AppContext';
@@ -48,7 +49,9 @@ export function BrowseScreen({ navigation, route }) {
     trackPlaceOpen,
   } = useAppContext();
   const mapRef = useRef(null);
-  const { region: userRegion, hasResolvedInitialRegion } = useLiveLocation({ watch: false });
+  const { region: userRegion, hasResolvedInitialRegion, permissionStatus } = useLiveLocation({
+    watch: false,
+  });
   const initialPlaceId = route?.params?.placeId ?? '';
   const isAuthenticated = isLoggedIn(state.session);
   const [mapKey, setMapKey] = useState(0);
@@ -198,10 +201,15 @@ export function BrowseScreen({ navigation, route }) {
         initialRegion={mapRegion}
         onRegionChangeComplete={setMapRegion}
         onPress={() => setSelectedPlaceId('')}
-        showsUserLocation
         style={StyleSheet.absoluteFill}
         testID="browse-map"
       >
+        {permissionStatus === 'granted' ? (
+          <MapUserLocationMarker
+            coordinate={{ latitude: userRegion.latitude, longitude: userRegion.longitude }}
+            testID="browse-user-location-marker"
+          />
+        ) : null}
         {visiblePlaces.map((place) => (
           <MapPlaceMarker
             key={place.id}

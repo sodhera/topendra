@@ -1,7 +1,8 @@
 import React from 'react';
+import L from 'leaflet';
 import {
-  CircleMarker,
   MapContainer,
+  Marker,
   TileLayer,
   useMap,
   useMapEvents,
@@ -11,6 +12,34 @@ import { DEFAULT_REGION, KATHMANDU_EXPLORE_REGION } from '@topey/shared/lib/cons
 const DEFAULT_ZOOM = 13;
 const USER_LOCATION_ZOOM = 15;
 const ADD_PLACE_PIN_VERTICAL_FRACTION = 0.4;
+const PLACE_MARKER_SIZE = 20;
+const PLACE_MARKER_SELECTED_SIZE = 26;
+const USER_LOCATION_MARKER_SIZE = 26;
+
+function buildDivMarkerIcon({ className, containerClassName, size }) {
+  return L.divIcon({
+    className: `leaflet-div-icon ${containerClassName}`,
+    html: `<span class="${className}" aria-hidden="true"></span>`,
+    iconAnchor: [size / 2, size / 2],
+    iconSize: [size, size],
+  });
+}
+
+const PLACE_MARKER_ICON = buildDivMarkerIcon({
+  className: 'web-place-marker',
+  containerClassName: 'web-place-marker-icon',
+  size: PLACE_MARKER_SIZE,
+});
+const SELECTED_PLACE_MARKER_ICON = buildDivMarkerIcon({
+  className: 'web-place-marker is-selected',
+  containerClassName: 'web-place-marker-icon',
+  size: PLACE_MARKER_SELECTED_SIZE,
+});
+const USER_LOCATION_MARKER_ICON = buildDivMarkerIcon({
+  className: 'web-user-location-marker',
+  containerClassName: 'web-user-location-marker-icon',
+  size: USER_LOCATION_MARKER_SIZE,
+});
 
 function mapToRegion(map) {
   const center = map.getCenter();
@@ -271,39 +300,30 @@ export default function DesktopMap({
           const center = [place.latitude, place.longitude];
 
           return (
-            <React.Fragment key={place.id}>
-              <CircleMarker
-                bubblingMouseEvents={false}
-                center={center}
-                eventHandlers={{
-                  click: () =>
-                    onSelectPlace(place.id, {
-                      openModal: true,
-                      sourceScreen: 'web_home_pin_modal',
-                    }),
-                }}
-                pathOptions={{
-                  color: isSelected ? 'rgba(255, 255, 255, 0.92)' : 'rgba(255, 255, 255, 0.86)',
-                  fillColor: isSelected ? '#111111' : 'rgba(255, 255, 255, 0.96)',
-                  fillOpacity: 1,
-                  weight: 1,
-                }}
-                radius={isSelected ? 13 : 10}
-              />
-              <CircleMarker
-                center={center}
-                interactive={false}
-                pathOptions={{
-                  color: isSelected ? '#ffffff' : '#111111',
-                  fillColor: isSelected ? '#ffffff' : '#111111',
-                  fillOpacity: 1,
-                  weight: 0,
-                }}
-                radius={isSelected ? 4 : 3.5}
-              />
-            </React.Fragment>
+            <Marker
+              key={place.id}
+              eventHandlers={{
+                click: () =>
+                  onSelectPlace(place.id, {
+                    openModal: true,
+                    sourceScreen: 'web_home_pin_modal',
+                  }),
+              }}
+              icon={isSelected ? SELECTED_PLACE_MARKER_ICON : PLACE_MARKER_ICON}
+              position={center}
+              title={place.name}
+            />
           );
         })}
+
+        {userRegion ? (
+          <Marker
+            icon={USER_LOCATION_MARKER_ICON}
+            interactive={false}
+            keyboard={false}
+            position={[userRegion.latitude, userRegion.longitude]}
+          />
+        ) : null}
       </MapContainer>
 
       <a

@@ -15,6 +15,7 @@ import MapView from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CenteredMapPin } from '../components/CenteredMapPin';
 import { EmailAuthCard } from '../components/EmailAuthCard';
+import { MapUserLocationMarker } from '../components/MapUserLocationMarker';
 import { ShadButton } from '../components/ShadButton';
 import { useAppContext } from '../context/AppContext';
 import { isLoggedIn } from '@topey/shared/lib/auth';
@@ -46,6 +47,7 @@ export function AddPlaceScreen({ navigation, route }) {
   const {
     region: userRegion,
     hasResolvedInitialRegion,
+    permissionStatus,
   } = useLiveLocation({ watch: false });
   const mapRef = useRef(null);
   const [initialViewportRegion] = useState(
@@ -149,8 +151,14 @@ export function AddPlaceScreen({ navigation, route }) {
           setPin(getPinnedCoordinate(nextRegion));
           setIsMapMoving(false);
         }}
-        showsUserLocation
-      />
+      >
+        {permissionStatus === 'granted' ? (
+          <MapUserLocationMarker
+            coordinate={{ latitude: userRegion.latitude, longitude: userRegion.longitude }}
+            testID="add-place-user-location-marker"
+          />
+        ) : null}
+      </MapView>
       <CenteredMapPin
         moving={isMapMoving}
         testID="add-place-center-pin"

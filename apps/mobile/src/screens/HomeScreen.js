@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { CompactVoteControls } from '../components/CompactVoteControls';
 import { EmailAuthCard } from '../components/EmailAuthCard';
 import { MapPlaceMarker } from '../components/MapPlaceMarker';
+import { MapUserLocationMarker } from '../components/MapUserLocationMarker';
 import { PlaceConversationSection } from '../components/PlaceConversationSection';
 import { ShadButton } from '../components/ShadButton';
 import { useAppContext } from '../context/AppContext';
@@ -44,7 +45,9 @@ export function HomeScreen({ navigation }) {
   } = useAppContext();
   const currentUser = getUserIdentity(state.session?.user);
   const isAuthenticated = isLoggedIn(state.session);
-  const { region: userRegion, hasResolvedInitialRegion } = useLiveLocation({ watch: false });
+  const { region: userRegion, hasResolvedInitialRegion, permissionStatus } = useLiveLocation({
+    watch: false,
+  });
   const [mapKey, setMapKey] = useState(0);
   const [mapRegion, setMapRegion] = useState(KATHMANDU_EXPLORE_REGION);
   const [hasCenteredMap, setHasCenteredMap] = useState(false);
@@ -193,10 +196,15 @@ export function HomeScreen({ navigation }) {
         key={`home-map-${mapKey}`}
         initialRegion={mapRegion}
         onRegionChangeComplete={setMapRegion}
-        showsUserLocation
         style={StyleSheet.absoluteFill}
         testID="home-map"
       >
+        {permissionStatus === 'granted' ? (
+          <MapUserLocationMarker
+            coordinate={{ latitude: userRegion.latitude, longitude: userRegion.longitude }}
+            testID="home-user-location-marker"
+          />
+        ) : null}
         {visiblePlaces.map((place) => (
           <MapPlaceMarker
             key={place.id}
