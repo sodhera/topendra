@@ -17,6 +17,8 @@ const MAP_FLY_DURATION_SLOW = 0.3;
 const CANVAS_RENDERER = L.canvas({ padding: 0.4 });
 const PLACE_MARKER_RADIUS = 7;
 const SELECTED_PLACE_MARKER_RADIUS = 10;
+const ADD_MODE_PLACE_MARKER_RADIUS = 5;
+const ADD_MODE_SELECTED_PLACE_MARKER_RADIUS = 7;
 const USER_LOCATION_MARKER_RADIUS = 8;
 const PLACE_MARKER_STYLE = Object.freeze({
   color: '#FFFFFF',
@@ -31,6 +33,20 @@ const SELECTED_PLACE_MARKER_STYLE = Object.freeze({
   fillOpacity: 1,
   opacity: 1,
   weight: 3,
+});
+const ADD_MODE_PLACE_MARKER_STYLE = Object.freeze({
+  color: '#FFFFFF',
+  fillColor: '#FF4500',
+  fillOpacity: 0.38,
+  opacity: 0.42,
+  weight: 1,
+});
+const ADD_MODE_SELECTED_PLACE_MARKER_STYLE = Object.freeze({
+  color: '#1A1A1B',
+  fillColor: '#FF4500',
+  fillOpacity: 0.48,
+  opacity: 0.58,
+  weight: 2,
 });
 const USER_LOCATION_MARKER_STYLE = Object.freeze({
   color: '#FFFFFF',
@@ -145,9 +161,59 @@ function MapRuntimeBridge({
   });
 
   React.useEffect(() => {
-    map.invalidateSize();
-    emitRegion();
-    emitAddPin();
+    const container = map.getContainer();
+    let frameId = 0;
+
+    const refreshLayout = () => {
+      if (typeof window === 'undefined') {
+        map.invalidateSize({
+          debounceMoveend: true,
+          pan: false,
+        });
+        emitRegion();
+        emitAddPin();
+        return;
+      }
+
+      window.cancelAnimationFrame(frameId);
+      frameId = window.requestAnimationFrame(() => {
+        map.invalidateSize({
+          debounceMoveend: true,
+          pan: false,
+        });
+        emitRegion();
+        emitAddPin();
+      });
+    };
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        refreshLayout();
+      }
+    };
+
+    const resizeObserver =
+      typeof ResizeObserver === 'function'
+        ? new ResizeObserver(() => {
+            refreshLayout();
+          })
+        : null;
+
+    refreshLayout();
+    resizeObserver?.observe(container);
+    window.addEventListener('resize', refreshLayout);
+    window.visualViewport?.addEventListener('resize', refreshLayout);
+    window.visualViewport?.addEventListener('scroll', refreshLayout);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+      resizeObserver?.disconnect();
+      window.removeEventListener('resize', refreshLayout);
+      window.visualViewport?.removeEventListener('resize', refreshLayout);
+      window.visualViewport?.removeEventListener('scroll', refreshLayout);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [emitAddPin, emitRegion, map]);
 
   React.useEffect(() => {
@@ -290,24 +356,45 @@ function MapRuntimeBridge({
 }
 
 const PlaceMarkersLayer = React.memo(function PlaceMarkersLayer({
+  addMode,
   onSelectPlace,
   selectedPlaceId,
   visiblePlaces,
 }) {
   return visiblePlaces.map((place) => {
     const isSelected = place.id === selectedPlaceId;
+    const interactive = !addMode;
+    const radius = addMode
+      ? isSelected
+        ? ADD_MODE_SELECTED_PLACE_MARKER_RADIUS
+        : ADD_MODE_PLACE_MARKER_RADIUS
+      : isSelected
+        ? SELECTED_PLACE_MARKER_RADIUS
+        : PLACE_MARKER_RADIUS;
+    const pathOptions = addMode
+      ? isSelected
+        ? ADD_MODE_SELECTED_PLACE_MARKER_STYLE
+        : ADD_MODE_PLACE_MARKER_STYLE
+      : isSelected
+        ? SELECTED_PLACE_MARKER_STYLE
+        : PLACE_MARKER_STYLE;
+    const eventHandlers = interactive
+      ? {
+          click: () => onSelectPlace(place.id),
+          touchstart: () => onSelectPlace(place.id),
+        }
+      : undefined;
 
     return (
       <CircleMarker
-        bubblingMouseEvents={false}
+        bubblingMouseEvents={interactive}
         center={[place.latitude, place.longitude]}
-        eventHandlers={{
-          click: () => onSelectPlace(place.id),
-          touchstart: () => onSelectPlace(place.id),
-        }}
+        eventHandlers={eventHandlers}
+        interactive={interactive}
+        keyboard={interactive}
         key={place.id}
-        pathOptions={isSelected ? SELECTED_PLACE_MARKER_STYLE : PLACE_MARKER_STYLE}
-        radius={isSelected ? SELECTED_PLACE_MARKER_RADIUS : PLACE_MARKER_RADIUS}
+        pathOptions={pathOptions}
+        radius={radius}
         renderer={CANVAS_RENDERER}
       />
     );
@@ -375,6 +462,7 @@ const DesktopMap = React.memo(function DesktopMap({
         />
 
         <PlaceMarkersLayer
+          addMode={addMode}
           onSelectPlace={handleSelectPlace}
           selectedPlaceId={selectedPlaceId}
           visiblePlaces={visiblePlaces}
