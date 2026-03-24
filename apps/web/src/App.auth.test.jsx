@@ -198,4 +198,19 @@ describe('App web auth', () => {
       },
     });
   });
+
+  it('removes background shell controls from the accessibility tree while auth is open', async () => {
+    render(<App />);
+
+    expect(await screen.findByRole('button', { name: 'Add a place' })).toBeTruthy();
+
+    fireEvent.click(screen.getByTestId('account-button'));
+    const dialog = await screen.findByRole('dialog');
+
+    expect(screen.queryByRole('button', { name: 'Add a place' })).toBeNull();
+
+    fireEvent.click(dialog.querySelector('.modal-close-button'));
+
+    expect(await screen.findByRole('button', { name: 'Add a place' })).toBeTruthy();
+  });
 });

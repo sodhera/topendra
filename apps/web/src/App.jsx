@@ -679,6 +679,12 @@ export default function App() {
       />
     </div>
   );
+  const hasActiveModal =
+    isPlaceModalVisible ||
+    isAuthModalVisible ||
+    isDiscussionModalVisible ||
+    isComposerModalVisible ||
+    isAddSheetVisible;
 
   if (!isHydrated) {
     return (
@@ -691,7 +697,7 @@ export default function App() {
 
   return (
     <div
-      className="app-shell"
+      className={`app-shell${hasActiveModal ? ' has-modal' : ''}`}
       style={{
         '--color-background': WEB_SHELL_COLORS.background,
         '--color-card': WEB_SHELL_COLORS.card,
@@ -712,7 +718,10 @@ export default function App() {
         keys work when the map is focused, and Page Up / Page Down move between visible places.
       </div>
 
-      <main className={`map-screen${isAddMode ? ' is-add-mode' : ''}`}>
+      <main
+        aria-hidden={hasActiveModal}
+        className={`map-screen${isAddMode ? ' is-add-mode' : ''}`}
+      >
         <DesktopMap
           addMode={isAddMode}
           focusedPlace={focusedPlace}

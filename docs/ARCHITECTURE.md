@@ -61,9 +61,12 @@ Mechanism:
 6. add-place mode reads a pinned coordinate from an offset point inside the settled map viewport so the browser flow matches the mobile upper-half pin behavior without dragging the React tree through every movement frame
 7. when browser geolocation resolves, a custom black-with-white-center location marker is rendered separately from place drops so current position stays visually distinct
 8. the browser base map intentionally strips labels and most external iconography so Topey pins remain the primary landmarks
-9. the browser map stays visually hidden behind the same full-screen app shell used by the mobile experience
-10. place, auth, composer, and add-place dialogs intentionally reuse the same flat bordered card language so metadata, voting, and threading feel consistent across the browser flow
-11. threaded comments are assembled client-side from `parent_comment_id`, with root comments sorted newest-first and replies rendered inside a nested gutter beneath the parent comment
+9. the browser runtime explicitly re-invalidates the Leaflet layout on viewport resize, browser zoom, and tab re-entry so changing the visible browser space does not leave tiles or hit targets out of sync
+10. add-place mode visually softens the existing place markers and disables their hit targets so moving the map to position a new drop does not accidentally kick the user back into browse details
+11. the browser map stays visually hidden behind the same full-screen app shell used by the mobile experience
+12. place, auth, composer, and add-place dialogs intentionally reuse the same flat bordered card language so metadata, voting, and threading feel consistent across the browser flow
+13. when one of those dialogs is open, the background shell is dimmed and removed from the accessibility tree so only the active surface remains interactive
+14. threaded comments are assembled client-side from `parent_comment_id`, with root comments sorted newest-first and replies rendered inside a nested gutter beneath the parent comment
 
 ### Web runtime state
 

@@ -68,6 +68,9 @@ cd topey
 - The browser map now has desktop-first controls under that same shell: drag panning, two-finger trackpad panning, wheel/pinch zoom, double-click zoom, keyboard map movement, and keyboard place traversal.
 - On web, place details, auth, discussion, composer, and add-place content now open as centered desktop dialogs rather than mobile bottom sheets.
 - Web discussion flows now keep only one action dialog active at a time, so moving from place details to discussion to composer does not stack multiple fixed overlays on top of each other.
+- When any browser dialog is open, the background shell is now dimmed and removed from the accessibility tree so the map HUD and floating actions do not compete with the active task.
+- Browser add-place mode now visually softens the existing place dots and disables their hit targets while the user is positioning a new drop, which keeps the pin flow calmer and prevents accidental modal jumps.
+- The Leaflet runtime now re-invalidates layout on viewport resize, browser zoom, and tab re-entry so the map stays aligned when the visible browser space changes.
 - Web replies now persist a real `parent_comment_id`, so refreshes keep the same nested thread shape instead of flattening replies back into the main comment list.
 - After a successful browser add-place submit, the UI now reopens the new place from the freshly refreshed dataset instead of trying to resolve it from stale pre-refresh state.
 
