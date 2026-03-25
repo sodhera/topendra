@@ -139,7 +139,7 @@ button {
 
 .place-page-stack {
   display: grid;
-  gap: 20px;
+  gap: 28px;
   margin-top: 18px;
 }
 
@@ -167,7 +167,7 @@ button {
   box-shadow: 0 6px 18px rgba(98, 72, 42, 0.07);
 }
 
-.place-page-card {
+.place-page-empty-card {
   backdrop-filter: blur(8px);
   background: rgba(255, 253, 249, 0.93);
   border: 1px solid rgba(72, 58, 42, 0.14);
@@ -175,21 +175,18 @@ button {
   box-shadow:
     0 10px 24px rgba(121, 88, 44, 0.06),
     inset 0 1px 0 rgba(255, 255, 255, 0.82);
-  padding: clamp(18px, 2.4vw, 26px);
-  position: relative;
-  overflow: hidden;
-}
-
-.place-page-card::before {
-  content: none;
-}
-
-.place-page-empty-card {
   max-width: 760px;
+  padding: clamp(18px, 2.4vw, 26px);
 }
 
-.place-page-comments-card {
-  padding-top: clamp(20px, 2.4vw, 24px);
+.place-page-post,
+.place-page-comments {
+  min-width: 0;
+}
+
+.place-page-comments {
+  border-top: 1px solid rgba(72, 58, 42, 0.14);
+  padding-top: 26px;
 }
 
 .place-page-content {
@@ -271,7 +268,7 @@ button {
 
 .place-page-vote-bar {
   align-self: flex-start;
-  margin-top: 20px;
+  margin-top: 18px;
 }
 
 .place-page-toolbar {
@@ -307,7 +304,7 @@ button {
   align-items: end;
   border-bottom: 1px solid rgba(72, 58, 42, 0.1);
   margin-bottom: 18px;
-  padding-bottom: 16px;
+  padding-bottom: 12px;
 }
 
 .place-page-thread-title {
@@ -318,13 +315,10 @@ button {
 }
 
 .place-page-comment-count {
-  background: rgba(255, 255, 255, 0.82);
-  border: 1px solid rgba(72, 58, 42, 0.14);
-  border-radius: 999px;
-  color: var(--color-text, #18181b);
+  color: #6a5b4d;
   font-size: 13px;
   font-weight: 700;
-  padding: 8px 12px;
+  padding: 0;
 }
 
 .place-page-discussion-list {
@@ -342,18 +336,18 @@ button {
 }
 
 .place-page .vote-controls {
-  background: rgba(255, 255, 255, 0.92);
-  border: 1px solid rgba(72, 58, 42, 0.14);
-  border-radius: 14px;
-  box-shadow: 0 6px 18px rgba(121, 88, 44, 0.06);
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
   gap: 6px;
   min-width: 56px;
-  padding: 8px 6px;
+  padding: 0;
 }
 
 .place-page .vote-arrow {
   align-items: center;
-  border-radius: 10px;
+  border-radius: 999px;
   display: inline-flex;
   height: 32px;
   justify-content: center;
@@ -374,41 +368,35 @@ button {
 .place-page .vote-controls.is-horizontal {
   align-items: center;
   flex-direction: row;
-  gap: 10px;
+  gap: 12px;
   min-width: 0;
-  padding: 8px;
-}
-
-.place-page .vote-controls.is-horizontal.is-colorful {
-  background: rgba(255, 249, 241, 0.96);
-  border-color: rgba(196, 149, 114, 0.22);
-  box-shadow: 0 10px 24px rgba(180, 135, 89, 0.12);
+  padding: 0;
 }
 
 .place-page .vote-controls.is-horizontal .vote-arrow {
-  height: 40px;
-  width: 40px;
+  height: 34px;
+  width: 34px;
 }
 
 .place-page .vote-controls.is-horizontal .vote-score {
   align-items: center;
-  background: linear-gradient(180deg, rgba(255, 244, 224, 0.98), rgba(246, 231, 207, 0.98));
-  border: 1px solid rgba(196, 149, 114, 0.18);
-  border-radius: 999px;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
   color: #3e3228;
   display: inline-flex;
   justify-content: center;
-  min-height: 40px;
-  min-width: 78px;
-  padding: 0 16px;
+  min-height: 0;
+  min-width: 0;
+  padding: 0;
 }
 
 .place-page .vote-controls.is-horizontal .vote-arrow.is-up {
-  background: rgba(236, 120, 75, 0.14);
+  background: rgba(236, 120, 75, 0.12);
 }
 
 .place-page .vote-controls.is-horizontal .vote-arrow.is-down {
-  background: rgba(74, 147, 171, 0.14);
+  background: rgba(74, 147, 171, 0.12);
 }
 
 .place-page .vote-controls.is-horizontal .vote-arrow.is-up span {
@@ -420,13 +408,13 @@ button {
 }
 
 .place-page .vote-controls.is-horizontal .vote-arrow.is-up.is-active {
-  background: linear-gradient(180deg, #ea7449, #d95f33);
-  box-shadow: 0 10px 16px rgba(217, 95, 51, 0.2);
+  background: #ea7449;
+  box-shadow: none;
 }
 
 .place-page .vote-controls.is-horizontal .vote-arrow.is-down.is-active {
-  background: linear-gradient(180deg, #4c98af, #2f7f98);
-  box-shadow: 0 10px 16px rgba(47, 127, 152, 0.18);
+  background: #4c98af;
+  box-shadow: none;
 }
 
 .place-page .vote-controls.is-horizontal .vote-arrow.is-active span {
@@ -437,16 +425,17 @@ button {
 .place-page .discussion-list .comment-card,
 .place-page .discussion-list .comment-thread.depth-0 > .comment-card,
 .place-page .discussion-list .comment-replies .comment-card {
-  background: rgba(255, 252, 247, 0.9);
-  border: 1px solid rgba(72, 58, 42, 0.12);
-  border-radius: 14px;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid rgba(72, 58, 42, 0.1);
+  border-radius: 0;
   box-shadow: none;
 }
 
 .place-page .comment-card {
   gap: 12px;
   grid-template-columns: 28px minmax(0, 1fr);
-  padding: 14px 15px;
+  padding: 14px 0 16px;
 }
 
 .place-page .comment-replies {
@@ -1366,7 +1355,7 @@ button {
     padding: 16px;
   }
 
-  .place-page-card {
+  .place-page-empty-card {
     border-radius: 18px;
     padding: 20px 18px;
   }
@@ -1395,8 +1384,7 @@ button {
   }
 
   .place-page .vote-controls.is-horizontal {
-    justify-content: space-between;
-    width: 100%;
+    gap: 14px;
   }
 
   .place-page-thread-header {

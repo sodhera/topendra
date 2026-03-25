@@ -1171,7 +1171,7 @@ function PlacePage({
         </div>
 
         <div className="place-page-stack">
-          <article className="place-page-card place-page-post-card">
+          <article className="place-page-post">
             <div className="place-page-content place-page-post-content">
               <div className="place-page-meta-row">
                 <span className="place-page-kicker">r/topeyplaces</span>
@@ -1199,7 +1199,6 @@ function PlacePage({
                 onDownvote={() => onVote(-1)}
                 onUpvote={() => onVote(1)}
                 score={voteBreakdown.score}
-                tone="colorful"
               />
 
               <div className="place-page-toolbar">
@@ -1216,7 +1215,7 @@ function PlacePage({
             </div>
           </article>
 
-          <section className="place-page-card place-page-comments-card">
+          <section className="place-page-comments">
             <div className="thread-header place-page-thread-header">
               <div>
                 <div className="thread-kicker">r/topeyplaces</div>
@@ -1259,14 +1258,9 @@ function VoteControls({
   onDownvote,
   onUpvote,
   score,
-  tone = 'default',
 }) {
   return (
-    <div
-      className={`vote-controls is-${direction}${tone === 'colorful' ? ' is-colorful' : ''}${
-        className ? ` ${className}` : ''
-      }`}
-    >
+    <div className={`vote-controls is-${direction}${className ? ` ${className}` : ''}`}>
       <button
         className={`vote-arrow is-up${currentVote === 1 ? ' is-active' : ''}`}
         type="button"
