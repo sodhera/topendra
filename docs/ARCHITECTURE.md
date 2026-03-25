@@ -2,362 +2,162 @@
 
 ## Scope
 
-Topey is a monorepo for:
+Topey is a monorepo with:
 
-- a native Expo app in `apps/mobile`
-- a browser app in `apps/web`
-- a shared package in `packages/shared`
+- `apps/mobile`: Expo runtime for iOS and Android
+- `apps/web`: Vite + React browser runtime
+- `packages/shared`: shared auth helpers, geo helpers, constants, theme tokens, and deterministic fixtures used by tests
 
-Runtime product behavior still centers on the map-driven Topey experience:
+The shipped product is map-first:
 
-- browsing nearby places on a map
-- selecting a pin and reading place details
-- viewing comment threads after login on mobile
-- upvoting and downvoting a place after login on mobile
-- adding new places after login on mobile
+- browse visible places on a map
+- open a place detail surface
+- vote on places
+- comment and reply
+- vote on comments
+- add new places
+- track explicit place opens
 
 ## Runtime Model
 
-## Workspace Layout
+### Mobile
 
-- [apps/mobile](/Users/sirishjoshi/Desktop/Topey/apps/mobile): Expo app for iOS and Android
-- [apps/web](/Users/sirishjoshi/Desktop/Topey/apps/web): Vite browser app
-- [packages/shared](/Users/sirishjoshi/Desktop/Topey/packages/shared): shared cross-platform data and UI tokens
+The mobile shell lives in [apps/mobile/App.js](/Users/sirishjoshi/Desktop/Topey/apps/mobile/App.js).
 
-### Mobile app shell
-
-The mobile app shell is defined in [App.js](/Users/sirishjoshi/Desktop/Topey/apps/mobile/App.js).
-
-The navigation stack is:
+Navigation stack:
 
 - `Home`
 - `Browse`
 - `AddPlace`
 
-### Web app shell
-
-The browser app shell is defined in [App.jsx](/Users/sirishjoshi/Desktop/Topey/apps/web/src/App.jsx).
+Runtime state lives in [apps/mobile/src/context/AppContext.js](/Users/sirishjoshi/Desktop/Topey/apps/mobile/src/context/AppContext.js).
 
 Responsibilities:
 
-- render the same map-first Topey shell as the app, but for desktop browsers
-- render a real browser tile map underneath that shell
-- derive a region-like viewport from the browser map bounds
-- translate drag, trackpad, wheel, pinch, double-click, and keyboard input through the browser map engine
-- expose place details as a routed `/places/:id` page while keeping auth, composer, and add-place as lightweight browser dialogs
-- talk to Supabase directly when browser env config exists, while still falling back to the shared demo dataset
+- restore the Supabase session
+- restore email-link auth from `topey://auth/callback`
+- restore or create a viewer session id
+- fetch places, place votes, comments, and comment votes
+- enforce anonymous-handle completion before posting places or comments
+- expose write actions for places, place votes, comments, comment votes, and place-open tracking
 
-### Web desktop interaction model
+### Web
 
-The browser app uses a Leaflet map surface with a muted CARTO no-label raster base map and a minimal low-resource shell for all comment-heavy UI.
+The browser shell lives in [apps/web/src/App.jsx](/Users/sirishjoshi/Desktop/Topey/apps/web/src/App.jsx).
+
+Responsibilities:
+
+- restore the browser Supabase session
+- restore or create a browser viewer session id
+- fetch places, place votes, comments, and comment votes
+- keep `/places/:id` in sync with the selected place
+- run email-link auth and anonymous-handle completion
+- keep place votes optimistic in the routed place page
+- keep auth, composer, and add-place as lightweight dialogs over the map shell
+
+Browser backend helpers live in:
+
+- [apps/web/src/lib/supabase.js](/Users/sirishjoshi/Desktop/Topey/apps/web/src/lib/supabase.js)
+- [apps/web/src/lib/backend.js](/Users/sirishjoshi/Desktop/Topey/apps/web/src/lib/backend.js)
+- [apps/web/src/lib/runtimeConfig.js](/Users/sirishjoshi/Desktop/Topey/apps/web/src/lib/runtimeConfig.js)
+
+## Map Model
+
+### Shared viewport filtering
+
+Shared map filtering lives in [packages/shared/lib/geo.js](/Users/sirishjoshi/Desktop/Topey/packages/shared/lib/geo.js).
+
+Current rule:
+
+- only places inside the padded visible bounds are rendered
+- visible places are sorted by selection, thread count, score, and recency
+- zoom level no longer removes or thins visible markers
+
+### Mobile maps
+
+Mobile map screens use `react-native-maps`.
 
 Mechanism:
 
-1. the browser map owns panning, zooming, trackpad gestures, and tile rendering
-2. the app derives a region-like viewport from settled Leaflet bounds after move-end and zoom-end events instead of streaming every drag tick into React state
-3. that viewport is fed into the shared `getMapPlacesForRegion` logic so desktop and mobile marker density stay aligned
-4. place drops render as canvas-backed Leaflet `CircleMarker` paths instead of DOM-backed marker icons so wider desktop views remain responsive as the visible place count grows
-5. the browser map keeps Leaflet's default zoom motion, avoids raster tile post-processing, and only upgrades to denser `@2x` tiles once the user is zoomed in close enough to benefit from that extra detail
-6. the browser map still exposes extra keyboard affordances such as `Page Up`, `Page Down`, `Home`, `End`, `Enter`, and `0`
-7. add-place mode reads a pinned coordinate from an offset point inside the settled map viewport so the browser flow matches the mobile upper-half pin behavior without dragging the React tree through every movement frame
-8. when browser geolocation resolves, a custom black-with-white-center location marker is rendered separately from place drops so current position stays visually distinct
-9. the browser base map intentionally strips labels and most external iconography so Topey pins remain the primary landmarks
-10. the browser runtime explicitly re-invalidates the Leaflet layout on viewport resize, browser zoom, and tab re-entry so changing the visible browser space does not leave tiles or hit targets out of sync
-11. shared place thinning now becomes more aggressive as the viewport widens so zoomed-out browser views trade marker density for faster interaction
-12. add-place mode visually softens the existing place markers, disables their hit targets, and renders a single outline pin icon so moving the map to position a new drop stays calm and legible
-13. the browser map stays visually hidden behind the same full-screen app shell used by the mobile experience
-14. the routed place page now reads as one continuous thread surface instead of two boxed shells; the page itself is the scroll container, the post header is reduced to a compact summary line, and the comments area blends into the same page with divider lines instead of stacked cards
-15. when one of those dialogs is open, the background shell is dimmed and removed from the accessibility tree so only the active surface remains interactive
-16. threaded comments are assembled client-side from `parent_comment_id`, with root comments sorted newest-first and replies rendered inside a nested gutter beneath the parent comment
-17. browser place markers stay hidden until the initial base-tile load completes, then expose a lightweight hover tooltip with place name, vote score, ratio, and an `Open` action; the tooltip is managed as anchored hover state instead of a cursor-following bubble so the user can move from the marker into the preview controls
-18. place votes on the routed web page are derived from the live vote dataset plus a small optimistic overlay keyed by `placeId:userId`, so score and ratio updates land immediately in the UI while the backend write catches up; the primary place vote control now lives inline below the description as a simple colored row instead of a left-side rail or boxed widget
+1. mount with `initialRegion`
+2. recenter once from foreground location when available
+3. keep gesture ownership inside the native map view instead of controlling `region` during drag
+4. render a custom current-location marker when permission is granted
+5. keep add-place targeting on a fixed upper-half pin while the map moves underneath it
 
-### Web runtime state
+### Web map
 
-The browser app keeps its own lightweight runtime in [App.jsx](/Users/sirishjoshi/Desktop/Topey/apps/web/src/App.jsx).
+The browser map lives in [apps/web/src/components/DesktopMap.jsx](/Users/sirishjoshi/Desktop/Topey/apps/web/src/components/DesktopMap.jsx).
 
-Responsibilities:
+Mechanism:
 
-- restore the browser session from Supabase when configured
-- restore or create an anonymous viewer session id in local storage
-- fetch places and votes for every viewer
-- fetch comments only when a session exists
-- keep the URL and selected place in sync so `/places/:id` remains the source of truth for web detail navigation
-- open the auth, composer, and add-place dialogs directly from the app shell
-- keep browser participation flows mutually exclusive so only one blocking dialog owns focus at a time
-- derive nested comment threads from the flat Supabase result so web can render mobile-Reddit-style reply stacks without a second backend query shape
-
-Browser-specific backend helpers live in:
-
-- [supabase.js](/Users/sirishjoshi/Desktop/Topey/apps/web/src/lib/supabase.js)
-- [backend.js](/Users/sirishjoshi/Desktop/Topey/apps/web/src/lib/backend.js)
-- [runtimeConfig.js](/Users/sirishjoshi/Desktop/Topey/apps/web/src/lib/runtimeConfig.js)
-- [DesktopMap.jsx](/Users/sirishjoshi/Desktop/Topey/apps/web/src/components/DesktopMap.jsx)
-
-### Shared package
-
-Cross-platform source-of-truth utilities live in [packages/shared](/Users/sirishjoshi/Desktop/Topey/packages/shared).
-
-Important shared modules:
-
-- [theme.js](/Users/sirishjoshi/Desktop/Topey/packages/shared/lib/theme.js)
-- [constants.js](/Users/sirishjoshi/Desktop/Topey/packages/shared/lib/constants.js)
-- [auth.js](/Users/sirishjoshi/Desktop/Topey/packages/shared/lib/auth.js)
-- [geo.js](/Users/sirishjoshi/Desktop/Topey/packages/shared/lib/geo.js)
-- [demoCatalog.js](/Users/sirishjoshi/Desktop/Topey/packages/shared/data/demoCatalog.js)
-
-### Mobile state container
-
-Shared mobile app state lives in [AppContext.js](/Users/sirishjoshi/Desktop/Topey/apps/mobile/src/context/AppContext.js).
-
-The context is responsible for:
-
-- restoring the Supabase session
-- restoring email-link auth sessions from deep links
-- loading places and votes
-- loading comments only for authenticated users
-- exposing auth actions
-- exposing place, vote, and comment write actions
-
-This replaced the old reducer-backed local runtime for the actual app flow.
-
-## Screen Responsibilities
-
-### Home
-
-Defined in [HomeScreen.js](/Users/sirishjoshi/Desktop/Topey/apps/mobile/src/screens/HomeScreen.js).
-
-Responsibilities:
-
-- center the initial map on the resolved live location when available, with Kathmandu as the fallback
-- suppress native POIs/buildings/traffic chrome so only Topey place drops compete for attention
-- thin marker density as the viewport widens so wide-area views stay readable
-- keep the map directly pannable without any full-screen overlay layer
-- replace the platform default location dot with a custom black-with-white-center location marker when foreground permission is granted
-- render only `Profile` or `Sign in` at the top right
-- keep a single large `+` add-place button anchored at the bottom
-- open the place modal directly on marker taps instead of navigating into another screen
-- expose `Open location` inside that modal for every viewer
-- render rating, votes, and threads as one metadata line instead of boxed stat cards
-- use stemmed arrow voting under `Open location`
-- show only a two-comment preview stack in the place modal
-- open the full discussion in a second modal with per-comment vote/reply affordances
-- use a floating add-comment action instead of an inline composer in the place modal
-- expose `See More` as the large preview affordance inside the faded comment tail
-- keep the top two preview comments visible for guests, but route `See More` and comment actions into the email-link auth path
-
-The large center hero card, test-user widget, and center-floating action row are intentionally gone.
-
-### Browse
-
-Defined in [BrowseScreen.js](/Users/sirishjoshi/Desktop/Topey/apps/mobile/src/screens/BrowseScreen.js).
-
-Responsibilities:
-
-- render the same live-location-first map foundation as home
-- keep the same decluttered mobile map configuration so only Topey pins stand out against the base map
-- use the same viewport-based pin thinning as home so zoomed-out maps do not render every place at once
-- render the same custom black-with-white-center location marker used on home when foreground permission is granted
-- show only two top controls: `Back` and `Add a place`
-- display up to 50 place markers from Supabase plus the runtime demo fallback
-- open a compact place preview only when a dot is tapped
-- show rating, vote ratio, and thread count in that preview
-- open an explicit details modal from `View more`
-- expose `Open location`, simple arrow voting, and the same compact thread preview inside the details modal
-- open the full conversation in a second modal from the preview stack
-- keep the two-comment preview visible for guests while auth-gating the full discussion and participation actions
-- expose the same email-plus-anonymous-username auth card when a guest tries to participate
-
-### AddPlace
-
-Defined in [AddPlaceScreen.js](/Users/sirishjoshi/Desktop/Topey/apps/mobile/src/screens/AddPlaceScreen.js).
-
-Responsibilities:
-
-- center on the resolved live location before enabling submission
-- inherit the current home or browse viewport on entry so existing place pins disappear without a hard map jump
-- keep the base map decluttered while still showing the custom user location marker and a red teardrop add-pin target
-- let the user move the pin by moving the map instead of dragging a controlled region prop
-- render a fixed maps-style location bubble pin in the upper half of the viewport so the add target stays visible while the map moves underneath it
-- keep the live overlay minimal with only `Back` and `Add here`
-- open a details modal from the map-first `Add here` action
-- capture the place name and description inside the modal
-- require login before save
-- expose email-link access directly inside the add-place details modal for guests
-- insert the place into Supabase
+1. Leaflet owns drag, wheel, pinch, keyboard, and tile rendering
+2. React only consumes settled viewport changes
+3. place markers are canvas-backed Leaflet paths
+4. markers stay hidden until the initial base-tile batch is ready
+5. hover previews are anchored near the marker so the user can move into the `Open` button
+6. add-place mode disables existing marker hit targets and reads the pending coordinate from the offset viewport pin
 
 ## Auth Model
 
-Client auth helpers live in:
+Shared auth helpers live in [packages/shared/lib/auth.js](/Users/sirishjoshi/Desktop/Topey/packages/shared/lib/auth.js).
 
-- [supabase.js](/Users/sirishjoshi/Desktop/Topey/apps/mobile/src/lib/supabase.js)
-- [auth.js](/Users/sirishjoshi/Desktop/Topey/packages/shared/lib/auth.js)
+Current flow:
 
-Mechanism:
+1. user enters an email address
+2. user may also suggest an anonymous handle up front
+3. app calls `supabase.auth.signInWithOtp`
+4. session is restored from the email callback
+5. app claims a unique handle in `public.user_handles`
+6. the claimed handle is synced back into auth metadata as `preferred_username`
+7. public UI uses only the anonymous handle, never real-world identity fields
 
-1. The app asks Supabase for the saved session.
-2. Guests can browse without a session.
-3. Guests who try to add, vote, or comment see an email access card instead of OAuth or password UI.
-4. The card collects only email plus an anonymous username.
-5. Supabase sends a sign-in link back to `topey://auth/callback`.
-6. The app restores the session from that deep link and persists it in AsyncStorage through Supabase’s React Native storage integration.
+The apps block place creation and comment creation until the user has a valid anonymous handle.
+
+## Participation Model
+
+### Places
+
+- `places` rows store `author_name` and `created_by`
+- `place_votes` stores one vote row per `(place_id, user_id)`
+- the web app layers optimistic place votes on top of the fetched dataset
+
+### Comments
+
+- `place_comments` stores top-level comments and replies through `parent_comment_id`
+- `place_comment_votes` stores one vote row per `(comment_id, user_id)`
+- both apps rebuild nested threads client-side from the flat comment result set
 
 ## Data Model
 
-Remote schema lives in [supabase/migrations/20260322114500_init_topey.sql](/Users/sirishjoshi/Desktop/Topey/supabase/migrations/20260322114500_init_topey.sql).
+Primary schema files:
+
+- [supabase/migrations/20260322114500_init_topey.sql](/Users/sirishjoshi/Desktop/Topey/supabase/migrations/20260322114500_init_topey.sql)
+- [supabase/migrations/20260325093000_add_handles_and_comment_votes.sql](/Users/sirishjoshi/Desktop/Topey/supabase/migrations/20260325093000_add_handles_and_comment_votes.sql)
 
 Primary tables:
 
 - `places`
 - `place_votes`
 - `place_comments`
+- `place_comment_votes`
+- `user_handles`
+- `place_open_events`
 
-### Places
+## Test Fixtures
 
-Each place contains:
+Deterministic Kathmandu fixture data still exists in:
 
-```js
-{
-  id,
-  name,
-  description,
-  latitude,
-  longitude,
-  createdBy,
-  authorName,
-  createdAt
-}
-```
+- [packages/shared/data/demoCatalog.js](/Users/sirishjoshi/Desktop/Topey/packages/shared/data/demoCatalog.js)
+- [packages/shared/data/seed.js](/Users/sirishjoshi/Desktop/Topey/packages/shared/data/seed.js)
 
-### Votes
-
-Each vote contains:
-
-```js
-{
-  id,
-  placeId,
-  userId,
-  value, // 1 or -1
-  createdAt
-}
-```
-
-### Comments
-
-Each comment contains:
-
-```js
-{
-  id,
-  placeId,
-  authorId,
-  authorName,
-  body,
-  createdAt
-}
-```
-
-## Data Fetching And Writes
-
-Backend data helpers live in [backend.js](/Users/sirishjoshi/Desktop/Topey/apps/mobile/src/lib/backend.js).
-
-### Reads
-
-- all users fetch `places`
-- all users fetch `place_votes`
-- only authenticated users fetch `place_comments`
-- the app merges in a deterministic 50-place Kathmandu demo dataset when the backend is thin or unavailable
-
-### Writes
-
-- `createPlace`: inserts a new place with both `created_by` and `author_name`
-- `voteForPlace`: upserts or removes the current user’s vote
-- `createComment`: inserts a comment
-- `createPlaceOpenEvent`: records each place open with a viewer session id and source screen
-- after a successful `createPlace`, the web runtime now selects the new place from the just-refreshed dataset instead of the stale pre-refresh `places` closure
-
-### Place Detail Participation Row
-
-The routed place detail surface now exposes place participation in one compact row:
-
-- left side: place-level upvote and downvote arrows
-- right side: `Added by: <Username>` using the persisted `authorName`
-
-This keeps authorship visible at the same moment the user chooses whether to vote, comment, or open the full discussion.
-
-### Anonymous Public Identity
-
-Places and comments use the session user’s anonymous username from auth metadata.
-
-Rules:
-
-- the app asks for email plus an anonymous username when creating access
-- public surfaces use that anonymous username
-- when metadata is missing, the UI falls back to `Anonymous member` instead of exposing an email-derived name
-
-### Place Open Tracking
-
-Open tracking now writes into `place_open_events`.
-
-Each event stores:
-
-- `place_id`
-- `user_id` when logged in, otherwise `null`
-- `viewer_session_id` from AsyncStorage so anonymous sessions still have continuity
-- `source_screen`
-- `opened_at`
-
-This is the first piece of the planned area-update notification system.
-
-## Location Handling
-
-Location logic lives in [useLiveLocation.js](/Users/sirishjoshi/Desktop/Topey/apps/mobile/src/hooks/useLiveLocation.js).
-
-Behavior:
-
-1. Request foreground location permission.
-2. Hold the initial map-centering step until the first live-location lookup resolves.
-3. Use the live position for `Home`, `Browse`, and `AddPlace` when permission is granted.
-4. Fall back to Kathmandu when location is unavailable.
-5. Recenter only once automatically, then let the user explore the map freely.
-6. Show explicit copy that location is used to center the map, show nearby places, and save added place coordinates.
-
-## Map Gesture Model
-
-The map screens intentionally avoid controlling `react-native-maps` with `region={...}` during ordinary drag gestures.
-
-Mechanism:
-
-1. Each map screen mounts the map with `initialRegion`.
-2. `Home`, `Browse`, and `AddPlace` all recenter once from foreground location when permission is granted.
-3. `AddPlace` starts from the current source viewport, hides place pins, then animates to the resolved live location for a smoother transition into placement mode.
-4. `AddPlace` keeps the target coordinates synced to the point under the fixed upper-half overlay pin instead of the literal screen center.
-5. `Home` and `Browse` derive a visible marker subset from the current viewport, bucket nearby places together, ease the marker cap down as the map zooms out, and return to full visible-pin rendering once the user is zoomed in past the density threshold.
-6. User drags happen directly inside the native map view because only the actual buttons intercept touches.
-7. `Home` modals and `Browse` previews both come from explicit marker taps instead of automatic map-center selection.
-
-This keeps the interaction simple and avoids the earlier bug where the map felt locked and only tiny untouched areas seemed draggable.
-
-## Legacy Prototype Code
-
-The repo still contains:
-
-- [reducer.js](/Users/sirishjoshi/Desktop/Topey/apps/mobile/src/lib/reducer.js)
-- [seed.js](/Users/sirishjoshi/Desktop/Topey/packages/shared/data/seed.js)
-
-These are retained mainly for existing unit tests and historical reference. They are not the live runtime source of truth anymore.
+These are test fixtures and historical reference now. They are not runtime fallback data.
 
 ## Verification Surface
 
-Current verification steps:
+Current verification:
 
-- Jest tests
-- `expo-doctor`
-- Supabase management API checks for schema and seed rows
-
-What is still not fully automated:
-
-- device-level email-link auth on a real phone
-- native map interaction on a real phone
-- end-to-end comment gating smoke tests in a dev build
+- `npm run web:test`
+- `npm run web:build`
+- `npm run mobile:test`
+- targeted local browser QA when needed

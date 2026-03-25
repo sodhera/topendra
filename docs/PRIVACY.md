@@ -2,14 +2,15 @@
 
 ## Product Intent
 
-Topey is designed to be anonymous-by-default in the public UI while still using enough data to make the map work.
+Topey is anonymous-by-default in the public UI.
 
 ## Identity Data
 
-What the app asks from the user:
+What the app collects:
 
 - email address for authentication
-- anonymous username for public activity
+- an optional suggested anonymous handle during sign-in
+- a required unique anonymous handle before the user can post places or comments
 
 What the app shows publicly:
 
@@ -18,27 +19,26 @@ What the app shows publicly:
 
 Rules:
 
-- the public name should come from the chosen anonymous username
-- the UI should not fall back to email-derived names
-- when no anonymous username is available, the fallback label is `Anonymous member`
+- public identity comes from the claimed anonymous handle
+- public UI must not fall back to real-world identity fields
+- if a handle has not been claimed yet, the UI uses `Anonymous member` locally and blocks posting until setup is complete
 
 ## Location Data
 
 Foreground location is used for:
 
-- centering the add-place map near the user
-- showing nearby map context when location is available
+- centering the map near the user
+- showing nearby map context
 - saving the coordinates of places the user explicitly adds
 
 If location permission is denied:
 
-- the app falls back to Kathmandu
+- the app falls back to the default Kathmandu region
 - browsing still works
-- the user can still explore demo pins
 
 ## Tracking Data
 
-The app records each explicit place open in `place_open_events`.
+The app records explicit place opens in `place_open_events`.
 
 Each event stores:
 
@@ -48,16 +48,16 @@ Each event stores:
 - `source_screen`
 - `opened_at`
 
-This exists to support later notification and area-update features.
+## Stored Surfaces
 
-## Current Storage Surface
-
-- Supabase Auth: email, session, anonymous username in auth metadata
-- `public.places`: place content, coordinates, creator id, creator display name
-- `public.place_comments`: comment body plus anonymous display name
+- Supabase Auth: email, session, synced `preferred_username`
+- `public.user_handles`: unique claimed anonymous handle
+- `public.places`: place content, coordinates, creator id, public author name
+- `public.place_comments`: comment body, reply parent, public author name
 - `public.place_votes`: per-user place votes
-- `public.place_open_events`: place-open analytics and future notification groundwork
+- `public.place_comment_votes`: per-user comment votes
+- `public.place_open_events`: place-open tracking
 
 ## Developer Rule
 
-If identity, location, or tracking behavior changes, update this file in the same change as the code.
+If identity, location, or tracking behavior changes, update this file in the same code change.

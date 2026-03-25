@@ -2,47 +2,46 @@
 
 ## Purpose
 
-This document explains the backend contract that the Topey monorepo depends on.
+This document describes the live backend contract used by both Topey clients.
 
-Today that means:
+Both `apps/mobile` and `apps/web` now depend on Supabase directly for runtime data. The shared Kathmandu fixture catalog remains test-only and is no longer merged into live reads.
 
-- the mobile app in `apps/mobile` uses Supabase directly
-- the web app in `apps/web` also uses Supabase directly when browser env config is present
-- both apps fall back to the shared Kathmandu demo dataset if the backend is unavailable
+## Environment
 
-## Environment Variables
-
-Local development expects:
+Required repo-root env vars:
 
 - `EXPO_PUBLIC_SUPABASE_URL`
 - `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
 - `SUPABASE_ACCESS_TOKEN`
-- `WEB_AUTH_REDIRECT_URLS` (optional, comma-separated extra browser redirect URLs)
-- `WEB_SITE_URL` (optional, overrides the default Supabase `site_url`)
 
-These values should live in the repo-root `.env`, not in committed files.
-The mobile Expo config, the browser Vite app, and the admin scripts all load that root file automatically.
-The web app achieves this by pointing Vite `envDir` back to the monorepo root, so browser auth uses the same Supabase variables as mobile and the local admin scripts.
+Optional:
+
+- `WEB_AUTH_REDIRECT_URLS`
+- `WEB_SITE_URL`
 
 ## Runtime Responsibilities
 
 Supabase is responsible for:
 
 - storing places
-- storing votes
-- storing comments
-- storing place-open tracking events
+- storing place votes
+- storing comments and replies
+- storing comment votes
+- storing claimed anonymous handles
 - persisting auth sessions
-- brokering email-link auth
-- storing anonymous usernames in auth metadata
+- handling email-link auth
+- storing place-open tracking events
 
-The app uses the publishable key at runtime. The management access token is only for local admin scripts.
+## Schema
 
-## Database Contract
+Migration files:
+
+- [supabase/migrations/20260322114500_init_topey.sql](/Users/sirishjoshi/Desktop/Topey/supabase/migrations/20260322114500_init_topey.sql)
+- [supabase/migrations/20260325093000_add_handles_and_comment_votes.sql](/Users/sirishjoshi/Desktop/Topey/supabase/migrations/20260325093000_add_handles_and_comment_votes.sql)
+
+Primary tables:
 
 ### `public.places`
-
-Stores map pins and the widget copy shown in the browse experience.
 
 Important columns:
 
@@ -57,154 +56,107 @@ Important columns:
 
 ### `public.place_votes`
 
-Stores per-user upvotes and downvotes.
-
 Important rules:
 
-- public read is allowed so guests can still see vote ratios
-- authenticated users can only insert, update, or delete their own vote row
-- a partial unique index prevents duplicate votes from the same user for the same place
+- public read
+- authenticated users can only mutate their own row
+- one row per `(place_id, user_id)`
 
 ### `public.place_comments`
 
-Stores discussion threads for a place.
+Important columns:
+
+- `id`
+- `place_id`
+- `parent_comment_id`
+- `user_id`
+- `author_name`
+- `body`
+- `created_at`
 
 Important rules:
 
-- select is authenticated-only
-- insert is authenticated-only
-- replies persist through nullable `parent_comment_id uuid references public.place_comments (id)`
-- guests do not receive comment rows from the backend
-- guest thread previews come from the deterministic Kathmandu demo dataset merged client-side, so unauthenticated users still see a seeded top-of-thread preview
+- public read
+- authenticated insert
+- replies are represented by nullable `parent_comment_id`
+
+### `public.place_comment_votes`
+
+Important rules:
+
+- public read
+- authenticated users can only mutate their own row
+- one row per `(comment_id, user_id)`
+
+### `public.user_handles`
+
+Important rules:
+
+- one row per `user_id`
+- `handle` is unique and case-insensitive
+- used as the source of truth for public anonymous identity
 
 ### `public.place_open_events`
 
-Stores every explicit place open from the map UI.
+Important columns:
 
-Important rules:
+- `place_id`
+- `user_id`
+- `viewer_session_id`
+- `source_screen`
+- `opened_at`
 
-- both guests and logged-in users can insert open events
-- anonymous continuity comes from a client-side `viewer_session_id`
-- authenticated reads are limited to the current user’s own rows
+## Auth Model
 
-## Row Level Security
+Current shipped flow:
 
-RLS lives in [supabase/migrations/20260322114500_init_topey.sql](/Users/sirishjoshi/Desktop/Topey/supabase/migrations/20260322114500_init_topey.sql).
+1. client collects email
+2. client may collect a suggested anonymous handle
+3. client calls `supabase.auth.signInWithOtp`
+4. email callback restores the session
+5. client claims the final unique handle in `public.user_handles`
+6. client syncs the claimed handle back to auth metadata as `preferred_username`
 
-Policy summary:
-
-- anyone can read `places`
-- anyone can read `place_votes`
-- only authenticated users can insert `places`
-- only authenticated users can insert/update/delete their own `place_votes`
-- only authenticated users can read and insert `place_comments`
-- anyone can insert `place_open_events`, but authenticated reads are scoped to their own rows
-
-## Seed Data
-
-Seed data lives in [supabase/seed.sql](/Users/sirishjoshi/Desktop/Topey/supabase/seed.sql).
-
-The seed inserts:
-
-- 50 Kathmandu demo places
-- multiple anonymous vote rows per place
-- 3 to 4 threaded comments per place, with every second comment replying to the one directly above it
-
-The seed first clears old `Topey team` and `Topey demo` rows, then rebuilds the full demo browse dataset.
+The apps never use `full_name`, `user_name`, or similar real-world metadata as the public author label.
 
 ## App-Side Data Flow
 
-The mobile app context lives in [AppContext.js](/Users/sirishjoshi/Desktop/Topey/apps/mobile/src/context/AppContext.js).
+Read helpers:
 
-Flow:
-
-1. Restore the saved Supabase session.
-2. Restore a session from `topey://auth/callback` when the app is opened from an email link.
-3. Restore or create a local anonymous viewer session id.
-4. Fetch places and votes for every user.
-5. Fetch comments only when a session exists.
-6. Expose auth, write actions, and place-open tracking to the screens.
-
-Backend helper code lives in:
-
-- [supabase.js](/Users/sirishjoshi/Desktop/Topey/apps/mobile/src/lib/supabase.js)
-- [backend.js](/Users/sirishjoshi/Desktop/Topey/apps/mobile/src/lib/backend.js)
-- [apps/web/src/lib/supabase.js](/Users/sirishjoshi/Desktop/Topey/apps/web/src/lib/supabase.js)
+- [apps/mobile/src/lib/backend.js](/Users/sirishjoshi/Desktop/Topey/apps/mobile/src/lib/backend.js)
 - [apps/web/src/lib/backend.js](/Users/sirishjoshi/Desktop/Topey/apps/web/src/lib/backend.js)
-- [apps/web/src/lib/runtimeConfig.js](/Users/sirishjoshi/Desktop/Topey/apps/web/src/lib/runtimeConfig.js)
 
-The browser map surface itself lives in [DesktopMap.jsx](/Users/sirishjoshi/Desktop/Topey/apps/web/src/components/DesktopMap.jsx) and emits the viewport bounds that drive the shared map-place filtering logic.
+Each client fetches:
 
-## Mobile Email Auth
+- `places`
+- `place_votes`
+- `place_comments`
+- `place_comment_votes`
 
-The mobile redirect target is:
+Write helpers expose:
 
-```text
-topey://auth/callback
-```
+- `createPlace`
+- `voteForPlace`
+- `createComment`
+- `voteForComment`
+- `claimAnonymousHandle`
+- `createPlaceOpenEvent`
 
-The auth config sync script lives in [scripts/sync-supabase-auth-config.mjs](/Users/sirishjoshi/Desktop/Topey/scripts/sync-supabase-auth-config.mjs).
+## Seed And Admin Scripts
 
-Run:
+Files:
 
-```bash
-npm run supabase:auth
-```
+- [supabase/seed.sql](/Users/sirishjoshi/Desktop/Topey/supabase/seed.sql)
+- [scripts/apply-supabase-sql.mjs](/Users/sirishjoshi/Desktop/Topey/scripts/apply-supabase-sql.mjs)
+- [scripts/sync-supabase-auth-config.mjs](/Users/sirishjoshi/Desktop/Topey/scripts/sync-supabase-auth-config.mjs)
 
-This updates:
+Current behavior:
 
-- `site_url`
-- `uri_allow_list`
-- `mailer_autoconfirm`
+- `npm run supabase:migrate` applies every `.sql` file in `supabase/migrations`
+- `npm run supabase:seed` removes placeholder `Topey demo` / `Topey team` rows and their dependent votes/comments/comment-votes
 
-Default auth redirect behavior after sync:
+## Test User Script
 
-- keeps `site_url` at `topey://auth/callback` unless `WEB_SITE_URL` is set
-- always allow-lists `topey://auth/callback`
-- also allow-lists local browser OAuth redirects for `http://localhost:5173/**`, `http://127.0.0.1:5173/**`, `http://localhost:4173/**`, and `http://127.0.0.1:4173/**`
-- also appends the current machine's non-loopback IPv4 dev origins for ports `5173` and `4173`
-- appends any extra browser redirect URLs from `WEB_AUTH_REDIRECT_URLS`
+[scripts/create-test-user.mjs](/Users/sirishjoshi/Desktop/Topey/scripts/create-test-user.mjs) still exists for developer QA against Supabase Auth.
 
-Runtime auth behavior:
-
-- the app calls `supabase.auth.signInWithOtp`
-- new users send `preferred_username` in auth metadata
-- tapping the email link routes back into the app and the session is restored from the callback URL
-
-Fallback catalog behavior:
-
-- `packages/shared/data/demoCatalog.js` now uses the same deterministic UUID ids as `supabase/seed.sql`
-- this keeps browser fallback places, votes, and comments aligned with seeded Supabase rows instead of creating a second client-only id namespace
-- seeded and fallback comments now also carry deterministic parent links, so threaded previews and full discussions keep the same structure in demo and live modes
-- write actions on web can therefore target the same place ids whether the UI is reading live rows, fallback demo rows, or a merged result
-
-## Admin Scripts
-
-### Apply SQL over the Management API
-
-File: [scripts/apply-supabase-sql.mjs](/Users/sirishjoshi/Desktop/Topey/scripts/apply-supabase-sql.mjs)
-
-Examples:
-
-```bash
-npm run supabase:migrate
-npm run supabase:seed
-npm run supabase:test-user
-```
-
-This path was chosen because the current repo does not have the remote Postgres password available, but it does have a Supabase management token.
-
-### Create the seeded test user
-
-File: [scripts/create-test-user.mjs](/Users/sirishjoshi/Desktop/Topey/scripts/create-test-user.mjs)
-
-Credentials:
-
-```text
-Email: testuser@topey.app
-Password: TopeyTest123!
-```
-
-This script signs the user up if needed, then verifies a legacy password-based backend login path for developer QA.
-
-This script is now developer-only backend QA. The shipped product flow uses email-link auth, not password entry in the app UI.
+It is not the shipped user flow. The product UI is email-link only.

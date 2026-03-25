@@ -27,13 +27,13 @@
 - Home and browse maps also must not be controlled with `region={...}` in a way that fights native drag gestures.
 - Browse mode should have only `Back` at the top left and `Add a place` at the top right.
 - Browse previews should open from explicit dot taps, not automatic map-center tracking.
-- Demo Kathmandu pins should stay visible by default so the map behavior is easy to verify.
-- The runtime demo dataset should include up to 50 Kathmandu places with multiple comment threads for testing.
+- Visible pins should stay visible by default; do not thin or drop them just because the user zooms out.
+- Deterministic Kathmandu fixtures may remain in shared test data, but the shipped runtime should use live Supabase data instead of demo fallback rows.
 - Button and overlay treatment should follow an Apple-like iOS direction with a monochrome white/black/grey palette, solid white surfaces, generous radii, and clear hierarchy without overdone glass effects.
 - Each place open should be tracked so later notification work has real event history.
 - Location usage should stay explicit: it centers the map, supports nearby exploration, and stores added place coordinates.
 - The app is Expo native and written in JavaScript.
-- The browser app is React + Vite and reuses the shared demo data/utilities package.
+- The browser app is React + Vite and reuses the shared auth/map utility package.
 
 ## Design Direction
 
