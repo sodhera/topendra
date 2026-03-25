@@ -73,6 +73,8 @@ cd topey
 - The Leaflet runtime now re-invalidates layout on viewport resize, browser zoom, and tab re-entry so the map stays aligned when the visible browser space changes.
 - The browser map also runs without tile post-processing, keeps Leaflet’s default zoom feel, leans harder on shared pin thinning as the viewport widens, serves lower-density tiles until the user zooms in close enough to benefit from higher-detail raster images, and now waits to reveal pins until the first base-tile batch is fully loaded.
 - Web place markers now show a small hover preview with the place name, vote score, ratio, and an `Open` action.
+- That hover preview now stays anchored near the marker long enough for the user to move onto the `Open` button instead of chasing the cursor.
+- Web place voting now updates instantly in the UI and settles against the backend afterward, so score changes feel immediate even on slower writes.
 - Web replies now persist a real `parent_comment_id`, so refreshes keep the same nested thread shape instead of flattening replies back into the main comment list.
 - After a successful browser add-place submit, the UI now reopens the new place from the freshly refreshed dataset instead of trying to resolve it from stale pre-refresh state.
 

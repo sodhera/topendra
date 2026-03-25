@@ -69,7 +69,8 @@ Mechanism:
 14. the routed place page is split into a post card and a comments card so the browser thread reads more like a destination page than a stretched modal transplant; the page itself is the scroll container and the post header is reduced to a compact summary line instead of separate stat panels
 15. when one of those dialogs is open, the background shell is dimmed and removed from the accessibility tree so only the active surface remains interactive
 16. threaded comments are assembled client-side from `parent_comment_id`, with root comments sorted newest-first and replies rendered inside a nested gutter beneath the parent comment
-17. browser place markers stay hidden until the initial base-tile load completes, then expose a lightweight hover tooltip with place name, vote score, ratio, and an `Open` action so previews do not compete with the routed place page
+17. browser place markers stay hidden until the initial base-tile load completes, then expose a lightweight hover tooltip with place name, vote score, ratio, and an `Open` action; the tooltip is managed as anchored hover state instead of a cursor-following bubble so the user can move from the marker into the preview controls
+18. place votes on the routed web page are derived from the live vote dataset plus a small optimistic overlay keyed by `placeId:userId`, so score and ratio updates land immediately in the UI while the backend write catches up
 
 ### Web runtime state
 
