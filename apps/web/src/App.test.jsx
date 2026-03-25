@@ -109,6 +109,6 @@ describe('App web shell', () => {
 
     expect(screen.getByTestId('map-mode').textContent).toBe('add');
     expect(screen.getByText('Back')).toBeTruthy();
-    expect(screen.getByText('Add here')).toBeTruthy();
+    expect(screen.getByTestId('add-place-center-button')).toBeTruthy();
   });
 });

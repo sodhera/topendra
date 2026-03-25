@@ -96,7 +96,7 @@ Mechanism:
 3. place markers are canvas-backed Leaflet paths
 4. markers stay hidden until the initial base-tile batch is ready
 5. hover previews are anchored near the marker so the user can move into the `Open` button
-6. add-place mode disables existing marker hit targets and reads the pending coordinate from the offset viewport pin
+6. add-place mode disables existing marker hit targets, reads the pending coordinate from the offset viewport pin, and exposes a centered `Add Place` CTA directly below that pin so placement does not rely only on the top-bar action
 
 ## Auth Model
 

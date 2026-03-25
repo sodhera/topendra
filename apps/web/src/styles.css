@@ -715,6 +715,23 @@ button {
   z-index: 2;
 }
 
+.center-pin-action {
+  display: flex;
+  justify-content: center;
+  left: 50%;
+  pointer-events: none;
+  position: absolute;
+  top: calc(40% + 94px);
+  transform: translateX(-50%);
+  width: min(100%, 320px);
+  z-index: 3;
+}
+
+.center-pin-action-button {
+  min-width: 172px;
+  pointer-events: auto;
+}
+
 .center-pin-icon {
   display: block;
   filter: drop-shadow(0 14px 20px rgba(24, 24, 27, 0.18));
@@ -1434,6 +1451,15 @@ button {
   .map-screen.is-add-mode .hud-row-split .app-button {
     flex: 1;
     min-width: 0;
+  }
+
+  .center-pin-action {
+    top: calc(40% + 88px);
+    width: calc(100vw - 32px);
+  }
+
+  .center-pin-action-button {
+    width: min(100%, 280px);
   }
 
   .stats-row {

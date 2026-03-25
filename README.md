@@ -32,6 +32,7 @@ cd topey
 - The mobile and web maps now keep every visible place dot; wide zoom levels do not thin or drop markers anymore.
 - The web app routes place details to `/places/:id`.
 - The mobile app still opens place details inside native modal surfaces.
+- Web add mode now exposes the `Add Place` CTA directly under the placement pin as well as in the top bar, so saving a new place does not depend on reaching into the corner controls.
 - Place discussions support:
   - top-level comments
   - replies through `parent_comment_id`

@@ -1019,7 +1019,7 @@ export default function App() {
   const topControls = isAddMode ? (
     <div className="hud-row hud-row-split">
       <AppButton label="Back" variant="secondary" size="compact" onClick={cancelAddPlace} />
-      <AppButton label="Add here" size="compact" onClick={() => setIsAddSheetVisible(true)} />
+      <AppButton label="Add Place" size="compact" onClick={() => setIsAddSheetVisible(true)} />
     </div>
   ) : (
     <div className="hud-row hud-row-end">
@@ -1102,27 +1102,38 @@ export default function App() {
           />
 
           {isAddMode ? (
-            <div
-              className="center-pin"
-              aria-hidden="true"
-              style={{ top: '40%' }}
-            >
-              <svg
-                className="center-pin-icon"
-                fill="none"
-                viewBox="0 0 52 68"
-                xmlns="http://www.w3.org/2000/svg"
+            <>
+              <div
+                className="center-pin"
+                aria-hidden="true"
+                style={{ top: '40%' }}
               >
-                <path
-                  d="M26 64C26 64 46 42.1234 46 24.9412C46 13.9274 37.0457 5 26 5C14.9543 5 6 13.9274 6 24.9412C6 42.1234 26 64 26 64Z"
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="3"
+                <svg
+                  className="center-pin-icon"
+                  fill="none"
+                  viewBox="0 0 52 68"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M26 64C26 64 46 42.1234 46 24.9412C46 13.9274 37.0457 5 26 5C14.9543 5 6 13.9274 6 24.9412C6 42.1234 26 64 26 64Z"
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="3"
+                  />
+                  <circle cx="26" cy="25" r="8.5" stroke="currentColor" strokeWidth="3" />
+                </svg>
+              </div>
+              <div className="center-pin-action">
+                <AppButton
+                  label="Add Place"
+                  size="default"
+                  onClick={() => setIsAddSheetVisible(true)}
+                  styleClassName="center-pin-action-button"
+                  testId="add-place-center-button"
                 />
-                <circle cx="26" cy="25" r="8.5" stroke="currentColor" strokeWidth="3" />
-              </svg>
-            </div>
+              </div>
+            </>
           ) : null}
 
           <div className="map-hud map-hud-top">{topControls}</div>
