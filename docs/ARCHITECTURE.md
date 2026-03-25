@@ -66,9 +66,10 @@ Mechanism:
 11. shared place thinning now becomes more aggressive as the viewport widens so zoomed-out browser views trade marker density for faster interaction
 12. add-place mode visually softens the existing place markers, disables their hit targets, and renders a single outline pin icon so moving the map to position a new drop stays calm and legible
 13. the browser map stays visually hidden behind the same full-screen app shell used by the mobile experience
-14. the routed place page is split into a post card and a comments card so the browser thread reads more like a destination page than a stretched modal transplant, while auth, composer, and add-place still reuse the same flat bordered card language
+14. the routed place page is split into a post card and a comments card so the browser thread reads more like a destination page than a stretched modal transplant; the page itself is the scroll container and the post header is reduced to a compact summary line instead of separate stat panels
 15. when one of those dialogs is open, the background shell is dimmed and removed from the accessibility tree so only the active surface remains interactive
 16. threaded comments are assembled client-side from `parent_comment_id`, with root comments sorted newest-first and replies rendered inside a nested gutter beneath the parent comment
+17. browser place markers stay hidden until the initial base-tile load completes, then expose a lightweight hover tooltip with place name, vote score, ratio, and an `Open` action so previews do not compete with the routed place page
 
 ### Web runtime state
 

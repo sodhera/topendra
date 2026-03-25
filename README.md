@@ -67,11 +67,12 @@ cd topey
 - Web now exists as a dedicated app in `apps/web`; it mirrors the map-first shell in the browser with routed place pages, lightweight overlays, and the same add-place flow on top of a real tile map.
 - The browser map now has desktop-first controls under that same shell: drag panning, two-finger trackpad panning, wheel/pinch zoom, double-click zoom, keyboard map movement, and keyboard place traversal.
 - On web, place details now live at `/places/:id` as a dedicated full page; auth, composer, and add-place remain lightweight dialogs over the map shell.
-- The web place page now reads like a thread: one post card, one comments card, strong display type, and a warm gradient background instead of a flat white modal transplant.
+- The web place page now reads like a compact thread: one post card, one comments card, a small inline summary line for votes and comment count, more readable system-first typography, and a warm gradient background instead of a flat white modal transplant.
 - When any browser dialog is open, the background shell is now dimmed and removed from the accessibility tree so the map HUD and floating actions do not compete with the active task.
 - Browser add-place mode now visually softens the existing place dots, disables their hit targets, and uses a single outline pin icon while the user is positioning a new drop.
 - The Leaflet runtime now re-invalidates layout on viewport resize, browser zoom, and tab re-entry so the map stays aligned when the visible browser space changes.
-- The browser map also runs without tile post-processing, keeps Leaflet’s default zoom feel, leans harder on shared pin thinning as the viewport widens, and serves lower-density tiles until the user zooms in close enough to benefit from higher-detail raster images.
+- The browser map also runs without tile post-processing, keeps Leaflet’s default zoom feel, leans harder on shared pin thinning as the viewport widens, serves lower-density tiles until the user zooms in close enough to benefit from higher-detail raster images, and now waits to reveal pins until the first base-tile batch is fully loaded.
+- Web place markers now show a small hover preview with the place name, vote score, ratio, and an `Open` action.
 - Web replies now persist a real `parent_comment_id`, so refreshes keep the same nested thread shape instead of flattening replies back into the main comment list.
 - After a successful browser add-place submit, the UI now reopens the new place from the freshly refreshed dataset instead of trying to resolve it from stale pre-refresh state.
 
@@ -218,7 +219,8 @@ npm run web:test
 - sees the same custom location marker language as mobile when browser geolocation is available
 - can drag the map, pan with a trackpad, zoom with wheel or pinch, and double-click to zoom in
 - can use arrow keys to pan, `Page Up` and `Page Down` to change the selected place, and `0` to reset the camera
-- can click place dots and land on a dedicated `/places/:id` page with creator attribution, voting, `Open location`, and the full threaded discussion inline
+- can click place dots and land on a dedicated `/places/:id` page with voting, `Open location`, and the full threaded discussion inline
+- can hover place dots to preview the place name, votes, ratio, and an `Open` action before navigating
 - can sign in from the browser when Supabase is configured
 - can vote, post comments, and add places from the browser when signed in
 - can open the selected place in external maps
