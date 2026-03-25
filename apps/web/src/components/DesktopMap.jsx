@@ -12,10 +12,13 @@ import { DEFAULT_REGION, KATHMANDU_EXPLORE_REGION } from '@topey/shared/lib/cons
 const DEFAULT_ZOOM = 13;
 const USER_LOCATION_ZOOM = 15;
 const ADD_PLACE_PIN_VERTICAL_FRACTION = 0.4;
+const HIGH_DETAIL_TILE_ZOOM = 15;
 const MAP_FLY_DURATION = 0.24;
 const MAP_FLY_DURATION_SLOW = 0.3;
 const CANVAS_RENDERER = L.canvas({ padding: 0.4 });
-const TILE_KEEP_BUFFER = 2;
+const TILE_KEEP_BUFFER = 4;
+const STANDARD_TILE_URL = 'https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png';
+const HIGH_DETAIL_TILE_URL = 'https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}@2x.png';
 const PLACE_MARKER_RADIUS = 7;
 const SELECTED_PLACE_MARKER_RADIUS = 10;
 const ADD_MODE_PLACE_MARKER_RADIUS = 5;
@@ -114,6 +117,7 @@ function MapRuntimeBridge({
   onOpenSelected,
   onRegionChange,
   onSelectPlace,
+  onZoomLevelChange,
   selectedPlaceId,
   userRegion,
   visiblePlaces,
@@ -123,6 +127,7 @@ function MapRuntimeBridge({
   const lastAddPinRef = React.useRef(null);
   const lastFocusedPlaceIdRef = React.useRef('');
   const lastRegionRef = React.useRef(null);
+  const lastZoomLevelRef = React.useRef(null);
 
   const emitRegion = React.useCallback(() => {
     const nextRegion = mapToRegion(map);
@@ -150,6 +155,17 @@ function MapRuntimeBridge({
     onAddPinChange(nextCoordinates);
   }, [addMode, map, onAddPinChange]);
 
+  const emitZoomLevel = React.useCallback(() => {
+    const nextZoomLevel = map.getZoom();
+
+    if (lastZoomLevelRef.current === nextZoomLevel) {
+      return;
+    }
+
+    lastZoomLevelRef.current = nextZoomLevel;
+    onZoomLevelChange(nextZoomLevel);
+  }, [map, onZoomLevelChange]);
+
   useMapEvents({
     moveend() {
       emitRegion();
@@ -158,6 +174,7 @@ function MapRuntimeBridge({
     zoomend() {
       emitRegion();
       emitAddPin();
+      emitZoomLevel();
     },
   });
 
@@ -173,6 +190,7 @@ function MapRuntimeBridge({
         });
         emitRegion();
         emitAddPin();
+        emitZoomLevel();
         return;
       }
 
@@ -184,6 +202,7 @@ function MapRuntimeBridge({
         });
         emitRegion();
         emitAddPin();
+        emitZoomLevel();
       });
     };
 
@@ -215,11 +234,15 @@ function MapRuntimeBridge({
       window.visualViewport?.removeEventListener('scroll', refreshLayout);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [emitAddPin, emitRegion, map]);
+  }, [emitAddPin, emitRegion, emitZoomLevel, map]);
 
   React.useEffect(() => {
     emitAddPin();
   }, [addMode, emitAddPin]);
+
+  React.useEffect(() => {
+    emitZoomLevel();
+  }, [emitZoomLevel]);
 
   React.useEffect(() => {
     if (!userRegion || hasAppliedUserRegionRef.current) {
@@ -417,6 +440,15 @@ const DesktopMap = React.memo(function DesktopMap({
     () => [DEFAULT_REGION.latitude, DEFAULT_REGION.longitude],
     []
   );
+  const supportsHiDpiTiles = React.useMemo(
+    () => typeof window !== 'undefined' && window.devicePixelRatio > 1.25,
+    []
+  );
+  const [zoomLevel, setZoomLevel] = React.useState(DEFAULT_ZOOM);
+  const tileUrl =
+    supportsHiDpiTiles && zoomLevel >= HIGH_DETAIL_TILE_ZOOM
+      ? HIGH_DETAIL_TILE_URL
+      : STANDARD_TILE_URL;
   const handleSelectPlace = React.useCallback(
     (placeId) => {
       onSelectPlace(placeId, {
@@ -433,9 +465,7 @@ const DesktopMap = React.memo(function DesktopMap({
         center={initialCenter}
         className="leaflet-map"
         doubleClickZoom
-        fadeAnimation={false}
         keyboard
-        markerZoomAnimation={false}
         preferCanvas
         scrollWheelZoom
         style={{ height: '100%', width: '100%' }}
@@ -447,7 +477,8 @@ const DesktopMap = React.memo(function DesktopMap({
           keepBuffer={TILE_KEEP_BUFFER}
           subdomains="abcd"
           updateWhenIdle={false}
-          url="https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png"
+          updateWhenZooming={false}
+          url={tileUrl}
         />
 
         <MapRuntimeBridge
@@ -457,6 +488,7 @@ const DesktopMap = React.memo(function DesktopMap({
           onOpenSelected={onOpenSelected}
           onRegionChange={onRegionChange}
           onSelectPlace={onSelectPlace}
+          onZoomLevelChange={setZoomLevel}
           selectedPlaceId={selectedPlaceId}
           userRegion={userRegion}
           visiblePlaces={visiblePlaces}
