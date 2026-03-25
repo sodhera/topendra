@@ -1,6 +1,10 @@
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Syne:wght@700;800&display=swap");
+
 :root {
   color-scheme: light;
-  font-family: "IBM Plex Sans", "Avenir Next", "Segoe UI", Arial, sans-serif;
+  --font-ui: "Space Grotesk", "IBM Plex Sans", "Avenir Next", "Segoe UI", Arial, sans-serif;
+  --font-display: "Syne", "Avenir Next", "Segoe UI", Arial, sans-serif;
+  font-family: var(--font-ui);
   background: #f4f4f5;
   color: #18181b;
   --shell-space: clamp(12px, 1.6vw, 20px);
@@ -96,16 +100,49 @@ button {
 
 .place-page {
   background:
-    radial-gradient(circle at top, rgba(255, 255, 255, 0.96), rgba(244, 244, 245, 0.98) 55%),
-    #f4f4f5;
+    linear-gradient(180deg, rgba(251, 244, 230, 0.98), rgba(245, 236, 222, 0.98)),
+    #f3ebdf;
   min-height: 100dvh;
   overflow-y: auto;
   padding: var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left);
+  position: relative;
+}
+
+.place-page::before,
+.place-page::after {
+  content: "";
+  inset: 0;
+  pointer-events: none;
+  position: fixed;
+}
+
+.place-page::before {
+  background:
+    radial-gradient(circle at 10% 18%, rgba(246, 181, 91, 0.34), transparent 24%),
+    radial-gradient(circle at 84% 14%, rgba(120, 171, 129, 0.3), transparent 20%),
+    radial-gradient(circle at 82% 76%, rgba(239, 141, 111, 0.24), transparent 22%),
+    radial-gradient(circle at 18% 82%, rgba(120, 153, 218, 0.16), transparent 16%);
+}
+
+.place-page::after {
+  background:
+    radial-gradient(circle at 1px 1px, rgba(24, 24, 27, 0.045) 1px, transparent 0),
+    linear-gradient(140deg, rgba(255, 255, 255, 0.12), transparent 32%, rgba(255, 255, 255, 0.08) 68%, transparent 100%);
+  background-size: 18px 18px, auto;
+  opacity: 0.55;
 }
 
 .place-page-shell {
   margin: 0 auto;
-  max-width: 1180px;
+  max-width: 1120px;
+  position: relative;
+  z-index: 1;
+}
+
+.place-page-stack {
+  display: grid;
+  gap: 20px;
+  margin-top: 18px;
 }
 
 .place-page-nav {
@@ -117,35 +154,55 @@ button {
 
 .page-nav-button {
   align-items: center;
-  background: rgba(255, 255, 255, 0.94);
-  border: 1px solid var(--color-border, #d4d4d8);
+  backdrop-filter: blur(14px);
+  background: rgba(255, 250, 244, 0.74);
+  border: 1px solid rgba(24, 24, 27, 0.12);
   border-radius: 999px;
   color: var(--color-text, #18181b);
   cursor: pointer;
   display: inline-flex;
   font-size: 13px;
   font-weight: 700;
+  letter-spacing: 0.01em;
   min-height: 42px;
   padding: 0 16px;
+  box-shadow: 0 14px 34px rgba(117, 88, 49, 0.12);
 }
 
 .place-page-card {
-  background: rgba(255, 255, 255, 0.98);
-  border: 1px solid var(--color-border, #d4d4d8);
-  border-radius: 28px;
-  box-shadow: 0 28px 80px rgba(24, 24, 27, 0.1);
-  margin-top: 18px;
+  backdrop-filter: blur(18px);
+  background: rgba(255, 251, 246, 0.8);
+  border: 1px solid rgba(24, 24, 27, 0.12);
+  border-radius: 30px;
+  box-shadow:
+    0 28px 80px rgba(121, 88, 44, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.75);
   padding: clamp(20px, 3vw, 36px);
+  position: relative;
+  overflow: hidden;
+}
+
+.place-page-card::before {
+  background: linear-gradient(90deg, rgba(255, 193, 119, 0.85), rgba(135, 184, 143, 0.72), rgba(255, 153, 121, 0.82));
+  content: "";
+  height: 8px;
+  inset: 0 0 auto;
+  opacity: 0.72;
+  position: absolute;
 }
 
 .place-page-empty-card {
   max-width: 760px;
 }
 
+.place-page-comments-card {
+  padding-top: clamp(24px, 3vw, 32px);
+}
+
 .place-page-layout {
   display: grid;
   gap: clamp(18px, 2vw, 28px);
-  grid-template-columns: 76px minmax(0, 1fr);
+  grid-template-columns: 84px minmax(0, 1fr);
 }
 
 .place-page-vote-column {
@@ -158,68 +215,98 @@ button {
   min-width: 0;
 }
 
+.place-page-kicker-row {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
 .place-page-kicker {
-  color: var(--color-muted, #71717a);
+  color: #706356;
   font-size: 13px;
   font-weight: 800;
-  letter-spacing: 0.08em;
-  margin: 0 0 12px;
+  letter-spacing: 0.12em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.place-page-scene-label {
+  background: rgba(255, 255, 255, 0.62);
+  border: 1px solid rgba(24, 24, 27, 0.1);
+  border-radius: 999px;
+  color: #52463c;
+  display: inline-flex;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  padding: 6px 11px;
   text-transform: uppercase;
 }
 
 .place-page-title {
-  color: var(--color-text, #18181b);
-  font-size: clamp(34px, 4vw, 56px);
+  color: #18181b;
+  font-family: var(--font-display);
+  font-size: clamp(42px, 5vw, 74px);
   font-weight: 800;
   letter-spacing: -0.05em;
-  line-height: 0.95;
-  margin: 0;
+  line-height: 0.88;
+  margin: 10px 0 0;
+  max-width: 10ch;
+}
+
+.place-page-meta-row {
+  margin-top: 16px;
 }
 
 .place-page-copy {
-  color: var(--color-muted, #71717a);
+  color: #3d362f;
   font-size: 18px;
-  line-height: 1.55;
-  margin: 16px 0 0;
-  max-width: 54ch;
+  line-height: 1.7;
+  margin: 20px 0 0;
+  max-width: 56ch;
 }
 
 .place-page-stats {
-  margin-top: 22px;
+  margin-top: 26px;
 }
 
 .place-page-toolbar {
   align-items: center;
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 22px;
+  gap: 14px;
+  margin-top: 26px;
 }
 
 .place-page-open-button {
-  min-width: min(280px, 100%);
+  box-shadow: 0 18px 38px rgba(24, 24, 27, 0.16);
+  min-width: min(300px, 100%);
 }
 
 .place-page-thread-button {
   align-items: center;
-  background: transparent;
-  border: 1px solid var(--color-border, #d4d4d8);
+  background: rgba(255, 255, 255, 0.66);
+  border: 1px solid rgba(24, 24, 27, 0.14);
   border-radius: 999px;
   color: var(--color-text, #18181b);
   cursor: pointer;
   display: inline-flex;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
+  letter-spacing: 0.1em;
   min-height: 44px;
-  padding: 0 16px;
+  padding: 0 18px;
   text-transform: uppercase;
 }
 
 .place-page-added-by {
-  color: var(--color-muted, #71717a);
+  border-top: 1px solid rgba(24, 24, 27, 0.08);
+  color: #6f6256;
   font-size: 14px;
   line-height: 20px;
-  margin-top: 18px;
+  margin-top: 24px;
+  padding-top: 18px;
 }
 
 .place-page-added-by span,
@@ -228,28 +315,166 @@ button {
   font-weight: 800;
 }
 
-.place-page-discussion {
-  border-top: 1px solid var(--color-separator, #e4e4e7);
-  margin-top: 28px;
-  padding-top: 24px;
+.place-page-thread-header {
+  align-items: end;
+  border-bottom: 1px solid rgba(24, 24, 27, 0.08);
+  margin-bottom: 20px;
+  padding-bottom: 18px;
 }
 
-.place-page-thread-header {
+.place-page-thread-meta {
+  align-items: flex-end;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.place-page-thread-sort {
+  color: #726658;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
   margin-bottom: 18px;
+  text-transform: uppercase;
 }
 
 .place-page-thread-title {
-  font-size: 28px;
+  font-family: var(--font-display);
+  font-size: clamp(30px, 3vw, 44px);
+  letter-spacing: -0.04em;
 }
 
 .place-page-comment-count {
-  font-size: 16px;
+  background: rgba(255, 255, 255, 0.66);
+  border: 1px solid rgba(24, 24, 27, 0.12);
+  border-radius: 999px;
+  font-size: 15px;
+  padding: 8px 12px;
 }
 
 .place-page-discussion-list {
-  gap: 14px;
+  gap: 16px;
   padding-bottom: 0;
   padding-top: 0;
+}
+
+.place-page .thread-kicker {
+  color: #726658;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.place-page .sheet-meta-pill {
+  background: rgba(255, 255, 255, 0.68);
+  border-color: rgba(24, 24, 27, 0.1);
+  color: #5b5046;
+}
+
+.place-page .sheet-meta-inline {
+  color: #6f6258;
+}
+
+.place-page .stat-card {
+  background: rgba(255, 255, 255, 0.62);
+  border: 1px solid rgba(24, 24, 27, 0.1);
+  border-radius: 18px;
+  min-height: 98px;
+  padding: 16px 18px;
+}
+
+.place-page .stat-label {
+  color: #726658;
+  letter-spacing: 0.09em;
+}
+
+.place-page .stat-value {
+  color: #18181b;
+  font-size: 28px;
+  margin-top: 10px;
+}
+
+.place-page .vote-controls {
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(24, 24, 27, 0.12);
+  border-radius: 22px;
+  box-shadow: 0 16px 34px rgba(121, 88, 44, 0.12);
+  gap: 8px;
+  min-width: 68px;
+  padding: 12px 8px;
+}
+
+.place-page .vote-arrow {
+  align-items: center;
+  border-radius: 999px;
+  display: inline-flex;
+  height: 34px;
+  justify-content: center;
+  width: 34px;
+}
+
+.place-page .vote-arrow span {
+  color: #6f6358;
+  font-size: 18px;
+}
+
+.place-page .vote-score {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 800;
+}
+
+.place-page .comment-card,
+.place-page .discussion-list .comment-card,
+.place-page .discussion-list .comment-thread.depth-0 > .comment-card,
+.place-page .discussion-list .comment-replies .comment-card {
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(24, 24, 27, 0.12);
+  border-radius: 20px;
+  box-shadow: 0 12px 28px rgba(121, 88, 44, 0.08);
+}
+
+.place-page .comment-card {
+  gap: 14px;
+  grid-template-columns: 32px minmax(0, 1fr);
+  padding: 16px;
+}
+
+.place-page .comment-replies {
+  border-left: 2px solid rgba(24, 24, 27, 0.1);
+  gap: 10px;
+  margin-left: 28px;
+  padding-left: 16px;
+}
+
+.place-page .comment-author {
+  font-size: 15px;
+}
+
+.place-page .comment-meta-row,
+.place-page .comment-timestamp,
+.place-page .comment-meta-divider {
+  color: #7a6d60;
+}
+
+.place-page .comment-body {
+  color: #2d2722;
+  line-height: 1.65;
+}
+
+.place-page .comment-score {
+  color: #443a32;
+}
+
+.place-page .reply-button,
+.place-page .comment-reply-count {
+  color: #6f6258;
+}
+
+.place-page .empty-state {
+  background: rgba(255, 255, 255, 0.52);
+  border-color: rgba(24, 24, 27, 0.12);
 }
 
 .desktop-map-shell,
@@ -1064,12 +1289,16 @@ button {
   }
 
   .place-page-card {
-    border-radius: 22px;
-    padding: 18px;
+    border-radius: 24px;
+    padding: 20px 18px;
   }
 
   .place-page-layout {
     grid-template-columns: 1fr;
+  }
+
+  .place-page-stack {
+    gap: 16px;
   }
 
   .place-page-nav {
@@ -1088,13 +1317,37 @@ button {
 
   .place-page-vote-column .vote-controls {
     flex-direction: row;
+    gap: 10px;
     justify-content: center;
     min-width: 0;
     width: fit-content;
   }
 
+  .place-page-title {
+    font-size: clamp(38px, 12vw, 54px);
+    max-width: 100%;
+  }
+
+  .place-page-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .place-page-thread-header {
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  .place-page-thread-meta {
+    align-items: flex-start;
+  }
+
   .place-page-thread-title {
     font-size: 24px;
+  }
+
+  .place-page .comment-replies {
+    margin-left: 12px;
+    padding-left: 12px;
   }
 
   .map-hud {

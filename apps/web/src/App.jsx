@@ -1080,87 +1080,95 @@ function PlacePage({
           </button>
         </div>
 
-        <article className="place-page-card">
-          <div className="place-page-layout">
-            <aside className="place-page-vote-column">
-              <VoteControls
-                currentVote={currentVote}
-                onDownvote={() => onVote(-1)}
-                onUpvote={() => onVote(1)}
-                score={voteBreakdown.score}
-              />
-            </aside>
-
-            <div className="place-page-content">
-              <p className="place-page-kicker">r/topeyplaces</p>
-              <h1 className="place-page-title">{place.name}</h1>
-
-              <div className="sheet-meta-row">
-                <span className="sheet-meta-pill">Map drop</span>
-                <span className="sheet-meta-inline">Posted by {formatUserHandle(place.authorName)}</span>
-                <span className="sheet-meta-inline">{formatRelativeTime(place.createdAt)}</span>
-              </div>
-
-              <p className="place-page-copy">{place.description}</p>
-
-              <div className="stats-row place-page-stats">
-                <PreviewStat
-                  label="Score"
-                  value={`${voteBreakdown.score >= 0 ? '+' : ''}${voteBreakdown.score}`}
+        <div className="place-page-stack">
+          <article className="place-page-card place-page-post-card">
+            <div className="place-page-layout">
+              <aside className="place-page-vote-column">
+                <VoteControls
+                  currentVote={currentVote}
+                  onDownvote={() => onVote(-1)}
+                  onUpvote={() => onVote(1)}
+                  score={voteBreakdown.score}
                 />
-                <PreviewStat label="Vote ratio" value={voteBreakdown.ratioLabel} />
-                <PreviewStat label="Comments" value={`${place.threadCount ?? comments.length}`} />
-              </div>
+              </aside>
 
-              <div className="place-page-toolbar">
-                <AppButton
-                  label="Open location"
-                  size="default"
-                  onClick={onOpenLocation}
-                  styleClassName="place-page-open-button"
-                />
-                <button className="place-page-thread-button" type="button" onClick={() => onCompose()}>
-                  Add comment
-                </button>
-              </div>
+              <div className="place-page-content">
+                <div className="place-page-kicker-row">
+                  <p className="place-page-kicker">r/topeyplaces</p>
+                  <span className="place-page-scene-label">third-place thread</span>
+                </div>
+                <h1 className="place-page-title">{place.name}</h1>
 
-              <div className="place-page-added-by">
-                Added by: <span>{formatUserHandle(place.authorName)}</span>
-              </div>
-
-              <section className="place-page-discussion">
-                <div className="thread-header place-page-thread-header">
-                  <div>
-                    <div className="thread-kicker">Top comments</div>
-                    <h2 className="thread-title place-page-thread-title">Community discussion</h2>
-                  </div>
-                  <div className="place-page-comment-count">
-                    {comments.length ? `${comments.length} comments` : 'Start the thread'}
-                  </div>
+                <div className="sheet-meta-row place-page-meta-row">
+                  <span className="sheet-meta-pill">Map drop</span>
+                  <span className="sheet-meta-inline">Posted by {formatUserHandle(place.authorName)}</span>
+                  <span className="sheet-meta-inline">{formatRelativeTime(place.createdAt)}</span>
                 </div>
 
-                <div className="discussion-list place-page-discussion-list">
-                  {commentThreads.length ? (
-                    commentThreads.map((commentThread) => (
-                      <CommentThread
-                        key={commentThread.id}
-                        commentThread={commentThread}
-                        commentVotes={commentVotes}
-                        onCommentVote={onCommentVote}
-                        onCompose={onCompose}
-                      />
-                    ))
-                  ) : (
-                    <div className="empty-state">
-                      <strong>No discussion yet.</strong>
-                      <p>Start the first comment for this place.</p>
-                    </div>
-                  )}
+                <p className="place-page-copy">{place.description}</p>
+
+                <div className="stats-row place-page-stats">
+                  <PreviewStat
+                    label="Score"
+                    value={`${voteBreakdown.score >= 0 ? '+' : ''}${voteBreakdown.score}`}
+                  />
+                  <PreviewStat label="Vote ratio" value={voteBreakdown.ratioLabel} />
+                  <PreviewStat label="Comments" value={`${place.threadCount ?? comments.length}`} />
                 </div>
-              </section>
+
+                <div className="place-page-toolbar">
+                  <AppButton
+                    label="Open location"
+                    size="default"
+                    onClick={onOpenLocation}
+                    styleClassName="place-page-open-button"
+                  />
+                  <button className="place-page-thread-button" type="button" onClick={() => onCompose()}>
+                    Add comment
+                  </button>
+                </div>
+
+                <div className="place-page-added-by">
+                  Added by: <span>{formatUserHandle(place.authorName)}</span>
+                </div>
+              </div>
             </div>
-          </div>
-        </article>
+          </article>
+
+          <section className="place-page-card place-page-comments-card">
+            <div className="thread-header place-page-thread-header">
+              <div>
+                <div className="thread-kicker">Top comments</div>
+                <h2 className="thread-title place-page-thread-title">Community discussion</h2>
+              </div>
+              <div className="place-page-thread-meta">
+                <div className="place-page-thread-sort">Sorted by newest</div>
+                <div className="place-page-comment-count">
+                  {comments.length ? `${comments.length} comments` : 'Start the thread'}
+                </div>
+              </div>
+            </div>
+
+            <div className="discussion-list place-page-discussion-list">
+              {commentThreads.length ? (
+                commentThreads.map((commentThread) => (
+                  <CommentThread
+                    key={commentThread.id}
+                    commentThread={commentThread}
+                    commentVotes={commentVotes}
+                    onCommentVote={onCommentVote}
+                    onCompose={onCompose}
+                  />
+                ))
+              ) : (
+                <div className="empty-state">
+                  <strong>No discussion yet.</strong>
+                  <p>Start the first comment for this place.</p>
+                </div>
+              )}
+            </div>
+          </section>
+        </div>
       </div>
     </main>
   );
