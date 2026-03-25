@@ -111,6 +111,7 @@ vi.mock('./components/DesktopMap', () => ({
 
 describe('App web auth', () => {
   beforeEach(() => {
+    window.history.replaceState({}, '', '/');
     authState.callback = null;
     authState.session = null;
     signInWithOAuth.mockClear();

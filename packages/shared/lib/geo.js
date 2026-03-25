@@ -1,10 +1,10 @@
 import { DEFAULT_REGION } from './constants';
 
-const FULL_PIN_DENSITY_DELTA = 0.12;
-const MAX_PIN_THINNING_DELTA = 8;
-const MIN_PIN_COUNT = 6;
-const MAX_BUCKETS_PER_AXIS = 18;
-const MIN_BUCKETS_PER_AXIS = 6;
+const FULL_PIN_DENSITY_DELTA = 0.08;
+const MAX_PIN_THINNING_DELTA = 4.5;
+const MIN_PIN_COUNT = 4;
+const MAX_BUCKETS_PER_AXIS = 14;
+const MIN_BUCKETS_PER_AXIS = 4;
 
 export function getPlaceScore(votes, placeId) {
   return votes

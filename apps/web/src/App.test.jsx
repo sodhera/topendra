@@ -1,6 +1,6 @@
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
 
 vi.mock('./lib/supabase', () => ({
@@ -35,7 +35,11 @@ vi.mock('./components/DesktopMap', () => ({
 }));
 
 describe('App web shell', () => {
-  it('renders the app-style home shell and opens a place sheet from the map', async () => {
+  beforeEach(() => {
+    window.history.replaceState({}, '', '/');
+  });
+
+  it('renders the app-style home shell and opens a place page from the map', async () => {
     render(<App />);
 
     expect((await screen.findByTestId('account-button')).textContent).toBe('Sign in');
@@ -47,6 +51,8 @@ describe('App web shell', () => {
     expect(await screen.findByRole('heading', { name: 'Thamel Courtyard' })).toBeTruthy();
     expect(screen.getByText('Open location')).toBeTruthy();
     expect(screen.getByText(/Added by:/)).toBeTruthy();
+    expect(window.location.pathname).toBe('/places/00000000-0000-4000-8000-000000001001');
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 
   it('switches into add-place mode from the floating plus button', async () => {

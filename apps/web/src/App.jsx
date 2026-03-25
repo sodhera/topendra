@@ -72,11 +72,47 @@ function getWebAuthRedirectUrl() {
     return undefined;
   }
 
-  return new URL('/', window.location.origin).toString();
+  return new URL(window.location.pathname, window.location.origin).toString();
+}
+
+function getPlacePath(placeId) {
+  return `/places/${encodeURIComponent(placeId)}`;
+}
+
+function getAppRouteFromLocation() {
+  if (typeof window === 'undefined') {
+    return {
+      placeId: '',
+      view: 'map',
+    };
+  }
+
+  const normalizedPath = window.location.pathname.replace(/\/+$/, '') || '/';
+  const placeMatch = normalizedPath.match(/^\/places\/([^/]+)$/);
+
+  if (!placeMatch) {
+    return {
+      placeId: '',
+      view: 'map',
+    };
+  }
+
+  try {
+    return {
+      placeId: decodeURIComponent(placeMatch[1]),
+      view: 'place',
+    };
+  } catch {
+    return {
+      placeId: placeMatch[1],
+      view: 'place',
+    };
+  }
 }
 
 export default function App() {
   const helpId = React.useId();
+  const [appRoute, setAppRoute] = React.useState(() => getAppRouteFromLocation());
   const [session, setSession] = React.useState(null);
   const [viewerSessionId, setViewerSessionId] = React.useState('');
   const [places, setPlaces] = React.useState(demoData.places);
@@ -92,13 +128,10 @@ export default function App() {
   const [focusedPlaceId, setFocusedPlaceId] = React.useState('');
   const [mapRegion, setMapRegion] = React.useState(KATHMANDU_EXPLORE_REGION);
   const [userRegion, setUserRegion] = React.useState(null);
-  const [isPlaceModalVisible, setIsPlaceModalVisible] = React.useState(false);
   const [isAuthModalVisible, setIsAuthModalVisible] = React.useState(false);
-  const [isDiscussionModalVisible, setIsDiscussionModalVisible] = React.useState(false);
   const [isComposerModalVisible, setIsComposerModalVisible] = React.useState(false);
   const [commentDraft, setCommentDraft] = React.useState('');
   const [replyTarget, setReplyTarget] = React.useState(null);
-  const [composerReturnSurface, setComposerReturnSurface] = React.useState('none');
   const [isSubmittingComment, setIsSubmittingComment] = React.useState(false);
   const [commentVotes, setCommentVotes] = React.useState({});
   const [isAddMode, setIsAddMode] = React.useState(false);
@@ -113,6 +146,43 @@ export default function App() {
 
   const currentUser = React.useMemo(() => getUserIdentity(session?.user), [session]);
   const isAuthenticated = isLoggedIn(session);
+  const isPlaceRoute = appRoute.view === 'place';
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') {
+      return undefined;
+    }
+
+    const handlePopState = () => {
+      setAppRoute(getAppRouteFromLocation());
+    };
+
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, []);
+
+  React.useEffect(() => {
+    if (appRoute.view === 'place' && appRoute.placeId && appRoute.placeId !== selectedPlaceId) {
+      setSelectedPlaceId(appRoute.placeId);
+    }
+  }, [appRoute.placeId, appRoute.view, selectedPlaceId]);
+
+  const navigateToRoute = React.useCallback((nextRoute, { replace = false } = {}) => {
+    const nextPath = nextRoute.view === 'place' ? getPlacePath(nextRoute.placeId) : '/';
+
+    if (typeof window !== 'undefined') {
+      const currentPath = window.location.pathname.replace(/\/+$/, '') || '/';
+
+      if (currentPath !== nextPath) {
+        window.history[replace ? 'replaceState' : 'pushState']({}, '', nextPath);
+      }
+    }
+
+    setAppRoute(nextRoute);
+  }, []);
 
   const refreshData = React.useCallback(async (activeSession) => {
     try {
@@ -277,6 +347,39 @@ export default function App() {
     [session?.user?.id, viewerSessionId]
   );
 
+  const openPlacePage = React.useCallback(
+    (placeId, options = {}) => {
+      const place = options.place ?? places.find((candidate) => candidate.id === placeId);
+
+      if (!place) {
+        return;
+      }
+
+      setSelectedPlaceId(place.id);
+      setIsAddMode(false);
+      setIsComposerModalVisible(false);
+      setCommentDraft('');
+      setReplyTarget(null);
+
+      if (options.recenter) {
+        setFocusedPlaceId(place.id);
+      }
+
+      navigateToRoute(
+        {
+          placeId: place.id,
+          view: 'place',
+        },
+        {
+          replace: options.replaceHistory,
+        }
+      );
+
+      trackPlaceOpen(place.id, options.sourceScreen ?? 'web_place_page');
+    },
+    [navigateToRoute, places, trackPlaceOpen]
+  );
+
   const selectPlace = React.useCallback(
     (placeId, options = {}) => {
       const place = places.find((candidate) => candidate.id === placeId);
@@ -293,64 +396,30 @@ export default function App() {
       }
 
       if (options.openModal !== false) {
-        setIsPlaceModalVisible(true);
+        openPlacePage(place.id, {
+          recenter: false,
+          replaceHistory: options.replaceHistory,
+          sourceScreen: options.sourceScreen ?? 'web_home_pin_page',
+        });
+        return;
       }
-
-      trackPlaceOpen(place.id, options.sourceScreen ?? 'web_home_pin_modal');
     },
-    [places, trackPlaceOpen]
+    [openPlacePage, places]
   );
 
   const openAuthModal = React.useCallback(() => {
-    setIsPlaceModalVisible(false);
-    setIsDiscussionModalVisible(false);
     setIsComposerModalVisible(false);
     setIsAddSheetVisible(false);
     setCommentDraft('');
     setReplyTarget(null);
-    setComposerReturnSurface('none');
     setIsAuthModalVisible(true);
   }, []);
 
-  const openDiscussionModal = React.useCallback(() => {
-    if (!isAuthenticated) {
-      setIsPlaceModalVisible(false);
-      openAuthModal();
-      return;
-    }
-
-    setIsPlaceModalVisible(false);
+  const closeComposer = React.useCallback(() => {
     setIsComposerModalVisible(false);
-    setIsDiscussionModalVisible(true);
-  }, [isAuthenticated, openAuthModal]);
-
-  const closeDiscussionModal = React.useCallback(() => {
-    setIsDiscussionModalVisible(false);
-
-    if (selectedPlace) {
-      setIsPlaceModalVisible(true);
-    }
-  }, [selectedPlace]);
-
-  const closeComposer = React.useCallback(
-    ({ reopenOrigin = true } = {}) => {
-      const nextSurface = reopenOrigin && selectedPlace ? composerReturnSurface : 'none';
-
-      setIsComposerModalVisible(false);
-      setCommentDraft('');
-      setReplyTarget(null);
-      setComposerReturnSurface('none');
-
-      if (nextSurface === 'discussion') {
-        setIsPlaceModalVisible(false);
-        setIsDiscussionModalVisible(true);
-      } else if (nextSurface === 'place') {
-        setIsDiscussionModalVisible(false);
-        setIsPlaceModalVisible(true);
-      }
-    },
-    [composerReturnSurface, selectedPlace]
-  );
+    setCommentDraft('');
+    setReplyTarget(null);
+  }, []);
 
   const handleOpenLocation = React.useCallback(() => {
     if (!selectedPlace) {
@@ -363,7 +432,6 @@ export default function App() {
   const handleVote = React.useCallback(
     async (value) => {
       if (!isAuthenticated || !selectedPlace || !session?.user?.id) {
-        setIsPlaceModalVisible(false);
         openAuthModal();
         return;
       }
@@ -385,22 +453,15 @@ export default function App() {
   const openComposer = React.useCallback(
     (nextReplyTarget = null) => {
       if (!isAuthenticated) {
-        setIsPlaceModalVisible(false);
-        setIsDiscussionModalVisible(false);
         openAuthModal();
         return;
       }
 
-      setComposerReturnSurface(
-        isDiscussionModalVisible ? 'discussion' : isPlaceModalVisible ? 'place' : 'none'
-      );
-      setIsPlaceModalVisible(false);
-      setIsDiscussionModalVisible(false);
       setReplyTarget(nextReplyTarget);
       setCommentDraft(nextReplyTarget ? `@${nextReplyTarget.authorName || 'Topey user'} ` : '');
       setIsComposerModalVisible(true);
     },
-    [isAuthenticated, isDiscussionModalVisible, isPlaceModalVisible, openAuthModal]
+    [isAuthenticated, openAuthModal]
   );
 
   const handleSubmitComment = React.useCallback(async () => {
@@ -409,7 +470,7 @@ export default function App() {
     }
 
     if (!isAuthenticated || !session?.user) {
-      closeComposer({ reopenOrigin: false });
+      closeComposer();
       openAuthModal();
       return;
     }
@@ -587,21 +648,21 @@ export default function App() {
   }, [refreshData]);
 
   const beginAddPlace = React.useCallback(() => {
+    navigateToRoute({ placeId: '', view: 'map' });
     setIsAddMode(true);
-    setIsPlaceModalVisible(false);
-    setIsDiscussionModalVisible(false);
     setIsComposerModalVisible(false);
     setSelectedPlaceId('');
     setFocusedPlaceId('');
     setCommentDraft('');
     setReplyTarget(null);
-    setComposerReturnSurface('none');
-  }, []);
+  }, [navigateToRoute]);
   const handleOpenSelected = React.useCallback(() => {
     if (selectedPlaceId) {
-      setIsPlaceModalVisible(true);
+      openPlacePage(selectedPlaceId, {
+        sourceScreen: 'web_keyboard_selection',
+      });
     }
-  }, [selectedPlaceId]);
+  }, [openPlacePage, selectedPlaceId]);
 
   const cancelAddPlace = React.useCallback(() => {
     setIsAddMode(false);
@@ -643,8 +704,11 @@ export default function App() {
       if (newestPlace) {
         setFocusedPlaceId(newestPlace.id);
         setSelectedPlaceId(newestPlace.id);
-        setIsPlaceModalVisible(true);
-        trackPlaceOpen(newestPlace.id, 'web_add_place');
+        openPlacePage(newestPlace.id, {
+          place: newestPlace,
+          replaceHistory: false,
+          sourceScreen: 'web_add_place',
+        });
       }
     } catch (error) {
       setErrorMessage(error?.message ?? 'Save failed.');
@@ -658,9 +722,9 @@ export default function App() {
     newPlaceDescription,
     newPlaceName,
     openAuthModal,
+    openPlacePage,
     refreshData,
     session,
-    trackPlaceOpen,
   ]);
 
   const topControls = isAddMode ? (
@@ -679,18 +743,13 @@ export default function App() {
       />
     </div>
   );
-  const hasActiveModal =
-    isPlaceModalVisible ||
-    isAuthModalVisible ||
-    isDiscussionModalVisible ||
-    isComposerModalVisible ||
-    isAddSheetVisible;
+  const hasActiveModal = isAuthModalVisible || isComposerModalVisible || isAddSheetVisible;
 
   if (!isHydrated) {
     return (
       <div className="loading-screen">
         <div className="loading-title">Topey</div>
-        <p className="loading-copy">Loading the map and latest place data.</p>
+        <p className="loading-copy">Share Spaces</p>
       </div>
     );
   }
@@ -718,105 +777,84 @@ export default function App() {
         keys work when the map is focused, and Page Up / Page Down move between visible places.
       </div>
 
-      <main
-        aria-hidden={hasActiveModal}
-        className={`map-screen${isAddMode ? ' is-add-mode' : ''}`}
-      >
-        <DesktopMap
-          addMode={isAddMode}
-          focusedPlace={focusedPlace}
-          onAddPinChange={setAddPinCoordinates}
-          onOpenSelected={handleOpenSelected}
-          onRegionChange={setMapRegion}
-          onSelectPlace={selectPlace}
-          selectedPlaceId={selectedPlaceId}
-          userRegion={userRegion}
-          visiblePlaces={visiblePlaces}
-        />
-
-        {isAddMode ? (
-          <div
-            className="center-pin"
-            aria-hidden="true"
-            style={{ top: '40%' }}
-          >
-            <div className="center-pin-bubble" />
-            <div className="center-pin-stem" />
-            <div className="center-pin-shadow" />
-          </div>
-        ) : null}
-
-        <div className="map-hud map-hud-top">{topControls}</div>
-
-        {!isAddMode ? (
-          <div className="map-hud map-hud-bottom">
-            <button
-              className="fab-button"
-              type="button"
-              onClick={beginAddPlace}
-              aria-label="Add a place"
-              data-testid="add-place-button"
-            >
-              +
-            </button>
-          </div>
-        ) : null}
-
-        {errorMessage && !isAuthModalVisible ? <div className="status-banner">{errorMessage}</div> : null}
-      </main>
-
-      {selectedPlace && isPlaceModalVisible ? (
-        <SheetModal onClose={() => setIsPlaceModalVisible(false)}>
-          <div className="sheet-header">
-            <div className="sheet-handle" />
-            <p className="sheet-kicker">r/topeyplaces</p>
-            <h2 className="sheet-title">{selectedPlace.name}</h2>
-            <div className="sheet-meta-row">
-              <span className="sheet-meta-pill">Map drop</span>
-              <span className="sheet-meta-inline">Posted by {formatUserHandle(selectedPlace.authorName)}</span>
-              <span className="sheet-meta-inline">{formatRelativeTime(selectedPlace.createdAt)}</span>
-            </div>
-            <p className="sheet-copy">{selectedPlace.description}</p>
-          </div>
-
-          <div className="stats-row">
-            <PreviewStat
-              label="Score"
-              value={`${voteBreakdown.score >= 0 ? '+' : ''}${voteBreakdown.score}`}
-            />
-            <PreviewStat label="Vote ratio" value={voteBreakdown.ratioLabel} />
-            <PreviewStat label="Comments" value={`${selectedPlace.threadCount ?? comments.length}`} />
-          </div>
-
-          <AppButton
-            label="Open location"
-            size="default"
-            onClick={handleOpenLocation}
-            styleClassName="block-button"
-          />
-
-          <div className="participation-row">
-            <VoteControls
-              currentVote={currentVote}
-              onDownvote={() => handleVote(-1)}
-              onUpvote={() => handleVote(1)}
-              score={voteBreakdown.score}
-            />
-            <div className="added-by">
-              Added by: <span>{formatUserHandle(selectedPlace.authorName)}</span>
-            </div>
-          </div>
-
-          <ConversationPreview
-            comments={comments}
+      {isPlaceRoute ? (
+        <div aria-hidden={hasActiveModal}>
+          <PlacePage
+            accountLabel={isAuthenticated ? 'Profile' : 'Sign in'}
             commentThreads={commentThreads}
             commentVotes={commentVotes}
+            comments={comments}
+            currentVote={currentVote}
+            onAccount={openAuthModal}
+            onBackToMap={() => navigateToRoute({ placeId: '', view: 'map' })}
             onCommentVote={handleCommentVote}
             onCompose={openComposer}
-            onOpenDiscussion={openDiscussionModal}
+            onOpenLocation={handleOpenLocation}
+            onVote={handleVote}
+            place={selectedPlace}
+            voteBreakdown={voteBreakdown}
           />
-        </SheetModal>
-      ) : null}
+        </div>
+      ) : (
+        <main
+          aria-hidden={hasActiveModal}
+          className={`map-screen${isAddMode ? ' is-add-mode' : ''}`}
+        >
+          <DesktopMap
+            addMode={isAddMode}
+            focusedPlace={focusedPlace}
+            onAddPinChange={setAddPinCoordinates}
+            onOpenSelected={handleOpenSelected}
+            onRegionChange={setMapRegion}
+            onSelectPlace={selectPlace}
+            selectedPlaceId={selectedPlaceId}
+            userRegion={userRegion}
+            visiblePlaces={visiblePlaces}
+          />
+
+          {isAddMode ? (
+            <div
+              className="center-pin"
+              aria-hidden="true"
+              style={{ top: '40%' }}
+            >
+              <svg
+                className="center-pin-icon"
+                fill="none"
+                viewBox="0 0 52 68"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M26 64C26 64 46 42.1234 46 24.9412C46 13.9274 37.0457 5 26 5C14.9543 5 6 13.9274 6 24.9412C6 42.1234 26 64 26 64Z"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="3"
+                />
+                <circle cx="26" cy="25" r="8.5" stroke="currentColor" strokeWidth="3" />
+              </svg>
+            </div>
+          ) : null}
+
+          <div className="map-hud map-hud-top">{topControls}</div>
+
+          {!isAddMode ? (
+            <div className="map-hud map-hud-bottom">
+              <button
+                className="fab-button"
+                type="button"
+                onClick={beginAddPlace}
+                aria-label="Add a place"
+                data-testid="add-place-button"
+              >
+                +
+              </button>
+            </div>
+          ) : null}
+
+          {errorMessage && !isAuthModalVisible ? <div className="status-banner">{errorMessage}</div> : null}
+        </main>
+      )}
 
       {isAuthModalVisible ? (
         <SheetModal
@@ -847,48 +885,6 @@ export default function App() {
               onSignUp={handleSignUp}
             />
           )}
-        </SheetModal>
-      ) : null}
-
-      {isDiscussionModalVisible && selectedPlace ? (
-        <SheetModal onClose={closeDiscussionModal} tall>
-          <div className="sheet-header">
-            <div className="sheet-handle" />
-            <p className="sheet-kicker">r/topeyplaces</p>
-            <h2 className="sheet-title">Discussion</h2>
-            <div className="sheet-meta-row">
-              <span className="sheet-meta-pill">Top comments</span>
-              <span className="sheet-meta-inline">{selectedPlace.name}</span>
-            </div>
-          </div>
-
-          <div className="discussion-list">
-            {commentThreads.length ? (
-              commentThreads.map((commentThread) => (
-                <CommentThread
-                  key={commentThread.id}
-                  commentThread={commentThread}
-                  commentVotes={commentVotes}
-                  onCommentVote={handleCommentVote}
-                  onCompose={openComposer}
-                />
-              ))
-            ) : (
-              <div className="empty-state">
-                <strong>No discussion yet.</strong>
-                <p>Start the first comment for this place.</p>
-              </div>
-            )}
-          </div>
-
-          <button
-            aria-label="Add comment"
-            className="compose-fab compose-fab-sheet"
-            type="button"
-            onClick={() => openComposer()}
-          >
-            +
-          </button>
         </SheetModal>
       ) : null}
 
@@ -1032,6 +1028,144 @@ function PreviewStat({ label, value }) {
   );
 }
 
+function PlacePage({
+  accountLabel,
+  commentThreads,
+  commentVotes,
+  comments,
+  currentVote,
+  onAccount,
+  onBackToMap,
+  onCommentVote,
+  onCompose,
+  onOpenLocation,
+  onVote,
+  place,
+  voteBreakdown,
+}) {
+  if (!place) {
+    return (
+      <main className="place-page">
+        <div className="place-page-shell">
+          <div className="place-page-nav">
+            <button className="page-nav-button" type="button" onClick={onBackToMap}>
+              Back to map
+            </button>
+            <button className="page-nav-button" type="button" onClick={onAccount}>
+              {accountLabel}
+            </button>
+          </div>
+
+          <section className="place-page-card place-page-empty-card">
+            <p className="place-page-kicker">r/topeyplaces</p>
+            <h1 className="place-page-title">Place not found</h1>
+            <p className="place-page-copy">
+              This place link does not match anything in the current dataset.
+            </p>
+          </section>
+        </div>
+      </main>
+    );
+  }
+
+  return (
+    <main className="place-page">
+      <div className="place-page-shell">
+        <div className="place-page-nav">
+          <button className="page-nav-button" type="button" onClick={onBackToMap}>
+            Back to map
+          </button>
+          <button className="page-nav-button" type="button" onClick={onAccount}>
+            {accountLabel}
+          </button>
+        </div>
+
+        <article className="place-page-card">
+          <div className="place-page-layout">
+            <aside className="place-page-vote-column">
+              <VoteControls
+                currentVote={currentVote}
+                onDownvote={() => onVote(-1)}
+                onUpvote={() => onVote(1)}
+                score={voteBreakdown.score}
+              />
+            </aside>
+
+            <div className="place-page-content">
+              <p className="place-page-kicker">r/topeyplaces</p>
+              <h1 className="place-page-title">{place.name}</h1>
+
+              <div className="sheet-meta-row">
+                <span className="sheet-meta-pill">Map drop</span>
+                <span className="sheet-meta-inline">Posted by {formatUserHandle(place.authorName)}</span>
+                <span className="sheet-meta-inline">{formatRelativeTime(place.createdAt)}</span>
+              </div>
+
+              <p className="place-page-copy">{place.description}</p>
+
+              <div className="stats-row place-page-stats">
+                <PreviewStat
+                  label="Score"
+                  value={`${voteBreakdown.score >= 0 ? '+' : ''}${voteBreakdown.score}`}
+                />
+                <PreviewStat label="Vote ratio" value={voteBreakdown.ratioLabel} />
+                <PreviewStat label="Comments" value={`${place.threadCount ?? comments.length}`} />
+              </div>
+
+              <div className="place-page-toolbar">
+                <AppButton
+                  label="Open location"
+                  size="default"
+                  onClick={onOpenLocation}
+                  styleClassName="place-page-open-button"
+                />
+                <button className="place-page-thread-button" type="button" onClick={() => onCompose()}>
+                  Add comment
+                </button>
+              </div>
+
+              <div className="place-page-added-by">
+                Added by: <span>{formatUserHandle(place.authorName)}</span>
+              </div>
+
+              <section className="place-page-discussion">
+                <div className="thread-header place-page-thread-header">
+                  <div>
+                    <div className="thread-kicker">Top comments</div>
+                    <h2 className="thread-title place-page-thread-title">Community discussion</h2>
+                  </div>
+                  <div className="place-page-comment-count">
+                    {comments.length ? `${comments.length} comments` : 'Start the thread'}
+                  </div>
+                </div>
+
+                <div className="discussion-list place-page-discussion-list">
+                  {commentThreads.length ? (
+                    commentThreads.map((commentThread) => (
+                      <CommentThread
+                        key={commentThread.id}
+                        commentThread={commentThread}
+                        commentVotes={commentVotes}
+                        onCommentVote={onCommentVote}
+                        onCompose={onCompose}
+                      />
+                    ))
+                  ) : (
+                    <div className="empty-state">
+                      <strong>No discussion yet.</strong>
+                      <p>Start the first comment for this place.</p>
+                    </div>
+                  )}
+                </div>
+              </section>
+            </div>
+          </div>
+        </article>
+      </div>
+    </main>
+  );
+}
+
 function VoteControls({ currentVote, onDownvote, onUpvote, score }) {
   return (
     <div className="vote-controls">
@@ -1041,63 +1175,6 @@ function VoteControls({ currentVote, onDownvote, onUpvote, score }) {
       <span className="vote-score">{formatSignedValue(score)}</span>
       <button className="vote-arrow" type="button" onClick={onDownvote} aria-label="Downvote place">
         <span className={currentVote === -1 ? 'is-active' : ''}>▼</span>
-      </button>
-    </div>
-  );
-}
-
-function ConversationPreview({
-  comments,
-  commentThreads,
-  commentVotes,
-  onCommentVote,
-  onCompose,
-  onOpenDiscussion,
-}) {
-  const previewThreads = commentThreads.slice(0, 2);
-
-  return (
-    <div className="conversation-preview">
-      <div className="thread-header">
-        <div>
-          <div className="thread-kicker">Top comments</div>
-          <h3 className="thread-title">Community discussion</h3>
-        </div>
-        <button className="thread-link-button" type="button" onClick={onOpenDiscussion}>
-          {comments.length ? `${comments.length} comments` : 'Start the thread'}
-        </button>
-      </div>
-
-      <div className="thread-card">
-        {previewThreads.length ? (
-          previewThreads.map((commentThread, index) => {
-            const isLastPreview = index === previewThreads.length - 1;
-            const shouldFadeOut = previewThreads.length > 1 && isLastPreview;
-
-            return (
-              <React.Fragment key={commentThread.id}>
-                {index > 0 ? <div className="thread-separator" /> : null}
-                <CommentThread
-                  commentThread={commentThread}
-                  commentVotes={commentVotes}
-                  isPreviewTail={shouldFadeOut}
-                  onOpenDiscussion={onOpenDiscussion}
-                  onCommentVote={onCommentVote}
-                  onCompose={onCompose}
-                />
-              </React.Fragment>
-            );
-          })
-        ) : (
-          <div className="empty-state">
-            <strong>No discussion yet.</strong>
-            <p>Start the first comment for this place.</p>
-          </div>
-        )}
-      </div>
-
-      <button className="compose-fab" type="button" onClick={() => onCompose()} aria-label="Add comment">
-        +
       </button>
     </div>
   );

@@ -160,6 +160,7 @@ vi.mock('./components/DesktopMap', () => ({
 
 describe('App web actions', () => {
   beforeEach(() => {
+    window.history.replaceState({}, '', '/');
     authState.callback = null;
     authState.session = {
       user: {
@@ -181,7 +182,7 @@ describe('App web actions', () => {
     signOut.mockClear();
   });
 
-  it('keeps one modal active while discussion, comment, reply, and vote flows run', async () => {
+  it('navigates to a place page and keeps comment actions on that page', async () => {
     render(<App />);
 
     await waitFor(() => {
@@ -190,19 +191,13 @@ describe('App web actions', () => {
 
     fireEvent.click(screen.getByTestId('desktop-map-open-place'));
 
+    expect(await screen.findByRole('heading', { name: 'Action Test Place' })).toBeTruthy();
+    expect(window.location.pathname).toBe('/places/place-1');
+    expect(screen.queryByRole('dialog')).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add comment' }));
+
     let dialog = await screen.findByRole('dialog');
-    expect(within(dialog).getByRole('heading', { name: 'Action Test Place' })).toBeTruthy();
-    expect(screen.getAllByRole('dialog')).toHaveLength(1);
-
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Start the thread' }));
-
-    dialog = await screen.findByRole('dialog');
-    expect(within(dialog).getByRole('heading', { name: 'Discussion' })).toBeTruthy();
-    expect(screen.getAllByRole('dialog')).toHaveLength(1);
-
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Add comment' }));
-
-    dialog = await screen.findByRole('dialog');
     expect(within(dialog).getByRole('heading', { name: 'Add a comment' })).toBeTruthy();
     expect(screen.getAllByRole('dialog')).toHaveLength(1);
 
@@ -221,8 +216,7 @@ describe('App web actions', () => {
         placeId: 'place-1',
       })
     );
-    expect(screen.getByRole('heading', { name: 'Discussion' })).toBeTruthy();
-    expect(screen.getAllByRole('dialog')).toHaveLength(1);
+    expect(screen.queryByRole('dialog')).toBeNull();
 
     fireEvent.click(screen.getByRole('button', { name: 'Reply' }));
 
@@ -248,15 +242,7 @@ describe('App web actions', () => {
     const replyThread = screen.getByText('Codex comment smoke alpha').closest('.comment-thread');
     expect(replyThread).toBeTruthy();
     expect(within(replyThread).getByText('Codex reply smoke beta')).toBeTruthy();
-    expect(screen.getByRole('heading', { name: 'Discussion' })).toBeTruthy();
-    expect(screen.getAllByRole('dialog')).toHaveLength(1);
-
-    fireEvent.click(document.querySelector('.modal-close-button'));
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: 'Action Test Place' })).toBeTruthy();
-    });
-    expect(screen.getAllByRole('dialog')).toHaveLength(1);
+    expect(screen.queryByRole('dialog')).toBeNull();
 
     fireEvent.click(screen.getByRole('button', { name: 'Upvote place' }));
 
@@ -269,7 +255,7 @@ describe('App web actions', () => {
     });
   });
 
-  it('adds a place and opens the new place modal', async () => {
+  it('adds a place and opens the new place page', async () => {
     render(<App />);
 
     await waitFor(() => {
@@ -304,6 +290,7 @@ describe('App web actions', () => {
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: 'Codex place gamma' })).toBeTruthy();
     });
-    expect(screen.getAllByRole('dialog')).toHaveLength(1);
+    expect(window.location.pathname).toBe('/places/place-3');
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 });

@@ -15,6 +15,7 @@ const ADD_PLACE_PIN_VERTICAL_FRACTION = 0.4;
 const MAP_FLY_DURATION = 0.24;
 const MAP_FLY_DURATION_SLOW = 0.3;
 const CANVAS_RENDERER = L.canvas({ padding: 0.4 });
+const TILE_KEEP_BUFFER = 2;
 const PLACE_MARKER_RADIUS = 7;
 const SELECTED_PLACE_MARKER_RADIUS = 10;
 const ADD_MODE_PLACE_MARKER_RADIUS = 5;
@@ -420,7 +421,7 @@ const DesktopMap = React.memo(function DesktopMap({
     (placeId) => {
       onSelectPlace(placeId, {
         openModal: true,
-        sourceScreen: 'web_home_pin_modal',
+        sourceScreen: 'web_home_pin_page',
       });
     },
     [onSelectPlace]
@@ -439,13 +440,17 @@ const DesktopMap = React.memo(function DesktopMap({
         scrollWheelZoom
         style={{ height: '100%', width: '100%' }}
         zoom={DEFAULT_ZOOM}
+        zoomAnimation={false}
         zoomControl={false}
-        zoomDelta={0.5}
-        zoomSnap={0.25}
+        zoomDelta={1}
+        zoomSnap={1}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+          keepBuffer={TILE_KEEP_BUFFER}
           subdomains="abcd"
+          updateWhenIdle={false}
+          updateWhenZooming={false}
           url="https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png"
         />
 
