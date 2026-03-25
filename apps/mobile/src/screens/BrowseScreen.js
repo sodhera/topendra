@@ -18,7 +18,7 @@ import { MapUserLocationMarker } from '../components/MapUserLocationMarker';
 import { PlaceConversationSection } from '../components/PlaceConversationSection';
 import { ShadButton } from '../components/ShadButton';
 import { useAppContext } from '../context/AppContext';
-import { isLoggedIn } from '@topey/shared/lib/auth';
+import { hasAnonymousHandle, isLoggedIn } from '@topey/shared/lib/auth';
 import { DEFAULT_REGION, KATHMANDU_EXPLORE_REGION } from '@topey/shared/lib/constants';
 import { getCommentsForPlace, getMapPlacesForRegion, getVoteBreakdown } from '@topey/shared/lib/geo';
 import { CLEAN_MOBILE_MAP_PROPS } from '@topey/shared/lib/mobileMap';
@@ -41,10 +41,10 @@ export function BrowseScreen({ navigation, route }) {
     isEmailAuthLoading,
     authNoticeMessage,
     errorMessage,
-    signUpWithPassword,
-    signInWithPassword,
-    signInWithGoogle,
+    requestEmailAccess,
+    claimHandle,
     addComment,
+    voteComment,
     votePlace,
     trackPlaceOpen,
   } = useAppContext();
@@ -54,6 +54,7 @@ export function BrowseScreen({ navigation, route }) {
   });
   const initialPlaceId = route?.params?.placeId ?? '';
   const isAuthenticated = isLoggedIn(state.session);
+  const canPostAnonymously = hasAnonymousHandle(state.session?.user);
   const [mapKey, setMapKey] = useState(0);
   const [mapRegion, setMapRegion] = useState(KATHMANDU_EXPLORE_REGION);
   const [hasCenteredMap, setHasCenteredMap] = useState(false);
@@ -120,30 +121,20 @@ export function BrowseScreen({ navigation, route }) {
     });
   }
 
-  async function handleSignUp({ email, username, password }) {
+  async function handleRequestAccess({ email, username }) {
     try {
-      await signUpWithPassword({ email, username, password });
-      setIsAuthModalVisible(false);
+      await requestEmailAccess({ email, username });
     } catch (error) {
-      Alert.alert('Sign-up failed', error.message);
+      Alert.alert('Email sign-in failed', error.message);
     }
   }
 
-  async function handleSignIn({ email, password }) {
+  async function handleClaimHandle({ username }) {
     try {
-      await signInWithPassword({ email, password });
+      await claimHandle({ handle: username });
       setIsAuthModalVisible(false);
     } catch (error) {
-      Alert.alert('Sign-in failed', error.message);
-    }
-  }
-
-  async function handleGoogleSignIn() {
-    try {
-      await signInWithGoogle();
-      setIsAuthModalVisible(false);
-    } catch (error) {
-      Alert.alert('Google Sign-in failed', error.message);
+      Alert.alert('Anonymous name failed', error.message);
     }
   }
 
@@ -164,8 +155,13 @@ export function BrowseScreen({ navigation, route }) {
     }
   }
 
-  async function handleComment({ body }) {
+  async function handleComment({ body, parentCommentId = null }) {
     if (!isAuthenticated || !selectedPlace) {
+      setIsAuthModalVisible(true);
+      return;
+    }
+
+    if (!canPostAnonymously) {
       setIsAuthModalVisible(true);
       return;
     }
@@ -174,9 +170,26 @@ export function BrowseScreen({ navigation, route }) {
       await addComment({
         placeId: selectedPlace.id,
         body,
+        parentCommentId,
       });
     } catch (error) {
       Alert.alert('Comment failed', error.message);
+    }
+  }
+
+  async function handleCommentVote({ commentId, value }) {
+    if (!isAuthenticated) {
+      setIsAuthModalVisible(true);
+      return;
+    }
+
+    try {
+      await voteComment({
+        commentId,
+        value,
+      });
+    } catch (error) {
+      Alert.alert('Vote failed', error.message);
     }
   }
 
@@ -323,8 +336,11 @@ export function BrowseScreen({ navigation, route }) {
 
                 <PlaceConversationSection
                   comments={comments}
+                  commentVotes={state.commentVotes}
+                  currentUserId={state.session?.user?.id ?? ''}
                   isAuthenticated={isAuthenticated}
                   onAddComment={handleComment}
+                  onVoteComment={handleCommentVote}
                   onRequireAuth={() => {
                     setIsDetailsModalVisible(false);
                     setIsAuthModalVisible(true);
@@ -352,11 +368,11 @@ export function BrowseScreen({ navigation, route }) {
           <View style={styles.sheet}>
             <View style={styles.sheetHandle} />
             <EmailAuthCard
-              onSignUp={handleSignUp}
-              onSignIn={handleSignIn}
-              onGoogleSignIn={handleGoogleSignIn}
               authBusy={isEmailAuthLoading}
               helperText={authNoticeMessage}
+              mode={isAuthenticated && !canPostAnonymously ? 'handle' : 'email'}
+              onClaimHandle={handleClaimHandle}
+              onRequestAccess={handleRequestAccess}
             />
             {errorMessage ? <Text style={styles.sheetMeta}>{errorMessage}</Text> : null}
           </View>

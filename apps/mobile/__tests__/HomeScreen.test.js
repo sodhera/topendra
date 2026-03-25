@@ -105,9 +105,9 @@ describe('HomeScreen', () => {
     navigate: jest.fn(),
   };
   const trackPlaceOpen = jest.fn();
-  const signUpWithPassword = jest.fn();
-  const signInWithPassword = jest.fn();
-  const signInWithGoogle = jest.fn();
+  const requestEmailAccess = jest.fn();
+  const claimHandle = jest.fn();
+  const voteComment = jest.fn();
   const setIsAuthModalVisible = jest.fn();
 
   beforeEach(() => {
@@ -126,11 +126,11 @@ describe('HomeScreen', () => {
       isEmailAuthLoading: false,
       authNoticeMessage: '',
       errorMessage: '',
-      signUpWithPassword,
-      signInWithPassword,
-      signInWithGoogle,
+      requestEmailAccess,
+      claimHandle,
       signOut: jest.fn(),
       addComment: jest.fn(),
+      voteComment,
       votePlace: jest.fn(),
       trackPlaceOpen,
       isAuthModalVisible: false,
@@ -216,11 +216,11 @@ describe('HomeScreen', () => {
       isEmailAuthLoading: false,
       authNoticeMessage: '',
       errorMessage: '',
-      signUpWithPassword,
-      signInWithPassword,
-      signInWithGoogle,
+      requestEmailAccess,
+      claimHandle,
       signOut: jest.fn(),
       addComment: jest.fn(),
+      voteComment,
       votePlace: jest.fn(),
       trackPlaceOpen,
       isAuthModalVisible: false,

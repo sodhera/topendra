@@ -18,7 +18,7 @@ import { EmailAuthCard } from '../components/EmailAuthCard';
 import { MapUserLocationMarker } from '../components/MapUserLocationMarker';
 import { ShadButton } from '../components/ShadButton';
 import { useAppContext } from '../context/AppContext';
-import { isLoggedIn } from '@topey/shared/lib/auth';
+import { hasAnonymousHandle, isLoggedIn } from '@topey/shared/lib/auth';
 import { DEFAULT_REGION } from '@topey/shared/lib/constants';
 import { CLEAN_MOBILE_MAP_PROPS } from '@topey/shared/lib/mobileMap';
 import { colors, radius, shadows, spacing, typography } from '@topey/shared/lib/theme';
@@ -39,9 +39,8 @@ export function AddPlaceScreen({ navigation, route }) {
     isEmailAuthLoading,
     authNoticeMessage,
     errorMessage,
-    signUpWithPassword,
-    signInWithPassword,
-    signInWithGoogle,
+    requestEmailAccess,
+    claimHandle,
     addPlace,
   } = useAppContext();
   const {
@@ -74,35 +73,31 @@ export function AddPlaceScreen({ navigation, route }) {
     setHasAutoScrolledToUserRegion(true);
   }, [hasAutoScrolledToUserRegion, hasResolvedInitialRegion, userRegion]);
 
-  async function handleSignUp({ email, username, password }) {
+  async function handleRequestAccess({ email, username }) {
     try {
-      await signUpWithPassword({ email, username, password });
-      setIsAuthModalVisible(false);
+      await requestEmailAccess({ email, username });
     } catch (error) {
-      Alert.alert('Sign-up failed', error.message);
+      Alert.alert('Email sign-in failed', error.message);
     }
   }
 
-  async function handleSignIn({ email, password }) {
+  async function handleClaimHandle({ username }) {
     try {
-      await signInWithPassword({ email, password });
+      await claimHandle({ handle: username });
       setIsAuthModalVisible(false);
     } catch (error) {
-      Alert.alert('Sign-in failed', error.message);
-    }
-  }
-
-  async function handleGoogleSignIn() {
-    try {
-      await signInWithGoogle();
-      setIsAuthModalVisible(false);
-    } catch (error) {
-      Alert.alert('Google Sign-in failed', error.message);
+      Alert.alert('Anonymous name failed', error.message);
     }
   }
 
   async function handleSubmit() {
     if (!isLoggedIn(state.session)) {
+      setIsDetailsModalVisible(false);
+      setIsAuthModalVisible(true);
+      return;
+    }
+
+    if (!hasAnonymousHandle(state.session?.user)) {
       setIsDetailsModalVisible(false);
       setIsAuthModalVisible(true);
       return;
@@ -284,11 +279,11 @@ export function AddPlaceScreen({ navigation, route }) {
           <View style={styles.modalSheet}>
             <View style={styles.modalHandle} />
             <EmailAuthCard
-              onSignUp={handleSignUp}
-              onSignIn={handleSignIn}
-              onGoogleSignIn={handleGoogleSignIn}
               authBusy={isEmailAuthLoading}
               helperText={authNoticeMessage}
+              mode={isLoggedIn(state.session) && !hasAnonymousHandle(state.session?.user) ? 'handle' : 'email'}
+              onClaimHandle={handleClaimHandle}
+              onRequestAccess={handleRequestAccess}
             />
             {errorMessage ? <Text style={styles.sheetMeta}>{errorMessage}</Text> : null}
           </View>

@@ -19,7 +19,7 @@ import { MapUserLocationMarker } from '../components/MapUserLocationMarker';
 import { PlaceConversationSection } from '../components/PlaceConversationSection';
 import { ShadButton } from '../components/ShadButton';
 import { useAppContext } from '../context/AppContext';
-import { getUserIdentity, isLoggedIn } from '@topey/shared/lib/auth';
+import { getUserIdentity, hasAnonymousHandle, isLoggedIn } from '@topey/shared/lib/auth';
 import { KATHMANDU_EXPLORE_REGION } from '@topey/shared/lib/constants';
 import { getCommentsForPlace, getMapPlacesForRegion, getVoteBreakdown } from '@topey/shared/lib/geo';
 import { CLEAN_MOBILE_MAP_PROPS } from '@topey/shared/lib/mobileMap';
@@ -33,11 +33,11 @@ export function HomeScreen({ navigation }) {
     isEmailAuthLoading,
     authNoticeMessage,
     errorMessage,
-    signUpWithPassword,
-    signInWithPassword,
-    signInWithGoogle,
+    requestEmailAccess,
+    claimHandle,
     signOut,
     addComment,
+    voteComment,
     votePlace,
     trackPlaceOpen,
     isAuthModalVisible,
@@ -45,6 +45,7 @@ export function HomeScreen({ navigation }) {
   } = useAppContext();
   const currentUser = getUserIdentity(state.session?.user);
   const isAuthenticated = isLoggedIn(state.session);
+  const canPostAnonymously = hasAnonymousHandle(state.session?.user);
   const { region: userRegion, hasResolvedInitialRegion, permissionStatus } = useLiveLocation({
     watch: false,
   });
@@ -83,30 +84,20 @@ export function HomeScreen({ navigation }) {
     )?.value ?? 0;
   }, [selectedPlace, state.session?.user?.id, state.votes]);
 
-  async function handleSignUp({ email, username, password }) {
+  async function handleRequestAccess({ email, username }) {
     try {
-      await signUpWithPassword({ email, username, password });
-      setIsAuthModalVisible(false);
+      await requestEmailAccess({ email, username });
     } catch (error) {
-      Alert.alert('Sign-up failed', error.message);
+      Alert.alert('Email sign-in failed', error.message);
     }
   }
 
-  async function handleSignIn({ email, password }) {
+  async function handleClaimHandle({ username }) {
     try {
-      await signInWithPassword({ email, password });
+      await claimHandle({ handle: username });
       setIsAuthModalVisible(false);
     } catch (error) {
-      Alert.alert('Sign-in failed', error.message);
-    }
-  }
-
-  async function handleGoogleSignIn() {
-    try {
-      await signInWithGoogle();
-      setIsAuthModalVisible(false);
-    } catch (error) {
-      Alert.alert('Google Sign-in failed', error.message);
+      Alert.alert('Anonymous name failed', error.message);
     }
   }
 
@@ -151,8 +142,14 @@ export function HomeScreen({ navigation }) {
     }
   }
 
-  async function handleComment({ body }) {
+  async function handleComment({ body, parentCommentId = null }) {
     if (!isAuthenticated || !selectedPlace) {
+      setIsPlaceModalVisible(false);
+      setIsAuthModalVisible(true);
+      return;
+    }
+
+    if (!canPostAnonymously) {
       setIsPlaceModalVisible(false);
       setIsAuthModalVisible(true);
       return;
@@ -162,9 +159,27 @@ export function HomeScreen({ navigation }) {
       await addComment({
         placeId: selectedPlace.id,
         body,
+        parentCommentId,
       });
     } catch (error) {
       Alert.alert('Comment failed', error.message);
+    }
+  }
+
+  async function handleCommentVote({ commentId, value }) {
+    if (!isAuthenticated) {
+      setIsPlaceModalVisible(false);
+      setIsAuthModalVisible(true);
+      return;
+    }
+
+    try {
+      await voteComment({
+        commentId,
+        value,
+      });
+    } catch (error) {
+      Alert.alert('Vote failed', error.message);
     }
   }
 
@@ -299,8 +314,11 @@ export function HomeScreen({ navigation }) {
 
                 <PlaceConversationSection
                   comments={comments}
+                  commentVotes={state.commentVotes}
+                  currentUserId={state.session?.user?.id ?? ''}
                   isAuthenticated={isAuthenticated}
                   onAddComment={handleComment}
+                  onVoteComment={handleCommentVote}
                   onRequireAuth={openAccountFromPlace}
                   placeName={selectedPlace.name}
                   testIDPrefix="home"
@@ -330,7 +348,8 @@ export function HomeScreen({ navigation }) {
               contentContainerStyle={styles.sheetScrollContent}
             >
               {isAuthenticated ? (
-                <>
+                canPostAnonymously ? (
+                  <>
                   <Text style={styles.sheetTitle}>Profile</Text>
                   <Text style={styles.profileName}>{currentUser.name}</Text>
                   {currentUser.email ? <Text style={styles.profileMeta}>{currentUser.email}</Text> : null}
@@ -340,15 +359,24 @@ export function HomeScreen({ navigation }) {
                     onPress={handleSignOut}
                     style={styles.sheetButton}
                   />
-                </>
+                  </>
+                ) : (
+                  <>
+                    <EmailAuthCard
+                      authBusy={isEmailAuthLoading}
+                      helperText={authNoticeMessage}
+                      mode="handle"
+                      onClaimHandle={handleClaimHandle}
+                    />
+                    {errorMessage ? <Text style={styles.sheetMeta}>{errorMessage}</Text> : null}
+                  </>
+                )
               ) : (
                 <>
                   <EmailAuthCard
-                    onSignUp={handleSignUp}
-                    onSignIn={handleSignIn}
-                    onGoogleSignIn={handleGoogleSignIn}
                     authBusy={isEmailAuthLoading}
                     helperText={authNoticeMessage}
+                    onRequestAccess={handleRequestAccess}
                   />
                   {errorMessage ? <Text style={styles.sheetMeta}>{errorMessage}</Text> : null}
                 </>

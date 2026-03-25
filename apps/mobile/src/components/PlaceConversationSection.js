@@ -17,11 +17,53 @@ function getAuthorName(comment) {
   return comment?.authorName || 'Topey user';
 }
 
+function sortCommentsByCreatedAtDescending(left, right) {
+  return new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime();
+}
+
+function sortCommentsByCreatedAtAscending(left, right) {
+  return new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime();
+}
+
+function sortRepliesAscending(comment) {
+  comment.replies.sort(sortCommentsByCreatedAtAscending);
+  comment.replies.forEach(sortRepliesAscending);
+}
+
+function buildCommentThreads(comments) {
+  const commentNodes = new Map(
+    comments.map((comment) => [
+      comment.id,
+      {
+        ...comment,
+        replies: [],
+      },
+    ])
+  );
+  const rootThreads = [];
+
+  commentNodes.forEach((comment) => {
+    if (comment.parentCommentId && commentNodes.has(comment.parentCommentId)) {
+      commentNodes.get(comment.parentCommentId).replies.push(comment);
+      return;
+    }
+
+    rootThreads.push(comment);
+  });
+
+  rootThreads.sort(sortCommentsByCreatedAtDescending);
+  rootThreads.forEach(sortRepliesAscending);
+  return rootThreads;
+}
+
 export function PlaceConversationSection({
   comments,
+  commentVotes = [],
+  currentUserId = '',
   isAuthenticated,
   onAddComment,
   onRequireAuth,
+  onVoteComment,
   placeName,
   testIDPrefix,
 }) {
@@ -30,8 +72,25 @@ export function PlaceConversationSection({
   const [isDiscussionModalVisible, setIsDiscussionModalVisible] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [replyTarget, setReplyTarget] = useState(null);
-  const [commentVotes, setCommentVotes] = useState({});
-  const previewComments = useMemo(() => comments.slice(0, 2), [comments]);
+  const commentThreads = useMemo(() => buildCommentThreads(comments), [comments]);
+  const previewComments = useMemo(() => commentThreads.slice(0, 2), [commentThreads]);
+  const voteState = useMemo(() => {
+    const currentVoteByCommentId = {};
+    const scoreByCommentId = {};
+
+    commentVotes.forEach((vote) => {
+      scoreByCommentId[vote.commentId] = (scoreByCommentId[vote.commentId] ?? 0) + vote.value;
+
+      if (vote.userId === currentUserId) {
+        currentVoteByCommentId[vote.commentId] = vote.value;
+      }
+    });
+
+    return {
+      currentVoteByCommentId,
+      scoreByCommentId,
+    };
+  }, [commentVotes, currentUserId]);
 
   function requireAuth() {
     setIsComposerModalVisible(false);
@@ -80,6 +139,7 @@ export function PlaceConversationSection({
       setIsSubmitting(true);
       await onAddComment({
         body: commentDraft,
+        parentCommentId: replyTarget?.id ?? null,
       });
       closeComposer();
     } catch (error) {
@@ -89,20 +149,20 @@ export function PlaceConversationSection({
     }
   }
 
-  function handleCommentVote(commentId, value) {
+  async function handleCommentVote(commentId, value) {
     if (!isAuthenticated) {
       requireAuth();
       return;
     }
 
-    setCommentVotes((currentVotes) => {
-      const currentValue = currentVotes[commentId] ?? 0;
-
-      return {
-        ...currentVotes,
-        [commentId]: currentValue === value ? 0 : value,
-      };
-    });
+    try {
+      await onVoteComment?.({
+        commentId,
+        value,
+      });
+    } catch (error) {
+      Alert.alert('Vote failed', error.message);
+    }
   }
 
   return (
@@ -182,36 +242,19 @@ export function PlaceConversationSection({
               contentContainerStyle={styles.discussionContent}
               showsVerticalScrollIndicator={false}
             >
-              {comments.map((comment, index) => (
-                <View key={comment.id} style={styles.discussionComment}>
-                  {index > 0 ? <View style={styles.discussionSeparator} /> : null}
-                  <Text style={styles.commentAuthor}>{getAuthorName(comment)}</Text>
-                  <Text style={styles.commentBody}>{comment.body}</Text>
-                  <View style={styles.commentActionRow}>
-                    <CommentArrowButton
-                      direction="up"
-                      isActive={(commentVotes[comment.id] ?? 0) === 1}
-                      onPress={() => handleCommentVote(comment.id, 1)}
-                      testID={`${testIDPrefix}-comment-up-${comment.id}`}
-                    />
-                    <Text style={styles.commentVoteScore}>
-                      {formatSignedValue(commentVotes[comment.id] ?? 0)}
-                    </Text>
-                    <CommentArrowButton
-                      direction="down"
-                      isActive={(commentVotes[comment.id] ?? 0) === -1}
-                      onPress={() => handleCommentVote(comment.id, -1)}
-                      testID={`${testIDPrefix}-comment-down-${comment.id}`}
-                    />
-                    <Pressable
-                      accessibilityRole="button"
-                      onPress={() => openComposer(comment)}
-                      style={styles.replyButton}
-                    >
-                      <Text style={styles.replyButtonLabel}>Reply</Text>
-                    </Pressable>
-                  </View>
-                </View>
+              {commentThreads.map((commentThread, index) => (
+                <DiscussionThread
+                  key={commentThread.id}
+                  comment={commentThread}
+                  currentVote={voteState.currentVoteByCommentId[commentThread.id] ?? 0}
+                  depth={0}
+                  index={index}
+                  onReply={openComposer}
+                  onVote={handleCommentVote}
+                  score={voteState.scoreByCommentId[commentThread.id] ?? 0}
+                  testIDPrefix={testIDPrefix}
+                  voteState={voteState}
+                />
               ))}
             </ScrollView>
 
@@ -267,6 +310,70 @@ export function PlaceConversationSection({
         </KeyboardAvoidingView>
       </Modal>
     </>
+  );
+}
+
+function DiscussionThread({
+  comment,
+  currentVote,
+  depth,
+  index,
+  onReply,
+  onVote,
+  score,
+  testIDPrefix,
+  voteState,
+}) {
+  return (
+    <View
+      style={[
+        styles.discussionThread,
+        depth > 0 && styles.nestedThread,
+      ]}
+    >
+      {index > 0 && depth === 0 ? <View style={styles.discussionSeparator} /> : null}
+      <View style={styles.discussionComment}>
+        <Text style={styles.commentAuthor}>{getAuthorName(comment)}</Text>
+        <Text style={styles.commentBody}>{comment.body}</Text>
+        <View style={styles.commentActionRow}>
+          <CommentArrowButton
+            direction="up"
+            isActive={currentVote === 1}
+            onPress={() => onVote(comment.id, 1)}
+            testID={`${testIDPrefix}-comment-up-${comment.id}`}
+          />
+          <Text style={styles.commentVoteScore}>{formatSignedValue(score)}</Text>
+          <CommentArrowButton
+            direction="down"
+            isActive={currentVote === -1}
+            onPress={() => onVote(comment.id, -1)}
+            testID={`${testIDPrefix}-comment-down-${comment.id}`}
+          />
+          <Pressable accessibilityRole="button" onPress={() => onReply(comment)} style={styles.replyButton}>
+            <Text style={styles.replyButtonLabel}>Reply</Text>
+          </Pressable>
+        </View>
+      </View>
+
+      {comment.replies?.length ? (
+        <View style={styles.threadReplies}>
+          {comment.replies.map((reply, replyIndex) => (
+            <DiscussionThread
+              key={reply.id}
+              comment={reply}
+              currentVote={voteState.currentVoteByCommentId[reply.id] ?? 0}
+              depth={Math.min(depth + 1, 3)}
+              index={replyIndex}
+              onReply={onReply}
+              onVote={onVote}
+              score={voteState.scoreByCommentId[reply.id] ?? 0}
+              testIDPrefix={testIDPrefix}
+              voteState={voteState}
+            />
+          ))}
+        </View>
+      ) : null}
+    </View>
   );
 }
 
@@ -441,10 +548,22 @@ const styles = StyleSheet.create({
   discussionComment: {
     paddingVertical: spacing.md,
   },
+  discussionThread: {
+    position: 'relative',
+  },
   discussionSeparator: {
     backgroundColor: colors.separator,
     height: 0.75,
     marginBottom: spacing.md,
+  },
+  nestedThread: {
+    marginLeft: spacing.md,
+    paddingLeft: spacing.md,
+  },
+  threadReplies: {
+    borderLeftColor: colors.separator,
+    borderLeftWidth: 0.75,
+    marginLeft: spacing.xs,
   },
   commentAuthor: {
     color: colors.text,

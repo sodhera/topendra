@@ -20,6 +20,7 @@ function createInitialAppData() {
     ],
     votes: [],
     comments: [],
+    commentVotes: [],
   };
 }
 
@@ -52,6 +53,7 @@ const {
   createPlace,
   createPlaceOpenEvent,
   fetchAppData,
+  voteForComment,
   voteForPlace,
 } = vi.hoisted(() => {
   const state = {
@@ -101,16 +103,20 @@ const {
     fetchAppData: vi.fn(async ({ includeComments }) => ({
       ...state.appData,
       comments: includeComments ? state.appData.comments : [],
+      commentVotes: state.appData.commentVotes,
     })),
+    voteForComment: vi.fn(async () => undefined),
     voteForPlace: vi.fn(async () => undefined),
   };
 });
 
 vi.mock('./lib/backend', () => ({
+  claimAnonymousHandle: vi.fn(async ({ handle }) => handle),
   createComment,
   createPlace,
   createPlaceOpenEvent,
   fetchAppData,
+  voteForComment,
   voteForPlace,
 }));
 

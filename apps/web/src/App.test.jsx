@@ -3,13 +3,60 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
 
+const appData = {
+  places: [
+    {
+      id: 'place-1',
+      name: 'Shell Test Place',
+      description: 'A routeable place from the live dataset.',
+      latitude: 27.7172,
+      longitude: 85.324,
+      authorName: 'quiet_reader',
+      createdAt: '2026-03-23T00:00:00.000Z',
+      createdBy: 'user-1',
+      threadCount: 0,
+    },
+  ],
+  votes: [
+    {
+      id: 'vote-1',
+      placeId: 'place-1',
+      userId: 'user-9',
+      value: 1,
+      createdAt: '2026-03-23T00:01:00.000Z',
+    },
+  ],
+  comments: [],
+  commentVotes: [],
+};
+
+vi.mock('./lib/backend', () => ({
+  claimAnonymousHandle: vi.fn(async ({ handle }) => handle),
+  createComment: vi.fn(),
+  createPlace: vi.fn(),
+  createPlaceOpenEvent: vi.fn(async () => undefined),
+  fetchAppData: vi.fn(async () => appData),
+  voteForComment: vi.fn(),
+  voteForPlace: vi.fn(),
+}));
+
 vi.mock('./lib/supabase', () => ({
   getSafeSession: vi.fn().mockResolvedValue({
     session: null,
     recoveredFromInvalidToken: false,
   }),
-  hasSupabaseConfig: false,
-  supabase: null,
+  hasSupabaseConfig: true,
+  supabase: {
+    auth: {
+      onAuthStateChange: vi.fn(() => ({
+        data: {
+          subscription: {
+            unsubscribe: vi.fn(),
+          },
+        },
+      })),
+    },
+  },
 }));
 
 vi.mock('./components/DesktopMap', () => ({
@@ -21,7 +68,7 @@ vi.mock('./components/DesktopMap', () => ({
           aria-label="Select first place"
           type="button"
           onClick={() =>
-            onSelectPlace('00000000-0000-4000-8000-000000001001', {
+            onSelectPlace('place-1', {
               openModal: true,
               sourceScreen: 'test_marker',
             })
@@ -48,10 +95,10 @@ describe('App web shell', () => {
 
     fireEvent.click(screen.getByLabelText('Select first place'));
 
-    expect(await screen.findByRole('heading', { name: 'Thamel Courtyard' })).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: 'Shell Test Place' })).toBeTruthy();
     expect(screen.getByText('Open location')).toBeTruthy();
-    expect(screen.getByText(/\+5 points/i)).toBeTruthy();
-    expect(window.location.pathname).toBe('/places/00000000-0000-4000-8000-000000001001');
+    expect(screen.getByText(/\+1 points/i)).toBeTruthy();
+    expect(window.location.pathname).toBe('/places/place-1');
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 

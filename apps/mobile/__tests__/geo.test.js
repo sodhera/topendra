@@ -29,7 +29,7 @@ describe('geo helpers', () => {
     expect(distanceInKm(from, to)).toBeGreaterThan(0);
   });
 
-  test('map place selection reduces marker density as the viewport zooms out', () => {
+  test('map place selection keeps all visible markers available across zoom levels', () => {
     const state = buildSeedState();
     const closeRegion = {
       latitude: 27.7172,
@@ -54,9 +54,8 @@ describe('geo helpers', () => {
     const farPlaces = getMapPlacesForRegion(state.places, farRegion, state.votes);
 
     expect(closePlaces.length).toBe(state.places.length);
-    expect(mediumPlaces.length).toBeLessThan(closePlaces.length);
-    expect(mediumPlaces.length).toBeGreaterThan(farPlaces.length);
-    expect(farPlaces.length).toBeLessThanOrEqual(6);
+    expect(mediumPlaces.length).toBe(closePlaces.length);
+    expect(farPlaces.length).toBe(closePlaces.length);
   });
 
   test('map place selection keeps the selected place visible when zoomed out', () => {

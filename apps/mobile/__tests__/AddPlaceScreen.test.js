@@ -99,9 +99,8 @@ jest.mock('../src/components/EmailAuthCard', () => ({
 
 describe('AddPlaceScreen', () => {
   const addPlace = jest.fn();
-  const signUpWithPassword = jest.fn();
-  const signInWithPassword = jest.fn();
-  const signInWithGoogle = jest.fn();
+  const requestEmailAccess = jest.fn();
+  const claimHandle = jest.fn();
   const navigation = {
     goBack: jest.fn(),
     navigate: jest.fn(),
@@ -115,15 +114,17 @@ describe('AddPlaceScreen', () => {
         session: {
           user: {
             id: 'user-1',
+            user_metadata: {
+              preferred_username: 'quiet_reader',
+            },
           },
         },
       },
       isEmailAuthLoading: false,
       authNoticeMessage: '',
       errorMessage: '',
-      signUpWithPassword,
-      signInWithPassword,
-      signInWithGoogle,
+      requestEmailAccess,
+      claimHandle,
       addPlace,
     });
 
@@ -207,9 +208,8 @@ describe('AddPlaceScreen', () => {
       isEmailAuthLoading: false,
       authNoticeMessage: '',
       errorMessage: '',
-      signUpWithPassword,
-      signInWithPassword,
-      signInWithGoogle,
+      requestEmailAccess,
+      claimHandle,
       addPlace,
     });
 

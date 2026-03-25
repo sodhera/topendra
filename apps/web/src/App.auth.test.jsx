@@ -19,14 +19,14 @@ const appData = {
   ],
   votes: [],
   comments: [],
+  commentVotes: [],
 };
 
 const {
   authState,
-  signInWithOAuth,
-  signInWithPassword,
+  claimAnonymousHandle,
+  signInWithOtp,
   signOut,
-  signUp,
 } = vi.hoisted(() => {
   const state = {
     callback: null,
@@ -35,28 +35,13 @@ const {
 
   return {
     authState: state,
-    signInWithOAuth: vi.fn(async () => ({ error: null })),
-    signInWithPassword: vi.fn(async ({ email, password }) => {
+    claimAnonymousHandle: vi.fn(async ({ handle }) => handle),
+    signInWithOtp: vi.fn(async ({ email, options }) => {
       state.session = {
         user: {
-          id: 'user-123',
+          id: options?.data?.preferred_username ? 'user-signup' : 'user-123',
           email,
-          user_metadata: {
-            preferred_username: 'quiet_reader',
-          },
-        },
-      };
-      state.callback?.('SIGNED_IN', state.session);
-      return { error: null };
-    }),
-    signUp: vi.fn(async ({ email, options }) => {
-      state.session = {
-        user: {
-          id: 'user-signup',
-          email,
-          user_metadata: {
-            preferred_username: options?.data?.preferred_username ?? 'new_user',
-          },
+          user_metadata: options?.data ?? {},
         },
       };
       state.callback?.('SIGNED_IN', state.session);
@@ -65,15 +50,18 @@ const {
     signOut: vi.fn(async () => {
       state.session = null;
       state.callback?.('SIGNED_OUT', null);
+      return { error: null };
     }),
   };
 });
 
 vi.mock('./lib/backend', () => ({
+  claimAnonymousHandle,
   createComment: vi.fn(),
   createPlace: vi.fn(),
   createPlaceOpenEvent: vi.fn(),
   fetchAppData: vi.fn(async () => appData),
+  voteForComment: vi.fn(),
   voteForPlace: vi.fn(),
 }));
 
@@ -95,10 +83,8 @@ vi.mock('./lib/supabase', () => ({
           },
         };
       }),
-      signInWithOAuth,
-      signInWithPassword,
+      signInWithOtp,
       signOut,
-      signUp,
     },
   },
 }));
@@ -114,13 +100,12 @@ describe('App web auth', () => {
     window.history.replaceState({}, '', '/');
     authState.callback = null;
     authState.session = null;
-    signInWithOAuth.mockClear();
-    signInWithPassword.mockClear();
+    claimAnonymousHandle.mockClear();
+    signInWithOtp.mockClear();
     signOut.mockClear();
-    signUp.mockClear();
   });
 
-  it('signs in with email/password and signs out from the profile modal', async () => {
+  it('requests an email sign-in link, lands in profile, and signs out', async () => {
     render(<App />);
 
     fireEvent.click(await screen.findByTestId('account-button'));
@@ -129,17 +114,30 @@ describe('App web auth', () => {
     fireEvent.change(screen.getByPlaceholderText('Email'), {
       target: { value: 'testuser@topey.app' },
     });
-    fireEvent.change(screen.getByPlaceholderText('Password'), {
-      target: { value: 'TopeyTest123!' },
+    fireEvent.change(screen.getByPlaceholderText('Anonymous name (optional for returning users)'), {
+      target: { value: 'quiet_reader' },
     });
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Sign in' }));
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Email me a sign-in link' }));
 
     await waitFor(() => {
       expect(screen.getByTestId('account-button').textContent).toBe('Profile');
     });
-    expect(signInWithPassword).toHaveBeenCalledWith({
+
+    expect(signInWithOtp).toHaveBeenCalledWith({
       email: 'testuser@topey.app',
-      password: 'TopeyTest123!',
+      options: {
+        shouldCreateUser: true,
+        emailRedirectTo: 'http://localhost:3000/',
+        data: {
+          preferred_username: 'quiet_reader',
+        },
+      },
+    });
+    expect(claimAnonymousHandle).toHaveBeenCalledWith({
+      user: expect.objectContaining({
+        email: 'testuser@topey.app',
+      }),
+      handle: 'quiet_reader',
     });
 
     fireEvent.click(screen.getByTestId('account-button'));
@@ -152,51 +150,35 @@ describe('App web auth', () => {
     expect(signOut).toHaveBeenCalledTimes(1);
   });
 
-  it('sends preferred_username during sign up and lands in the authenticated state', async () => {
+  it('keeps the auth sheet open to claim a handle when email sign-in returns without one', async () => {
     render(<App />);
 
     fireEvent.click(await screen.findByTestId('account-button'));
     const dialog = await screen.findByRole('dialog');
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Need an account? Sign up' }));
 
     fireEvent.change(screen.getByPlaceholderText('Email'), {
       target: { value: 'signup@topey.app' },
     });
-    fireEvent.change(screen.getByPlaceholderText('Anonymous username'), {
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Email me a sign-in link' }));
+
+    expect(
+      await screen.findByRole('heading', { name: 'Choose your anonymous name' })
+    ).toBeTruthy();
+
+    fireEvent.change(screen.getByPlaceholderText('Anonymous name'), {
       target: { value: 'Quiet Reader' },
     });
-    fireEvent.change(screen.getByPlaceholderText('Password'), {
-      target: { value: 'TopeySignup123!' },
-    });
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Create account' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Save anonymous name' }));
 
     await waitFor(() => {
-      expect(screen.getByTestId('account-button').textContent).toBe('Profile');
+      expect(screen.queryByRole('dialog')).toBeNull();
     });
 
-    expect(signUp).toHaveBeenCalledWith({
-      email: 'signup@topey.app',
-      password: 'TopeySignup123!',
-      options: {
-        data: {
-          preferred_username: 'Quiet Reader',
-        },
-      },
-    });
-  });
-
-  it('starts Google auth with the web origin redirect URL', async () => {
-    render(<App />);
-
-    fireEvent.click(await screen.findByTestId('account-button'));
-    const dialog = await screen.findByRole('dialog');
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Continue with Google' }));
-
-    expect(signInWithOAuth).toHaveBeenCalledWith({
-      provider: 'google',
-      options: {
-        redirectTo: 'http://localhost:3000/',
-      },
+    expect(claimAnonymousHandle).toHaveBeenCalledWith({
+      user: expect.objectContaining({
+        email: 'signup@topey.app',
+      }),
+      handle: 'Quiet Reader',
     });
   });
 

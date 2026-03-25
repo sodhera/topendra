@@ -1,13 +1,15 @@
 import React from 'react';
-import { buildKathmanduDemoData } from '@topey/shared/data/demoCatalog';
 import {
+  getAnonymousHandle,
   getUserIdentity,
+  hasAnonymousHandle,
   isLoggedIn,
   normalizeAnonymousUsername,
 } from '@topey/shared/lib/auth';
 import {
   DEFAULT_REGION,
   KATHMANDU_EXPLORE_REGION,
+  PENDING_ANONYMOUS_HANDLE_KEY,
   VIEWER_SESSION_KEY,
 } from '@topey/shared/lib/constants';
 import {
@@ -18,16 +20,16 @@ import {
   getVoteBreakdown,
 } from '@topey/shared/lib/geo';
 import {
+  claimAnonymousHandle,
   createComment,
   createPlace,
   createPlaceOpenEvent,
   fetchAppData,
+  voteForComment,
   voteForPlace,
 } from './lib/backend';
 import { getSafeSession, hasSupabaseConfig, supabase } from './lib/supabase';
 import DesktopMap from './components/DesktopMap';
-
-const demoData = buildKathmanduDemoData();
 const WEB_SHELL_COLORS = {
   background: '#F4F4F5',
   card: '#FFFFFF',
@@ -46,16 +48,16 @@ const RELATIVE_TIME_FORMATTER = new Intl.RelativeTimeFormat('en', {
   numeric: 'auto',
 });
 
-function getPlaceVoteKey(placeId, userId) {
-  return `${placeId}:${userId}`;
+function getVoteKey(entityId, userId) {
+  return `${entityId}:${userId}`;
 }
 
-function applyPlaceVoteOverride(votes, { placeId, userId, value }) {
+function applyVoteOverride(votes, { entityId, entityKey, userId, value }) {
   let hasMatchedExistingVote = false;
   const nextVotes = [];
 
   votes.forEach((vote) => {
-    if (vote.placeId === placeId && vote.userId === userId) {
+    if (vote[entityKey] === entityId && vote.userId === userId) {
       hasMatchedExistingVote = true;
 
       if (value !== 0) {
@@ -73,8 +75,8 @@ function applyPlaceVoteOverride(votes, { placeId, userId, value }) {
 
   if (!hasMatchedExistingVote && value !== 0) {
     nextVotes.unshift({
-      id: `optimistic-${placeId}-${userId}`,
-      placeId,
+      id: `optimistic-${entityId}-${userId}`,
+      [entityKey]: entityId,
       userId,
       value,
       createdAt: new Date().toISOString(),
@@ -84,10 +86,34 @@ function applyPlaceVoteOverride(votes, { placeId, userId, value }) {
   return nextVotes;
 }
 
-function applyOptimisticPlaceVotes(votes, optimisticVotesByKey) {
+function applyOptimisticVotes(votes, optimisticVotesByKey, entityKey) {
   return Object.values(optimisticVotesByKey).reduce(
-    (currentVotes, voteOverride) => applyPlaceVoteOverride(currentVotes, voteOverride),
+    (currentVotes, voteOverride) =>
+      applyVoteOverride(currentVotes, {
+        ...voteOverride,
+        entityKey,
+      }),
     votes
+  );
+}
+
+function getVoteScore(votes, entityKey, entityId) {
+  return votes.reduce((score, vote) => {
+    if (vote[entityKey] !== entityId) {
+      return score;
+    }
+
+    return score + vote.value;
+  }, 0);
+}
+
+function getCurrentVoteValue(votes, entityKey, entityId, userId) {
+  if (!entityId || !userId) {
+    return 0;
+  }
+
+  return (
+    votes.find((vote) => vote[entityKey] === entityId && vote.userId === userId)?.value ?? 0
   );
 }
 
@@ -105,6 +131,31 @@ function getOrCreateViewerSessionId() {
   const nextId = createViewerSessionId();
   window.localStorage.setItem(VIEWER_SESSION_KEY, nextId);
   return nextId;
+}
+
+function readPendingAnonymousHandle() {
+  if (typeof window === 'undefined') {
+    return '';
+  }
+
+  return normalizeAnonymousUsername(
+    window.localStorage.getItem(PENDING_ANONYMOUS_HANDLE_KEY) ?? ''
+  );
+}
+
+function writePendingAnonymousHandle(handle) {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  const normalizedHandle = normalizeAnonymousUsername(handle);
+
+  if (normalizedHandle) {
+    window.localStorage.setItem(PENDING_ANONYMOUS_HANDLE_KEY, normalizedHandle);
+    return;
+  }
+
+  window.localStorage.removeItem(PENDING_ANONYMOUS_HANDLE_KEY);
 }
 
 function openLocationHref(place) {
@@ -160,14 +211,13 @@ export default function App() {
   const [appRoute, setAppRoute] = React.useState(() => getAppRouteFromLocation());
   const [session, setSession] = React.useState(null);
   const [viewerSessionId, setViewerSessionId] = React.useState('');
-  const [places, setPlaces] = React.useState(demoData.places);
-  const [votes, setVotes] = React.useState(demoData.votes);
-  const [allComments, setAllComments] = React.useState(demoData.comments);
+  const [places, setPlaces] = React.useState([]);
+  const [votes, setVotes] = React.useState([]);
+  const [allComments, setAllComments] = React.useState([]);
+  const [commentVotes, setCommentVotes] = React.useState([]);
   const [isHydrated, setIsHydrated] = React.useState(false);
   const [isAuthBusy, setIsAuthBusy] = React.useState(false);
-  const [authNoticeMessage, setAuthNoticeMessage] = React.useState(
-    hasSupabaseConfig ? '' : 'Web is using demo data until Supabase is configured.'
-  );
+  const [authNoticeMessage, setAuthNoticeMessage] = React.useState('');
   const [errorMessage, setErrorMessage] = React.useState('');
   const [selectedPlaceId, setSelectedPlaceId] = React.useState('');
   const [focusedPlaceId, setFocusedPlaceId] = React.useState('');
@@ -178,8 +228,8 @@ export default function App() {
   const [commentDraft, setCommentDraft] = React.useState('');
   const [replyTarget, setReplyTarget] = React.useState(null);
   const [isSubmittingComment, setIsSubmittingComment] = React.useState(false);
-  const [commentVotes, setCommentVotes] = React.useState({});
   const [optimisticPlaceVotes, setOptimisticPlaceVotes] = React.useState({});
+  const [optimisticCommentVotes, setOptimisticCommentVotes] = React.useState({});
   const [isAddMode, setIsAddMode] = React.useState(false);
   const [isAddSheetVisible, setIsAddSheetVisible] = React.useState(false);
   const [newPlaceName, setNewPlaceName] = React.useState('');
@@ -190,9 +240,15 @@ export default function App() {
   });
   const [isSavingPlace, setIsSavingPlace] = React.useState(false);
   const placeVoteRequestVersionRef = React.useRef({});
+  const commentVoteRequestVersionRef = React.useRef({});
 
   const currentUser = React.useMemo(() => getUserIdentity(session?.user), [session]);
+  const currentAnonymousHandle = React.useMemo(
+    () => getAnonymousHandle(session?.user),
+    [session]
+  );
   const isAuthenticated = isLoggedIn(session);
+  const canPostAnonymously = hasAnonymousHandle(session?.user);
   const isPlaceRoute = appRoute.view === 'place';
 
   React.useEffect(() => {
@@ -231,31 +287,112 @@ export default function App() {
     setAppRoute(nextRoute);
   }, []);
 
+  const maybeClaimPendingHandle = React.useCallback(async (activeSession) => {
+    if (!activeSession?.user || !supabase) {
+      return activeSession ?? null;
+    }
+
+    const pendingHandle = readPendingAnonymousHandle();
+    const existingHandle = getAnonymousHandle(activeSession.user);
+    const handleToClaim = pendingHandle || existingHandle;
+
+    if (!handleToClaim) {
+      return activeSession;
+    }
+
+    const claimedHandle = await claimAnonymousHandle({
+      user: activeSession.user,
+      handle: handleToClaim,
+    });
+    writePendingAnonymousHandle('');
+
+    return {
+      ...activeSession,
+      user: {
+        ...activeSession.user,
+        user_metadata: {
+          ...(activeSession.user.user_metadata ?? {}),
+          preferred_username: claimedHandle,
+        },
+      },
+    };
+  }, []);
+
   const refreshData = React.useCallback(async (activeSession) => {
+    if (!hasSupabaseConfig) {
+      setPlaces([]);
+      setVotes([]);
+      setAllComments([]);
+      setCommentVotes([]);
+      setErrorMessage('Supabase environment variables are missing for the web app.');
+      return {
+        places: [],
+        votes: [],
+        comments: [],
+        commentVotes: [],
+      };
+    }
+
     try {
-      const nextData = hasSupabaseConfig
-        ? await fetchAppData({
-            includeComments: Boolean(activeSession?.user),
-          })
-        : demoData;
+      const nextData = await fetchAppData({
+        includeComments: Boolean(activeSession?.user),
+      });
 
       setPlaces(nextData.places);
       setVotes(nextData.votes);
       setAllComments(nextData.comments);
-
-      if (hasSupabaseConfig) {
-        setErrorMessage('');
-      }
+      setCommentVotes(nextData.commentVotes);
+      setErrorMessage('');
 
       return nextData;
     } catch (error) {
-      setPlaces(demoData.places);
-      setVotes(demoData.votes);
-      setAllComments(demoData.comments);
+      setPlaces([]);
+      setVotes([]);
+      setAllComments([]);
+      setCommentVotes([]);
       setErrorMessage(error?.message ?? 'Topey could not reach Supabase right now.');
-      return demoData;
+      return {
+        places: [],
+        votes: [],
+        comments: [],
+        commentVotes: [],
+      };
     }
   }, []);
+
+  const applySession = React.useCallback(
+    async (nextSession, { keepAuthModalOpen = false } = {}) => {
+      let resolvedSession = nextSession ?? null;
+
+      if (resolvedSession?.user) {
+        try {
+          resolvedSession = await maybeClaimPendingHandle(resolvedSession);
+          setErrorMessage('');
+        } catch (error) {
+          setErrorMessage(error?.message ?? 'Anonymous name setup failed.');
+          setAuthNoticeMessage('Choose a different anonymous name to finish setup.');
+          setIsAuthModalVisible(true);
+        }
+      }
+
+      setSession(resolvedSession);
+
+      const hasHandle = hasAnonymousHandle(resolvedSession?.user);
+      if (resolvedSession?.user) {
+        if (hasHandle && !keepAuthModalOpen) {
+          setIsAuthModalVisible(false);
+          setAuthNoticeMessage('');
+        } else if (!hasHandle) {
+          setIsAuthModalVisible(true);
+          setAuthNoticeMessage('Choose an anonymous name before posting or adding places.');
+        }
+      }
+
+      await refreshData(resolvedSession);
+      return resolvedSession;
+    },
+    [maybeClaimPendingHandle, refreshData]
+  );
 
   React.useEffect(() => {
     let active = true;
@@ -263,17 +400,16 @@ export default function App() {
     async function bootstrap() {
       try {
         const nextViewerSessionId = getOrCreateViewerSessionId();
-        const { session: safeSession } = hasSupabaseConfig
-          ? await getSafeSession()
-          : { session: null };
+        const { session: safeSession } = hasSupabaseConfig ? await getSafeSession() : { session: null };
 
         if (!active) {
           return;
         }
 
         setViewerSessionId(nextViewerSessionId);
-        setSession(safeSession ?? null);
-        await refreshData(safeSession ?? null);
+        await applySession(safeSession ?? null, {
+          keepAuthModalOpen: !hasAnonymousHandle(safeSession?.user),
+        });
       } catch (error) {
         if (active) {
           setErrorMessage(error?.message ?? 'Topey could not restore the saved session.');
@@ -300,20 +436,14 @@ export default function App() {
         return;
       }
 
-      setSession(nextSession ?? null);
-      if (nextSession?.user) {
-        setIsAuthModalVisible(false);
-        setAuthNoticeMessage('');
-      }
-
-      refreshData(nextSession ?? null).catch(() => undefined);
+      applySession(nextSession ?? null).catch(() => undefined);
     });
 
     return () => {
       active = false;
       subscription.unsubscribe();
     };
-  }, [refreshData]);
+  }, [applySession]);
 
   React.useEffect(() => {
     if (typeof navigator === 'undefined' || !navigator.geolocation) {
@@ -351,8 +481,12 @@ export default function App() {
     [focusedPlaceId, places]
   );
   const effectiveVotes = React.useMemo(
-    () => applyOptimisticPlaceVotes(votes, optimisticPlaceVotes),
+    () => applyOptimisticVotes(votes, optimisticPlaceVotes, 'placeId'),
     [optimisticPlaceVotes, votes]
+  );
+  const effectiveCommentVotes = React.useMemo(
+    () => applyOptimisticVotes(commentVotes, optimisticCommentVotes, 'commentId'),
+    [commentVotes, optimisticCommentVotes]
   );
   const visiblePlaces = React.useMemo(
     () =>
@@ -374,16 +508,25 @@ export default function App() {
     () => getVoteBreakdown(effectiveVotes, selectedPlace?.id),
     [effectiveVotes, selectedPlace]
   );
-  const currentVote = React.useMemo(() => {
-    if (!selectedPlace || !session?.user?.id) {
-      return 0;
-    }
+  const commentVoteState = React.useMemo(() => {
+    const scoreByCommentId = {};
+    const currentVoteByCommentId = {};
 
-    return (
-      effectiveVotes.find(
-        (vote) => vote.placeId === selectedPlace.id && vote.userId === session.user.id
-      )?.value ?? 0
-    );
+    effectiveCommentVotes.forEach((vote) => {
+      scoreByCommentId[vote.commentId] = (scoreByCommentId[vote.commentId] ?? 0) + vote.value;
+
+      if (vote.userId === session?.user?.id) {
+        currentVoteByCommentId[vote.commentId] = vote.value;
+      }
+    });
+
+    return {
+      currentVoteByCommentId,
+      scoreByCommentId,
+    };
+  }, [effectiveCommentVotes, session?.user?.id]);
+  const currentVote = React.useMemo(() => {
+    return getCurrentVoteValue(effectiveVotes, 'placeId', selectedPlace?.id, session?.user?.id);
   }, [effectiveVotes, selectedPlace, session]);
 
   const trackPlaceOpen = React.useCallback(
@@ -493,7 +636,7 @@ export default function App() {
 
       const placeId = selectedPlace.id;
       const userId = session.user.id;
-      const voteKey = getPlaceVoteKey(placeId, userId);
+      const voteKey = getVoteKey(placeId, userId);
       const nextOptimisticValue = currentVote === value ? 0 : value;
       const nextRequestVersion = (placeVoteRequestVersionRef.current[voteKey] ?? 0) + 1;
 
@@ -501,7 +644,7 @@ export default function App() {
       setOptimisticPlaceVotes((currentVotes) => ({
         ...currentVotes,
         [voteKey]: {
-          placeId,
+          entityId: placeId,
           userId,
           value: nextOptimisticValue,
         },
@@ -519,8 +662,9 @@ export default function App() {
         }
 
         setVotes((currentVotes) =>
-          applyPlaceVoteOverride(currentVotes, {
-            placeId,
+          applyVoteOverride(currentVotes, {
+            entityId: placeId,
+            entityKey: 'placeId',
             userId,
             value: nextOptimisticValue,
           })
@@ -572,6 +716,13 @@ export default function App() {
       return;
     }
 
+    if (!hasAnonymousHandle(session.user)) {
+      closeComposer();
+      setAuthNoticeMessage('Choose an anonymous name before posting or adding places.');
+      setIsAuthModalVisible(true);
+      return;
+    }
+
     if (!commentDraft.trim()) {
       setErrorMessage('Write something before posting.');
       return;
@@ -596,25 +747,75 @@ export default function App() {
   }, [closeComposer, commentDraft, isAuthenticated, openAuthModal, refreshData, selectedPlace, session]);
 
   const handleCommentVote = React.useCallback(
-    (commentId, value) => {
-      if (!isAuthenticated) {
+    async (commentId, value) => {
+      if (!isAuthenticated || !session?.user?.id) {
         openAuthModal();
         return;
       }
 
-      setCommentVotes((currentVotes) => {
-        const currentValue = currentVotes[commentId] ?? 0;
+      const userId = session.user.id;
+      const voteKey = getVoteKey(commentId, userId);
+      const currentCommentVote = getCurrentVoteValue(
+        effectiveCommentVotes,
+        'commentId',
+        commentId,
+        userId
+      );
+      const nextOptimisticValue = currentCommentVote === value ? 0 : value;
+      const nextRequestVersion = (commentVoteRequestVersionRef.current[voteKey] ?? 0) + 1;
 
-        return {
-          ...currentVotes,
-          [commentId]: currentValue === value ? 0 : value,
-        };
-      });
+      commentVoteRequestVersionRef.current[voteKey] = nextRequestVersion;
+      setOptimisticCommentVotes((currentVotes) => ({
+        ...currentVotes,
+        [voteKey]: {
+          entityId: commentId,
+          userId,
+          value: nextOptimisticValue,
+        },
+      }));
+
+      try {
+        await voteForComment({
+          commentId,
+          userId,
+          value,
+        });
+
+        if (commentVoteRequestVersionRef.current[voteKey] !== nextRequestVersion) {
+          return;
+        }
+
+        setCommentVotes((currentVotes) =>
+          applyVoteOverride(currentVotes, {
+            entityId: commentId,
+            entityKey: 'commentId',
+            userId,
+            value: nextOptimisticValue,
+          })
+        );
+        setOptimisticCommentVotes((currentVotes) => {
+          const nextVotes = { ...currentVotes };
+          delete nextVotes[voteKey];
+          return nextVotes;
+        });
+        setErrorMessage('');
+      } catch (error) {
+        if (commentVoteRequestVersionRef.current[voteKey] !== nextRequestVersion) {
+          return;
+        }
+
+        setOptimisticCommentVotes((currentVotes) => {
+          const nextVotes = { ...currentVotes };
+          delete nextVotes[voteKey];
+          return nextVotes;
+        });
+        setErrorMessage(error?.message ?? 'Comment vote failed.');
+      }
     },
-    [isAuthenticated, openAuthModal]
+    [effectiveCommentVotes, isAuthenticated, openAuthModal, session]
   );
 
-  const handleSignUp = React.useCallback(async ({ email, username, password }) => {
+  const handleRequestEmailAccess = React.useCallback(async ({ email, username }) => {
     if (!supabase) {
       setErrorMessage('Supabase is not configured for browser auth.');
       return;
@@ -628,26 +829,22 @@ export default function App() {
       return;
     }
 
-    if (normalizedUsername.length < 3) {
-      setErrorMessage('Choose an anonymous username with at least 3 characters.');
-      return;
-    }
-
-    if (!password || password.length < 6) {
-      setErrorMessage('Password must be at least 6 characters.');
+    if (normalizedUsername && normalizedUsername.length < 3) {
+      setErrorMessage('Choose an anonymous name with at least 3 characters.');
       return;
     }
 
     try {
       setIsAuthBusy(true);
       setErrorMessage('');
-      const { error } = await supabase.auth.signUp({
+      setAuthNoticeMessage('');
+      writePendingAnonymousHandle(normalizedUsername);
+      const { error } = await supabase.auth.signInWithOtp({
         email: normalizedEmail,
-        password,
         options: {
-          data: {
-            preferred_username: normalizedUsername,
-          },
+          shouldCreateUser: true,
+          emailRedirectTo: getWebAuthRedirectUrl(),
+          data: normalizedUsername ? { preferred_username: normalizedUsername } : undefined,
         },
       });
 
@@ -656,76 +853,62 @@ export default function App() {
       }
 
       setAuthNoticeMessage(
-        'Account created. If email confirmation is enabled, finish it from your inbox.'
+        normalizedUsername
+          ? 'Check your email for the sign-in link. We will finish claiming that anonymous name when you open it.'
+          : 'Check your email for the sign-in link. If this is your first time, you will choose an anonymous name after opening it.'
       );
     } catch (error) {
-      setErrorMessage(error?.message ?? 'Sign-up failed.');
+      setErrorMessage(error?.message ?? 'Email sign-in failed.');
     } finally {
       setIsAuthBusy(false);
     }
   }, []);
 
-  const handleSignIn = React.useCallback(async ({ email, password }) => {
-    if (!supabase) {
-      setErrorMessage('Supabase is not configured for browser auth.');
+  const handleClaimHandle = React.useCallback(async ({ handle }) => {
+    if (!session?.user) {
+      setErrorMessage('Login required before choosing an anonymous name.');
       return;
     }
 
-    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedHandle = normalizeAnonymousUsername(handle);
 
-    if (!normalizedEmail || !normalizedEmail.includes('@')) {
-      setErrorMessage('Enter a valid email address.');
-      return;
-    }
-
-    if (!password) {
-      setErrorMessage('Enter your password.');
+    if (normalizedHandle.length < 3) {
+      setErrorMessage('Choose an anonymous name with at least 3 characters.');
       return;
     }
 
     try {
       setIsAuthBusy(true);
       setErrorMessage('');
-      const { error } = await supabase.auth.signInWithPassword({
-        email: normalizedEmail,
-        password,
+      setAuthNoticeMessage('');
+      writePendingAnonymousHandle(normalizedHandle);
+      const claimedHandle = await claimAnonymousHandle({
+        user: session.user,
+        handle: normalizedHandle,
       });
-
-      if (error) {
-        throw error;
-      }
+      writePendingAnonymousHandle('');
+      setSession((currentSession) =>
+        currentSession
+          ? {
+              ...currentSession,
+              user: {
+                ...currentSession.user,
+                user_metadata: {
+                  ...(currentSession.user.user_metadata ?? {}),
+                  preferred_username: claimedHandle,
+                },
+              },
+            }
+          : currentSession
+      );
+      setIsAuthModalVisible(false);
     } catch (error) {
-      setErrorMessage(error?.message ?? 'Sign-in failed.');
+      setErrorMessage(error?.message ?? 'Anonymous name setup failed.');
+      setAuthNoticeMessage('Pick a different anonymous name to continue.');
     } finally {
       setIsAuthBusy(false);
     }
-  }, []);
-
-  const handleGoogleSignIn = React.useCallback(async () => {
-    if (!supabase) {
-      setErrorMessage('Supabase is not configured for browser auth.');
-      return;
-    }
-
-    try {
-      setIsAuthBusy(true);
-      setErrorMessage('');
-      const redirectTo = getWebAuthRedirectUrl();
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo,
-        },
-      });
-
-      if (error) {
-        throw error;
-      }
-    } catch (error) {
-      setIsAuthBusy(false);
-      setErrorMessage(error?.message ?? 'Google sign-in failed.');
-    }
-  }, []);
+  }, [session]);
 
   const handleSignOut = React.useCallback(async () => {
     if (!supabase) {
@@ -736,8 +919,10 @@ export default function App() {
 
     try {
       await supabase.auth.signOut();
+      writePendingAnonymousHandle('');
       setSession(null);
       setIsAuthModalVisible(false);
+      setAuthNoticeMessage('');
       await refreshData(null);
     } catch (error) {
       setErrorMessage(error?.message ?? 'Sign-out failed.');
@@ -777,6 +962,13 @@ export default function App() {
     if (!isAuthenticated || !session?.user) {
       setIsAddSheetVisible(false);
       openAuthModal();
+      return;
+    }
+
+    if (!hasAnonymousHandle(session.user)) {
+      setIsAddSheetVisible(false);
+      setAuthNoticeMessage('Choose an anonymous name before posting or adding places.');
+      setIsAuthModalVisible(true);
       return;
     }
 
@@ -879,8 +1071,8 @@ export default function App() {
           <PlacePage
             accountLabel={isAuthenticated ? 'Profile' : 'Sign in'}
             commentThreads={commentThreads}
-            commentVotes={commentVotes}
             comments={comments}
+            commentVoteState={commentVoteState}
             currentVote={currentVote}
             onAccount={openAuthModal}
             onBackToMap={() => navigateToRoute({ placeId: '', view: 'map' })}
@@ -955,15 +1147,15 @@ export default function App() {
 
       {isAuthModalVisible ? (
         <SheetModal
-          dialogClassName={isAuthenticated ? '' : 'sheet-auth'}
+          dialogClassName="sheet-auth"
           onClose={() => setIsAuthModalVisible(false)}
         >
-          {isAuthenticated ? (
+          {isAuthenticated && canPostAnonymously ? (
             <div className="sheet-header">
               <div className="sheet-handle" />
               <p className="sheet-kicker">Account</p>
               <h2 className="sheet-title">Profile</h2>
-              <div className="profile-name">{currentUser.name}</div>
+              <div className="profile-name">{formatUserHandle(currentUser.name)}</div>
               {currentUser.email ? <div className="profile-meta">{currentUser.email}</div> : null}
               <AppButton
                 label="Sign out"
@@ -972,14 +1164,20 @@ export default function App() {
                 styleClassName="auth-signout-button"
               />
             </div>
+          ) : isAuthenticated ? (
+            <HandleClaimCard
+              authBusy={isAuthBusy}
+              errorMessage={errorMessage}
+              helperText={authNoticeMessage}
+              initialHandle={readPendingAnonymousHandle() || currentAnonymousHandle}
+              onClaimHandle={handleClaimHandle}
+            />
           ) : (
             <AuthCard
               authBusy={isAuthBusy}
               errorMessage={errorMessage}
               helperText={authNoticeMessage}
-              onGoogleSignIn={handleGoogleSignIn}
-              onSignIn={handleSignIn}
-              onSignUp={handleSignUp}
+              onRequestEmailAccess={handleRequestEmailAccess}
             />
           )}
         </SheetModal>
@@ -1119,8 +1317,8 @@ function AppButton({
 function PlacePage({
   accountLabel,
   commentThreads,
-  commentVotes,
   comments,
+  commentVoteState,
   currentVote,
   onAccount,
   onBackToMap,
@@ -1232,7 +1430,7 @@ function PlacePage({
                   <CommentThread
                     key={commentThread.id}
                     commentThread={commentThread}
-                    commentVotes={commentVotes}
+                    commentVoteState={commentVoteState}
                     onCommentVote={onCommentVote}
                     onCompose={onCompose}
                   />
@@ -1284,7 +1482,7 @@ function VoteControls({
 
 function CommentThread({
   commentThread,
-  commentVotes,
+  commentVoteState,
   depth = 0,
   isPreviewTail = false,
   onCommentVote,
@@ -1298,11 +1496,12 @@ function CommentThread({
     <div className={`comment-thread depth-${nextDepth}${isPreviewTail ? ' is-preview-tail' : ''}`}>
       <CommentCard
         comment={commentThread}
+        currentVote={commentVoteState.currentVoteByCommentId[commentThread.id] ?? 0}
         depth={nextDepth}
         onDownvote={() => onCommentVote(commentThread.id, -1)}
         onReply={() => onCompose(commentThread)}
         onUpvote={() => onCommentVote(commentThread.id, 1)}
-        score={commentVotes[commentThread.id] ?? 0}
+        score={commentVoteState.scoreByCommentId[commentThread.id] ?? 0}
       />
 
       {nestedReplies.length ? (
@@ -1311,7 +1510,7 @@ function CommentThread({
             <CommentThread
               key={reply.id}
               commentThread={reply}
-              commentVotes={commentVotes}
+              commentVoteState={commentVoteState}
               depth={nextDepth + 1}
               onCommentVote={onCommentVote}
               onCompose={onCompose}
@@ -1333,6 +1532,7 @@ function CommentThread({
 
 function CommentCard({
   comment,
+  currentVote = 0,
   depth = 0,
   onDownvote,
   onReply,
@@ -1342,9 +1542,9 @@ function CommentCard({
   return (
     <article className={`comment-card depth-${Math.min(depth, 3)}`}>
       <div className="comment-vote-rail">
-        <CommentArrowButton direction="up" isActive={score === 1} onClick={onUpvote} />
+        <CommentArrowButton direction="up" isActive={currentVote === 1} onClick={onUpvote} />
         <span className="comment-score">{formatSignedValue(score)}</span>
-        <CommentArrowButton direction="down" isActive={score === -1} onClick={onDownvote} />
+        <CommentArrowButton direction="down" isActive={currentVote === -1} onClick={onDownvote} />
       </div>
 
       <div className="comment-content">
@@ -1388,39 +1588,19 @@ function AuthCard({
   authBusy,
   errorMessage,
   helperText,
-  onGoogleSignIn,
-  onSignIn,
-  onSignUp,
+  onRequestEmailAccess,
 }) {
-  const [mode, setMode] = React.useState('signin');
   const [email, setEmail] = React.useState('');
   const [username, setUsername] = React.useState('');
-  const [password, setPassword] = React.useState('');
-  const isSignUp = mode === 'signup';
 
   return (
     <div className="auth-card">
       <p className="sheet-kicker">r/topeyplaces</p>
-      <h2 className="sheet-title">{isSignUp ? 'Create account' : 'Sign in'}</h2>
+      <h2 className="sheet-title">Email access</h2>
       <p className="sheet-copy">
-        {isSignUp
-          ? 'Choose an anonymous handle to vote, reply, and add new places.'
-          : 'Sign in to vote, reply, and add new places from the map.'}
+        We only collect your email. Add an anonymous name now, or choose it after you open the
+        sign-in link.
       </p>
-
-      <AppButton
-        label={authBusy ? 'Please wait...' : 'Continue with Google'}
-        variant="secondary"
-        size="default"
-        onClick={onGoogleSignIn}
-        styleClassName="auth-google-button"
-      />
-
-      <div className="auth-divider">
-        <span />
-        <p>or continue with email</p>
-        <span />
-      </div>
 
       <input
         className="sheet-input"
@@ -1431,50 +1611,61 @@ function AuthCard({
         value={email}
         onChange={(event) => setEmail(event.target.value)}
       />
-      {isSignUp ? (
-        <input
-          className="sheet-input"
-          autoCapitalize="none"
-          autoCorrect="off"
-          placeholder="Anonymous username"
-          value={username}
-          onChange={(event) => setUsername(event.target.value)}
-        />
-      ) : null}
       <input
         className="sheet-input"
         autoCapitalize="none"
         autoCorrect="off"
-        placeholder="Password"
-        type="password"
-        value={password}
-        onChange={(event) => setPassword(event.target.value)}
+        placeholder="Anonymous name (optional for returning users)"
+        value={username}
+        onChange={(event) => setUsername(event.target.value)}
       />
       <AppButton
-        label={
-          authBusy
-            ? isSignUp
-              ? 'Creating account...'
-              : 'Signing in...'
-            : isSignUp
-              ? 'Create account'
-              : 'Sign in'
-        }
+        label={authBusy ? 'Sending link...' : 'Email me a sign-in link'}
         size="default"
         styleClassName="auth-submit-button"
-        onClick={() =>
-          isSignUp
-            ? onSignUp({ email, username, password })
-            : onSignIn({ email, password })
-        }
+        onClick={() => onRequestEmailAccess({ email, username })}
       />
-      <button
-        className="toggle-auth-button"
-        type="button"
-        onClick={() => setMode(isSignUp ? 'signin' : 'signup')}
-      >
-        {isSignUp ? 'Already have an account? Sign in' : 'Need an account? Sign up'}
-      </button>
+      {helperText ? <p className="sheet-meta">{helperText}</p> : null}
+      {!helperText && errorMessage ? <p className="sheet-meta">{errorMessage}</p> : null}
+    </div>
+  );
+}
+
+function HandleClaimCard({
+  authBusy,
+  errorMessage,
+  helperText,
+  initialHandle = '',
+  onClaimHandle,
+}) {
+  const [handle, setHandle] = React.useState(initialHandle);
+
+  React.useEffect(() => {
+    setHandle(initialHandle);
+  }, [initialHandle]);
+
+  return (
+    <div className="auth-card">
+      <p className="sheet-kicker">Finish setup</p>
+      <h2 className="sheet-title">Choose your anonymous name</h2>
+      <p className="sheet-copy">
+        This is the only name other people will see when you comment, reply, or add places.
+      </p>
+
+      <input
+        className="sheet-input"
+        autoCapitalize="none"
+        autoCorrect="off"
+        placeholder="Anonymous name"
+        value={handle}
+        onChange={(event) => setHandle(event.target.value)}
+      />
+      <AppButton
+        label={authBusy ? 'Saving...' : 'Save anonymous name'}
+        size="default"
+        styleClassName="auth-submit-button"
+        onClick={() => onClaimHandle({ handle })}
+      />
       {helperText ? <p className="sheet-meta">{helperText}</p> : null}
       {!helperText && errorMessage ? <p className="sheet-meta">{errorMessage}</p> : null}
     </div>
