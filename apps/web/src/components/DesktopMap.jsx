@@ -440,17 +440,13 @@ const DesktopMap = React.memo(function DesktopMap({
         scrollWheelZoom
         style={{ height: '100%', width: '100%' }}
         zoom={DEFAULT_ZOOM}
-        zoomAnimation={false}
         zoomControl={false}
-        zoomDelta={1}
-        zoomSnap={1}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
           keepBuffer={TILE_KEEP_BUFFER}
           subdomains="abcd"
           updateWhenIdle={false}
-          updateWhenZooming={false}
           url="https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png"
         />
 
