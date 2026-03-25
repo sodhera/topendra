@@ -20,7 +20,7 @@
     "web:preview": "npm --prefix apps/web run preview --",
     "web:test": "npm --prefix apps/web run test --",
     "supabase:auth": "node scripts/sync-supabase-auth-config.mjs",
-    "supabase:migrate": "node scripts/apply-supabase-sql.mjs supabase/migrations/20260322114500_init_topey.sql",
+    "supabase:migrate": "node scripts/apply-supabase-sql.mjs supabase/migrations",
     "supabase:seed": "node scripts/apply-supabase-sql.mjs supabase/seed.sql",
     "supabase:test-user": "node scripts/create-test-user.mjs"
   }

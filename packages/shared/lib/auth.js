@@ -4,6 +4,14 @@ export function normalizeAnonymousUsername(value) {
   return (value ?? '').trim().replace(/\s+/g, ' ').slice(0, 24);
 }
 
+export function getAnonymousHandle(user) {
+  return normalizeAnonymousUsername(user?.user_metadata?.preferred_username);
+}
+
+export function hasAnonymousHandle(user) {
+  return getAnonymousHandle(user).length >= 3;
+}
+
 export function isLoggedIn(sessionOrUser) {
   if (!sessionOrUser) {
     return false;
@@ -45,9 +53,7 @@ export function getUserIdentity(user) {
   }
 
   const metadata = user.user_metadata ?? {};
-  const displayName = normalizeAnonymousUsername(
-    metadata.preferred_username ?? metadata.user_name ?? metadata.username
-  );
+  const displayName = getAnonymousHandle(user);
 
   return {
     id: user.id,

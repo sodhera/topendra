@@ -1,8 +1,5 @@
-import { DEMO_PLACE_COUNT, buildKathmanduDemoData } from '@topey/shared/data/demoCatalog';
-import { getUserIdentity } from '@topey/shared/lib/auth';
+import { getAnonymousHandle, normalizeAnonymousUsername } from '@topey/shared/lib/auth';
 import { supabase } from './supabase';
-
-const demoData = buildKathmanduDemoData();
 
 function normalizeText(value) {
   return value?.trim() ?? '';
@@ -44,40 +41,13 @@ function mapComment(row) {
   };
 }
 
-function sortByCreatedAtDescending(left, right) {
-  return new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime();
-}
-
-function mergeById(primaryRecords, fallbackRecords) {
-  const records = new Map();
-
-  primaryRecords.forEach((record) => {
-    records.set(record.id, record);
-  });
-
-  fallbackRecords.forEach((record) => {
-    if (!records.has(record.id)) {
-      records.set(record.id, record);
-    }
-  });
-
-  return Array.from(records.values());
-}
-
-function attachDemoData(data) {
-  const places = mergeById(data.places, demoData.places)
-    .sort(sortByCreatedAtDescending)
-    .slice(0, DEMO_PLACE_COUNT);
-  const visiblePlaceIds = new Set(places.map((place) => place.id));
-  const votes = mergeById(data.votes, demoData.votes).filter((vote) => visiblePlaceIds.has(vote.placeId));
-  const comments = mergeById(data.comments, demoData.comments)
-    .filter((comment) => visiblePlaceIds.has(comment.placeId))
-    .sort(sortByCreatedAtDescending);
-
+function mapCommentVote(row) {
   return {
-    places,
-    votes,
-    comments,
+    id: row.id,
+    commentId: row.comment_id,
+    userId: row.user_id,
+    value: row.value,
+    createdAt: row.created_at,
   };
 }
 
@@ -89,14 +59,89 @@ function requireSupabase() {
   return supabase;
 }
 
-export async function fetchAppData({ includeComments }) {
+function isHandleConflictError(error) {
+  return /duplicate key value|unique constraint/i.test(String(error?.message ?? error ?? ''));
+}
+
+function createHandleTakenError(handle) {
+  return new Error(`The anonymous name "${handle}" is already taken.`);
+}
+
+async function getStoredAnonymousHandle(client, userId) {
+  const result = await client.from('user_handles').select('handle').eq('user_id', userId).maybeSingle();
+
+  if (result.error) {
+    throw result.error;
+  }
+
+  return normalizeAnonymousUsername(result.data?.handle ?? '');
+}
+
+async function getAuthorHandle(client, user) {
+  const storedHandle = await getStoredAnonymousHandle(client, user.id);
+  const fallbackHandle = getAnonymousHandle(user);
+  const authorHandle = storedHandle || fallbackHandle;
+
+  if (authorHandle.length < 3) {
+    throw new Error('Choose an anonymous name before posting.');
+  }
+
+  return authorHandle;
+}
+
+async function writeVoteRecord(client, table, matchColumn, entityId, userId, value) {
+  const existingResult = await client
+    .from(table)
+    .select('id, value')
+    .eq(matchColumn, entityId)
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (existingResult.error) {
+    throw existingResult.error;
+  }
+
+  if (existingResult.data?.value === value) {
+    const { error } = await client.from(table).delete().eq('id', existingResult.data.id);
+
+    if (error) {
+      throw error;
+    }
+
+    return;
+  }
+
+  if (existingResult.data) {
+    const { error } = await client
+      .from(table)
+      .update({ value })
+      .eq('id', existingResult.data.id);
+
+    if (error) {
+      throw error;
+    }
+
+    return;
+  }
+
+  const { error } = await client.from(table).insert({
+    [matchColumn]: entityId,
+    user_id: userId,
+    value,
+  });
+
+  if (error) {
+    throw error;
+  }
+}
+
+export async function fetchAppData() {
   const client = requireSupabase();
-  const [placesResult, votesResult, commentsResult] = await Promise.all([
+  const [placesResult, votesResult, commentsResult, commentVotesResult] = await Promise.all([
     client.from('places').select('*').order('created_at', { ascending: false }),
     client.from('place_votes').select('*'),
-    includeComments
-      ? client.from('place_comments').select('*').order('created_at', { ascending: false })
-      : Promise.resolve({ data: [], error: null }),
+    client.from('place_comments').select('*').order('created_at', { ascending: false }),
+    client.from('place_comment_votes').select('*'),
   ]);
 
   if (placesResult.error) {
@@ -111,11 +156,92 @@ export async function fetchAppData({ includeComments }) {
     throw commentsResult.error;
   }
 
-  return attachDemoData({
+  if (commentVotesResult.error) {
+    throw commentVotesResult.error;
+  }
+
+  return {
     places: placesResult.data.map(mapPlace),
     votes: votesResult.data.map(mapVote),
     comments: commentsResult.data.map(mapComment),
+    commentVotes: commentVotesResult.data.map(mapCommentVote),
+  };
+}
+
+export async function isAnonymousHandleAvailable(handle) {
+  const client = requireSupabase();
+  const normalizedHandle = normalizeAnonymousUsername(handle);
+
+  if (normalizedHandle.length < 3) {
+    throw new Error('Choose an anonymous name with at least 3 characters.');
+  }
+
+  const result = await client.from('user_handles').select('user_id').eq('handle', normalizedHandle).maybeSingle();
+
+  if (result.error) {
+    throw result.error;
+  }
+
+  return !result.data;
+}
+
+export async function claimAnonymousHandle({ user, handle }) {
+  const client = requireSupabase();
+  const normalizedHandle = normalizeAnonymousUsername(handle);
+
+  if (!user?.id) {
+    throw new Error('Login required before choosing an anonymous name.');
+  }
+
+  if (normalizedHandle.length < 3) {
+    throw new Error('Choose an anonymous name with at least 3 characters.');
+  }
+
+  const existingHandle = await getStoredAnonymousHandle(client, user.id);
+
+  if (existingHandle === normalizedHandle) {
+    return normalizedHandle;
+  }
+
+  if (existingHandle) {
+    const { error } = await client
+      .from('user_handles')
+      .update({ handle: normalizedHandle })
+      .eq('user_id', user.id);
+
+    if (error) {
+      if (isHandleConflictError(error)) {
+        throw createHandleTakenError(normalizedHandle);
+      }
+
+      throw error;
+    }
+  } else {
+    const { error } = await client.from('user_handles').insert({
+      user_id: user.id,
+      handle: normalizedHandle,
+    });
+
+    if (error) {
+      if (isHandleConflictError(error)) {
+        throw createHandleTakenError(normalizedHandle);
+      }
+
+      throw error;
+    }
+  }
+
+  const metadataResult = await client.auth.updateUser({
+    data: {
+      preferred_username: normalizedHandle,
+    },
   });
+
+  if (metadataResult.error) {
+    throw metadataResult.error;
+  }
+
+  return normalizedHandle;
 }
 
 export async function createPlace({ user, name, description, latitude, longitude }) {
@@ -127,14 +253,14 @@ export async function createPlace({ user, name, description, latitude, longitude
     throw new Error('A logged-in user, place name, and description are required.');
   }
 
-  const author = getUserIdentity(user);
+  const authorHandle = await getAuthorHandle(client, user);
   const { error } = await client.from('places').insert({
     name: normalizedName,
     description: normalizedDescription,
     latitude,
     longitude,
     created_by: user.id,
-    author_name: author.name,
+    author_name: authorHandle,
   });
 
   if (error) {
@@ -144,49 +270,7 @@ export async function createPlace({ user, name, description, latitude, longitude
 
 export async function voteForPlace({ placeId, userId, value }) {
   const client = requireSupabase();
-  const existingResult = await client
-    .from('place_votes')
-    .select('id, value')
-    .eq('place_id', placeId)
-    .eq('user_id', userId)
-    .maybeSingle();
-
-  if (existingResult.error) {
-    throw existingResult.error;
-  }
-
-  if (existingResult.data?.value === value) {
-    const { error } = await client.from('place_votes').delete().eq('id', existingResult.data.id);
-
-    if (error) {
-      throw error;
-    }
-
-    return;
-  }
-
-  if (existingResult.data) {
-    const { error } = await client
-      .from('place_votes')
-      .update({ value })
-      .eq('id', existingResult.data.id);
-
-    if (error) {
-      throw error;
-    }
-
-    return;
-  }
-
-  const { error } = await client.from('place_votes').insert({
-    place_id: placeId,
-    user_id: userId,
-    value,
-  });
-
-  if (error) {
-    throw error;
-  }
+  await writeVoteRecord(client, 'place_votes', 'place_id', placeId, userId, value);
 }
 
 export async function createComment({ placeId, parentCommentId = null, user, body }) {
@@ -197,18 +281,23 @@ export async function createComment({ placeId, parentCommentId = null, user, bod
     throw new Error('A logged-in user and non-empty comment are required.');
   }
 
-  const author = getUserIdentity(user);
+  const authorHandle = await getAuthorHandle(client, user);
   const { error } = await client.from('place_comments').insert({
     place_id: placeId,
     parent_comment_id: parentCommentId,
     user_id: user.id,
-    author_name: author.name,
+    author_name: authorHandle,
     body: normalizedBody,
   });
 
   if (error) {
     throw error;
   }
+}
+
+export async function voteForComment({ commentId, userId, value }) {
+  const client = requireSupabase();
+  await writeVoteRecord(client, 'place_comment_votes', 'comment_id', commentId, userId, value);
 }
 
 export async function createPlaceOpenEvent({ placeId, userId = null, viewerSessionId, sourceScreen }) {
