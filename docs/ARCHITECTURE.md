@@ -66,11 +66,11 @@ Mechanism:
 11. shared place thinning now becomes more aggressive as the viewport widens so zoomed-out browser views trade marker density for faster interaction
 12. add-place mode visually softens the existing place markers, disables their hit targets, and renders a single outline pin icon so moving the map to position a new drop stays calm and legible
 13. the browser map stays visually hidden behind the same full-screen app shell used by the mobile experience
-14. the routed place page is split into a post card and a comments card so the browser thread reads more like a destination page than a stretched modal transplant; the page itself is the scroll container and the post header is reduced to a compact summary line instead of separate stat panels
+14. the routed place page now reads as one continuous thread surface instead of two boxed shells; the page itself is the scroll container, the post header is reduced to a compact summary line, and the comments area blends into the same page with divider lines instead of stacked cards
 15. when one of those dialogs is open, the background shell is dimmed and removed from the accessibility tree so only the active surface remains interactive
 16. threaded comments are assembled client-side from `parent_comment_id`, with root comments sorted newest-first and replies rendered inside a nested gutter beneath the parent comment
 17. browser place markers stay hidden until the initial base-tile load completes, then expose a lightweight hover tooltip with place name, vote score, ratio, and an `Open` action; the tooltip is managed as anchored hover state instead of a cursor-following bubble so the user can move from the marker into the preview controls
-18. place votes on the routed web page are derived from the live vote dataset plus a small optimistic overlay keyed by `placeId:userId`, so score and ratio updates land immediately in the UI while the backend write catches up; the primary place vote control now lives inline below the description as a horizontal colored bar instead of a left-side rail
+18. place votes on the routed web page are derived from the live vote dataset plus a small optimistic overlay keyed by `placeId:userId`, so score and ratio updates land immediately in the UI while the backend write catches up; the primary place vote control now lives inline below the description as a simple colored row instead of a left-side rail or boxed widget
 
 ### Web runtime state
 

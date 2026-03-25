@@ -67,7 +67,7 @@ cd topey
 - Web now exists as a dedicated app in `apps/web`; it mirrors the map-first shell in the browser with routed place pages, lightweight overlays, and the same add-place flow on top of a real tile map.
 - The browser map now has desktop-first controls under that same shell: drag panning, two-finger trackpad panning, wheel/pinch zoom, double-click zoom, keyboard map movement, and keyboard place traversal.
 - On web, place details now live at `/places/:id` as a dedicated full page; auth, composer, and add-place remain lightweight dialogs over the map shell.
-- The web place page now reads like a compact thread: one post card, one comments card, a small inline summary line for votes and comment count, more readable system-first typography, a horizontal colored vote bar directly under the description, and a warm gradient background instead of a flat white modal transplant.
+- The web place page now reads like a compact thread on one continuous surface: no separate post/comments shells, a small inline summary line for votes and comment count, more readable system-first typography, and a simple colored vote row directly under the description.
 - When any browser dialog is open, the background shell is now dimmed and removed from the accessibility tree so the map HUD and floating actions do not compete with the active task.
 - Browser add-place mode now visually softens the existing place dots, disables their hit targets, and uses a single outline pin icon while the user is positioning a new drop.
 - The Leaflet runtime now re-invalidates layout on viewport resize, browser zoom, and tab re-entry so the map stays aligned when the visible browser space changes.
