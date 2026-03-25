@@ -57,7 +57,7 @@ Mechanism:
 2. the app derives a region-like viewport from settled Leaflet bounds after move-end and zoom-end events instead of streaming every drag tick into React state
 3. that viewport is fed into the shared `getMapPlacesForRegion` logic so desktop and mobile marker density stay aligned
 4. place drops render as canvas-backed Leaflet `CircleMarker` paths instead of DOM-backed marker icons so wider desktop views remain responsive as the visible place count grows
-5. the browser map disables zoom animation, snaps to integer zoom steps, and avoids raster tile post-processing so wheel and pinch zoom trigger less tile churn
+5. the browser map keeps Leaflet's default zoom motion, avoids raster tile post-processing, and only upgrades to denser `@2x` tiles once the user is zoomed in close enough to benefit from that extra detail
 6. the browser map still exposes extra keyboard affordances such as `Page Up`, `Page Down`, `Home`, `End`, `Enter`, and `0`
 7. add-place mode reads a pinned coordinate from an offset point inside the settled map viewport so the browser flow matches the mobile upper-half pin behavior without dragging the React tree through every movement frame
 8. when browser geolocation resolves, a custom black-with-white-center location marker is rendered separately from place drops so current position stays visually distinct
@@ -66,7 +66,7 @@ Mechanism:
 11. shared place thinning now becomes more aggressive as the viewport widens so zoomed-out browser views trade marker density for faster interaction
 12. add-place mode visually softens the existing place markers, disables their hit targets, and renders a single outline pin icon so moving the map to position a new drop stays calm and legible
 13. the browser map stays visually hidden behind the same full-screen app shell used by the mobile experience
-14. the routed place page, auth dialog, composer dialog, and add-place dialog intentionally reuse the same flat bordered card language so metadata, voting, and threading feel consistent across the browser flow
+14. the routed place page is split into a post card and a comments card so the browser thread reads more like a destination page than a stretched modal transplant, while auth, composer, and add-place still reuse the same flat bordered card language
 15. when one of those dialogs is open, the background shell is dimmed and removed from the accessibility tree so only the active surface remains interactive
 16. threaded comments are assembled client-side from `parent_comment_id`, with root comments sorted newest-first and replies rendered inside a nested gutter beneath the parent comment
 

@@ -67,10 +67,11 @@ cd topey
 - Web now exists as a dedicated app in `apps/web`; it mirrors the map-first shell in the browser with routed place pages, lightweight overlays, and the same add-place flow on top of a real tile map.
 - The browser map now has desktop-first controls under that same shell: drag panning, two-finger trackpad panning, wheel/pinch zoom, double-click zoom, keyboard map movement, and keyboard place traversal.
 - On web, place details now live at `/places/:id` as a dedicated full page; auth, composer, and add-place remain lightweight dialogs over the map shell.
+- The web place page now reads like a thread: one post card, one comments card, strong display type, and a warm gradient background instead of a flat white modal transplant.
 - When any browser dialog is open, the background shell is now dimmed and removed from the accessibility tree so the map HUD and floating actions do not compete with the active task.
 - Browser add-place mode now visually softens the existing place dots, disables their hit targets, and uses a single outline pin icon while the user is positioning a new drop.
 - The Leaflet runtime now re-invalidates layout on viewport resize, browser zoom, and tab re-entry so the map stays aligned when the visible browser space changes.
-- The browser map also runs without tile post-processing, snaps to integer zoom levels, and leans harder on shared pin thinning as the viewport widens so zooming costs less work.
+- The browser map also runs without tile post-processing, keeps Leaflet’s default zoom feel, leans harder on shared pin thinning as the viewport widens, and serves lower-density tiles until the user zooms in close enough to benefit from higher-detail raster images.
 - Web replies now persist a real `parent_comment_id`, so refreshes keep the same nested thread shape instead of flattening replies back into the main comment list.
 - After a successful browser add-place submit, the UI now reopens the new place from the freshly refreshed dataset instead of trying to resolve it from stale pre-refresh state.
 
