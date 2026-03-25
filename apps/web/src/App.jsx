@@ -46,6 +46,51 @@ const RELATIVE_TIME_FORMATTER = new Intl.RelativeTimeFormat('en', {
   numeric: 'auto',
 });
 
+function getPlaceVoteKey(placeId, userId) {
+  return `${placeId}:${userId}`;
+}
+
+function applyPlaceVoteOverride(votes, { placeId, userId, value }) {
+  let hasMatchedExistingVote = false;
+  const nextVotes = [];
+
+  votes.forEach((vote) => {
+    if (vote.placeId === placeId && vote.userId === userId) {
+      hasMatchedExistingVote = true;
+
+      if (value !== 0) {
+        nextVotes.push({
+          ...vote,
+          value,
+        });
+      }
+
+      return;
+    }
+
+    nextVotes.push(vote);
+  });
+
+  if (!hasMatchedExistingVote && value !== 0) {
+    nextVotes.unshift({
+      id: `optimistic-${placeId}-${userId}`,
+      placeId,
+      userId,
+      value,
+      createdAt: new Date().toISOString(),
+    });
+  }
+
+  return nextVotes;
+}
+
+function applyOptimisticPlaceVotes(votes, optimisticVotesByKey) {
+  return Object.values(optimisticVotesByKey).reduce(
+    (currentVotes, voteOverride) => applyPlaceVoteOverride(currentVotes, voteOverride),
+    votes
+  );
+}
+
 function createViewerSessionId() {
   return `viewer-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
@@ -134,6 +179,7 @@ export default function App() {
   const [replyTarget, setReplyTarget] = React.useState(null);
   const [isSubmittingComment, setIsSubmittingComment] = React.useState(false);
   const [commentVotes, setCommentVotes] = React.useState({});
+  const [optimisticPlaceVotes, setOptimisticPlaceVotes] = React.useState({});
   const [isAddMode, setIsAddMode] = React.useState(false);
   const [isAddSheetVisible, setIsAddSheetVisible] = React.useState(false);
   const [newPlaceName, setNewPlaceName] = React.useState('');
@@ -143,6 +189,7 @@ export default function App() {
     longitude: DEFAULT_REGION.longitude,
   });
   const [isSavingPlace, setIsSavingPlace] = React.useState(false);
+  const placeVoteRequestVersionRef = React.useRef({});
 
   const currentUser = React.useMemo(() => getUserIdentity(session?.user), [session]);
   const isAuthenticated = isLoggedIn(session);
@@ -303,13 +350,17 @@ export default function App() {
     () => places.find((place) => place.id === focusedPlaceId) ?? null,
     [focusedPlaceId, places]
   );
+  const effectiveVotes = React.useMemo(
+    () => applyOptimisticPlaceVotes(votes, optimisticPlaceVotes),
+    [optimisticPlaceVotes, votes]
+  );
   const visiblePlaces = React.useMemo(
     () =>
-      getMapPlacesForRegion(places, mapRegion, votes, selectedPlaceId).map((place) => ({
+      getMapPlacesForRegion(places, mapRegion, effectiveVotes, selectedPlaceId).map((place) => ({
         ...place,
-        voteBreakdown: getVoteBreakdown(votes, place.id),
+        voteBreakdown: getVoteBreakdown(effectiveVotes, place.id),
       })),
-    [mapRegion, places, selectedPlaceId, votes]
+    [effectiveVotes, mapRegion, places, selectedPlaceId]
   );
   const comments = React.useMemo(
     () => getCommentsForPlace(allComments, selectedPlace?.id),
@@ -320,8 +371,8 @@ export default function App() {
     [allComments, selectedPlace]
   );
   const voteBreakdown = React.useMemo(
-    () => getVoteBreakdown(votes, selectedPlace?.id),
-    [votes, selectedPlace]
+    () => getVoteBreakdown(effectiveVotes, selectedPlace?.id),
+    [effectiveVotes, selectedPlace]
   );
   const currentVote = React.useMemo(() => {
     if (!selectedPlace || !session?.user?.id) {
@@ -329,11 +380,11 @@ export default function App() {
     }
 
     return (
-      votes.find(
+      effectiveVotes.find(
         (vote) => vote.placeId === selectedPlace.id && vote.userId === session.user.id
       )?.value ?? 0
     );
-  }, [selectedPlace, session, votes]);
+  }, [effectiveVotes, selectedPlace, session]);
 
   const trackPlaceOpen = React.useCallback(
     (placeId, sourceScreen) => {
@@ -440,18 +491,60 @@ export default function App() {
         return;
       }
 
+      const placeId = selectedPlace.id;
+      const userId = session.user.id;
+      const voteKey = getPlaceVoteKey(placeId, userId);
+      const nextOptimisticValue = currentVote === value ? 0 : value;
+      const nextRequestVersion = (placeVoteRequestVersionRef.current[voteKey] ?? 0) + 1;
+
+      placeVoteRequestVersionRef.current[voteKey] = nextRequestVersion;
+      setOptimisticPlaceVotes((currentVotes) => ({
+        ...currentVotes,
+        [voteKey]: {
+          placeId,
+          userId,
+          value: nextOptimisticValue,
+        },
+      }));
+
       try {
         await voteForPlace({
-          placeId: selectedPlace.id,
-          userId: session.user.id,
+          placeId,
+          userId,
           value,
         });
-        await refreshData(session);
+
+        if (placeVoteRequestVersionRef.current[voteKey] !== nextRequestVersion) {
+          return;
+        }
+
+        setVotes((currentVotes) =>
+          applyPlaceVoteOverride(currentVotes, {
+            placeId,
+            userId,
+            value: nextOptimisticValue,
+          })
+        );
+        setOptimisticPlaceVotes((currentVotes) => {
+          const nextVotes = { ...currentVotes };
+          delete nextVotes[voteKey];
+          return nextVotes;
+        });
+        setErrorMessage('');
       } catch (error) {
+        if (placeVoteRequestVersionRef.current[voteKey] !== nextRequestVersion) {
+          return;
+        }
+
+        setOptimisticPlaceVotes((currentVotes) => {
+          const nextVotes = { ...currentVotes };
+          delete nextVotes[voteKey];
+          return nextVotes;
+        });
         setErrorMessage(error?.message ?? 'Vote failed.');
       }
     },
-    [isAuthenticated, openAuthModal, refreshData, selectedPlace, session]
+    [currentVote, isAuthenticated, openAuthModal, selectedPlace, session]
   );
 
   const openComposer = React.useCallback(
@@ -1090,19 +1183,21 @@ function PlacePage({
               </aside>
 
               <div className="place-page-content">
-                <p className="place-page-kicker">r/topeyplaces</p>
+                <div className="place-page-meta-row">
+                  <span className="place-page-kicker">r/topeyplaces</span>
+                  <span className="place-page-meta-dot">•</span>
+                  <span className="place-page-meta-inline">
+                    Posted by {formatUserHandle(place.authorName)}
+                  </span>
+                  <span className="place-page-meta-dot">•</span>
+                  <span className="place-page-meta-inline">{formatRelativeTime(place.createdAt)}</span>
+                </div>
                 <h1 className="place-page-title">{place.name}</h1>
 
-                <div className="sheet-meta-row place-page-meta-row">
-                  <span className="sheet-meta-pill">Map drop</span>
-                  <span className="sheet-meta-inline">Posted by {formatUserHandle(place.authorName)}</span>
-                  <span className="sheet-meta-inline">{formatRelativeTime(place.createdAt)}</span>
-                </div>
-
                 <div className="place-page-summary-line">
-                  <span>{formatSignedValue(voteBreakdown.score)} votes</span>
-                  <span>{voteBreakdown.ratioLabel} ratio</span>
+                  <span>{formatSignedValue(voteBreakdown.score)} points</span>
                   <span>{commentCount} comments</span>
+                  <span>{voteBreakdown.ratioLabel} split</span>
                 </div>
 
                 <p className="place-page-copy">{place.description}</p>
@@ -1125,8 +1220,8 @@ function PlacePage({
           <section className="place-page-card place-page-comments-card">
             <div className="thread-header place-page-thread-header">
               <div>
-                <div className="thread-kicker">Top comments</div>
-                <h2 className="thread-title place-page-thread-title">Community discussion</h2>
+                <div className="thread-kicker">r/topeyplaces</div>
+                <h2 className="thread-title place-page-thread-title">Comments</h2>
               </div>
               <div className="place-page-comment-count">
                 {comments.length ? `${comments.length} comments` : 'Start the thread'}

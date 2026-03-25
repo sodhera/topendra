@@ -18,6 +18,7 @@ const MAP_FLY_DURATION = 0.24;
 const MAP_FLY_DURATION_SLOW = 0.3;
 const CANVAS_RENDERER = L.canvas({ padding: 0.4 });
 const TILE_KEEP_BUFFER = 4;
+const HOVER_CARD_CLOSE_DELAY_MS = 120;
 const STANDARD_TILE_URL = 'https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png';
 const HIGH_DETAIL_TILE_URL = 'https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}@2x.png';
 const PLACE_MARKER_RADIUS = 7;
@@ -391,6 +392,48 @@ const PlaceMarkersLayer = React.memo(function PlaceMarkersLayer({
   selectedPlaceId,
   visiblePlaces,
 }) {
+  const [hoveredPlaceId, setHoveredPlaceId] = React.useState('');
+  const hoverCloseTimeoutRef = React.useRef(0);
+
+  const clearHoverCloseTimeout = React.useCallback(() => {
+    if (hoverCloseTimeoutRef.current) {
+      window.clearTimeout(hoverCloseTimeoutRef.current);
+      hoverCloseTimeoutRef.current = 0;
+    }
+  }, []);
+
+  const openHoverCard = React.useCallback(
+    (placeId) => {
+      clearHoverCloseTimeout();
+      setHoveredPlaceId(placeId);
+    },
+    [clearHoverCloseTimeout]
+  );
+
+  const scheduleHoverCardClose = React.useCallback(
+    (placeId) => {
+      clearHoverCloseTimeout();
+      hoverCloseTimeoutRef.current = window.setTimeout(() => {
+        setHoveredPlaceId((currentPlaceId) => (currentPlaceId === placeId ? '' : currentPlaceId));
+      }, HOVER_CARD_CLOSE_DELAY_MS);
+    },
+    [clearHoverCloseTimeout]
+  );
+
+  React.useEffect(
+    () => () => {
+      clearHoverCloseTimeout();
+    },
+    [clearHoverCloseTimeout]
+  );
+
+  React.useEffect(() => {
+    if (!baseMapReady || addMode) {
+      setHoveredPlaceId('');
+      clearHoverCloseTimeout();
+    }
+  }, [addMode, baseMapReady, clearHoverCloseTimeout]);
+
   if (!baseMapReady) {
     return null;
   }
@@ -415,7 +458,11 @@ const PlaceMarkersLayer = React.memo(function PlaceMarkersLayer({
     const eventHandlers = interactive
       ? {
           click: () => onSelectPlace(place.id),
+          focus: () => openHoverCard(place.id),
+          mouseover: () => openHoverCard(place.id),
+          mouseout: () => scheduleHoverCardClose(place.id),
           touchstart: () => onSelectPlace(place.id),
+          blur: () => scheduleHoverCardClose(place.id),
         }
       : undefined;
 
@@ -431,8 +478,21 @@ const PlaceMarkersLayer = React.memo(function PlaceMarkersLayer({
         radius={radius}
         renderer={CANVAS_RENDERER}
       >
-        {interactive ? (
-          <Tooltip className="place-hover-card" direction="top" interactive offset={[0, -10]} opacity={1} sticky>
+        {interactive && hoveredPlaceId === place.id ? (
+          <Tooltip
+            className="place-hover-card"
+            direction="top"
+            eventHandlers={{
+              blur: () => scheduleHoverCardClose(place.id),
+              focus: () => openHoverCard(place.id),
+              mouseout: () => scheduleHoverCardClose(place.id),
+              mouseover: () => openHoverCard(place.id),
+            }}
+            interactive
+            offset={[0, -14]}
+            opacity={1}
+            permanent
+          >
             <div className="place-hover-card-title">{place.name}</div>
             <div className="place-hover-card-meta">
               <span>{formatVoteScore(place.voteBreakdown?.score ?? 0)} votes</span>

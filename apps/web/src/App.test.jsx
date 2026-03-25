@@ -50,7 +50,7 @@ describe('App web shell', () => {
 
     expect(await screen.findByRole('heading', { name: 'Thamel Courtyard' })).toBeTruthy();
     expect(screen.getByText('Open location')).toBeTruthy();
-    expect(screen.getByText(/\+5 votes/i)).toBeTruthy();
+    expect(screen.getByText(/\+5 points/i)).toBeTruthy();
     expect(window.location.pathname).toBe('/places/00000000-0000-4000-8000-000000001001');
     expect(screen.queryByRole('dialog')).toBeNull();
   });

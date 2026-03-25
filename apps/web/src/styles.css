@@ -1,7 +1,7 @@
 :root {
   color-scheme: light;
-  --font-ui: "IBM Plex Sans", "Avenir Next", "Segoe UI", Arial, sans-serif;
-  --font-display: "IBM Plex Sans", "Avenir Next", "Segoe UI", Arial, sans-serif;
+  --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   font-family: var(--font-ui);
   background: #f4f4f5;
   color: #18181b;
@@ -100,10 +100,10 @@ button {
 
 .place-page {
   background:
-    radial-gradient(circle at 12% 18%, rgba(244, 197, 125, 0.22), transparent 20%),
-    radial-gradient(circle at 84% 14%, rgba(142, 188, 150, 0.2), transparent 18%),
-    linear-gradient(180deg, rgba(251, 244, 230, 0.98), rgba(245, 238, 226, 0.98)),
-    #f3ebdf;
+    radial-gradient(circle at 14% 16%, rgba(205, 170, 119, 0.18), transparent 22%),
+    radial-gradient(circle at 86% 12%, rgba(124, 156, 127, 0.12), transparent 20%),
+    linear-gradient(180deg, rgba(242, 236, 226, 0.98), rgba(234, 226, 214, 0.98)),
+    #ebe3d8;
   height: 100dvh;
   overflow-y: auto;
   padding: var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left);
@@ -121,18 +121,18 @@ button {
 
 .place-page::before {
   background:
-    radial-gradient(circle at 86% 72%, rgba(239, 141, 111, 0.16), transparent 18%),
-    radial-gradient(circle at 18% 80%, rgba(120, 153, 218, 0.1), transparent 14%);
+    radial-gradient(circle at 82% 76%, rgba(209, 132, 98, 0.12), transparent 18%),
+    radial-gradient(circle at 20% 82%, rgba(120, 153, 218, 0.08), transparent 14%);
 }
 
 .place-page::after {
-  background: linear-gradient(140deg, rgba(255, 255, 255, 0.08), transparent 38%, rgba(255, 255, 255, 0.06) 72%, transparent 100%);
-  opacity: 0.5;
+  background: linear-gradient(140deg, rgba(255, 255, 255, 0.08), transparent 42%, rgba(255, 255, 255, 0.05) 72%, transparent 100%);
+  opacity: 0.42;
 }
 
 .place-page-shell {
   margin: 0 auto;
-  max-width: 1120px;
+  max-width: 1080px;
   position: relative;
   z-index: 1;
 }
@@ -152,41 +152,36 @@ button {
 
 .page-nav-button {
   align-items: center;
-  backdrop-filter: blur(10px);
-  background: rgba(255, 250, 244, 0.82);
-  border: 1px solid rgba(24, 24, 27, 0.12);
+  backdrop-filter: blur(8px);
+  background: rgba(255, 252, 248, 0.88);
+  border: 1px solid rgba(72, 58, 42, 0.14);
   border-radius: 999px;
   color: var(--color-text, #18181b);
   cursor: pointer;
   display: inline-flex;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
   letter-spacing: 0.01em;
   min-height: 42px;
   padding: 0 16px;
-  box-shadow: 0 10px 24px rgba(117, 88, 49, 0.09);
+  box-shadow: 0 6px 18px rgba(98, 72, 42, 0.07);
 }
 
 .place-page-card {
-  backdrop-filter: blur(12px);
-  background: rgba(255, 253, 249, 0.9);
-  border: 1px solid rgba(24, 24, 27, 0.12);
-  border-radius: 24px;
+  backdrop-filter: blur(8px);
+  background: rgba(255, 253, 249, 0.93);
+  border: 1px solid rgba(72, 58, 42, 0.14);
+  border-radius: 16px;
   box-shadow:
-    0 18px 46px rgba(121, 88, 44, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.75);
-  padding: clamp(18px, 2.6vw, 30px);
+    0 10px 24px rgba(121, 88, 44, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.82);
+  padding: clamp(18px, 2.4vw, 26px);
   position: relative;
   overflow: hidden;
 }
 
 .place-page-card::before {
-  background: linear-gradient(90deg, rgba(255, 193, 119, 0.85), rgba(135, 184, 143, 0.72), rgba(255, 153, 121, 0.82));
-  content: "";
-  height: 4px;
-  inset: 0 0 auto;
-  opacity: 0.48;
-  position: absolute;
+  content: none;
 }
 
 .place-page-empty-card {
@@ -194,19 +189,19 @@ button {
 }
 
 .place-page-comments-card {
-  padding-top: clamp(24px, 3vw, 32px);
+  padding-top: clamp(20px, 2.4vw, 24px);
 }
 
 .place-page-layout {
   display: grid;
-  gap: clamp(18px, 2vw, 28px);
-  grid-template-columns: 84px minmax(0, 1fr);
+  gap: clamp(16px, 1.6vw, 22px);
+  grid-template-columns: 68px minmax(0, 1fr);
 }
 
 .place-page-vote-column {
   align-self: start;
   position: sticky;
-  top: var(--safe-top);
+  top: calc(var(--safe-top) + 8px);
 }
 
 .place-page-content {
@@ -214,37 +209,53 @@ button {
 }
 
 .place-page-kicker {
-  color: #706356;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  margin: 0 0 8px;
-  text-transform: uppercase;
+  color: #56483b;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  margin: 0;
+  text-transform: none;
 }
 
 .place-page-title {
   color: #18181b;
   font-family: var(--font-display);
-  font-size: clamp(34px, 4.5vw, 56px);
+  font-size: clamp(32px, 4vw, 48px);
   font-weight: 700;
-  letter-spacing: -0.04em;
-  line-height: 0.94;
-  margin: 0;
-  max-width: 12ch;
+  letter-spacing: -0.03em;
+  line-height: 1.02;
+  margin: 10px 0 0;
+  max-width: 14ch;
 }
 
 .place-page-meta-row {
-  margin-top: 12px;
+  align-items: center;
+  color: #6a5b4d;
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 13px;
+  font-weight: 600;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.place-page-meta-dot {
+  color: rgba(24, 24, 27, 0.34);
+}
+
+.place-page-meta-inline {
+  color: #6a5b4d;
 }
 
 .place-page-summary-line {
-  color: #5f5449;
+  color: #5c4f43;
   display: flex;
   flex-wrap: wrap;
-  font-size: 14px;
-  font-weight: 600;
-  gap: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  gap: 8px;
   margin-top: 14px;
+  text-transform: uppercase;
 }
 
 .place-page-summary-line span {
@@ -254,15 +265,15 @@ button {
 .place-page-summary-line span + span::before {
   color: rgba(24, 24, 27, 0.25);
   content: "•";
-  margin-right: 10px;
+  margin-right: 8px;
 }
 
 .place-page-copy {
-  color: #3d362f;
-  font-size: 17px;
-  line-height: 1.6;
+  color: #2f2822;
+  font-size: 16px;
+  line-height: 1.72;
   margin: 18px 0 0;
-  max-width: 56ch;
+  max-width: 64ch;
 }
 
 .place-page-toolbar {
@@ -274,46 +285,46 @@ button {
 }
 
 .place-page-open-button {
-  box-shadow: 0 12px 24px rgba(24, 24, 27, 0.12);
-  min-width: min(240px, 100%);
+  box-shadow: 0 8px 18px rgba(24, 24, 27, 0.08);
+  min-width: min(220px, 100%);
 }
 
 .place-page-thread-button {
   align-items: center;
-  background: rgba(255, 255, 255, 0.66);
-  border: 1px solid rgba(24, 24, 27, 0.14);
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(72, 58, 42, 0.14);
   border-radius: 999px;
   color: var(--color-text, #18181b);
   cursor: pointer;
   display: inline-flex;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.04em;
   min-height: 42px;
   padding: 0 16px;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .place-page-thread-header {
   align-items: end;
-  border-bottom: 1px solid rgba(24, 24, 27, 0.08);
-  margin-bottom: 20px;
-  padding-bottom: 18px;
+  border-bottom: 1px solid rgba(72, 58, 42, 0.1);
+  margin-bottom: 18px;
+  padding-bottom: 16px;
 }
 
 .place-page-thread-title {
   font-family: var(--font-ui);
-  font-size: clamp(24px, 3vw, 32px);
+  font-size: clamp(22px, 2.6vw, 28px);
   font-weight: 700;
   letter-spacing: -0.02em;
 }
 
 .place-page-comment-count {
-  background: rgba(255, 255, 255, 0.66);
-  border: 1px solid rgba(24, 24, 27, 0.12);
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(72, 58, 42, 0.14);
   border-radius: 999px;
   color: var(--color-text, #18181b);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
   padding: 8px 12px;
 }
@@ -325,50 +336,40 @@ button {
 }
 
 .place-page .thread-kicker {
-  color: #726658;
+  color: #6b5b4c;
   font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.place-page .sheet-meta-pill {
-  background: rgba(255, 255, 255, 0.68);
-  border-color: rgba(24, 24, 27, 0.1);
-  color: #5b5046;
-}
-
-.place-page .sheet-meta-inline {
-  color: #6f6258;
+  letter-spacing: 0.05em;
+  text-transform: lowercase;
 }
 
 .place-page .vote-controls {
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(24, 24, 27, 0.12);
-  border-radius: 18px;
-  box-shadow: 0 10px 20px rgba(121, 88, 44, 0.08);
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(72, 58, 42, 0.14);
+  border-radius: 14px;
+  box-shadow: 0 6px 18px rgba(121, 88, 44, 0.06);
   gap: 6px;
-  min-width: 60px;
-  padding: 10px 8px;
+  min-width: 56px;
+  padding: 8px 6px;
 }
 
 .place-page .vote-arrow {
   align-items: center;
-  border-radius: 999px;
+  border-radius: 10px;
   display: inline-flex;
-  height: 34px;
+  height: 32px;
   justify-content: center;
-  width: 34px;
+  width: 32px;
 }
 
 .place-page .vote-arrow span {
-  color: #6f6358;
-  font-size: 18px;
+  color: #625548;
+  font-size: 16px;
 }
 
 .place-page .vote-score {
   font-family: var(--font-ui);
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 700;
 }
 
@@ -376,23 +377,23 @@ button {
 .place-page .discussion-list .comment-card,
 .place-page .discussion-list .comment-thread.depth-0 > .comment-card,
 .place-page .discussion-list .comment-replies .comment-card {
-  background: rgba(255, 255, 255, 0.72);
-  border: 1px solid rgba(24, 24, 27, 0.12);
-  border-radius: 20px;
-  box-shadow: 0 12px 28px rgba(121, 88, 44, 0.08);
+  background: rgba(255, 252, 247, 0.9);
+  border: 1px solid rgba(72, 58, 42, 0.12);
+  border-radius: 14px;
+  box-shadow: none;
 }
 
 .place-page .comment-card {
-  gap: 14px;
-  grid-template-columns: 32px minmax(0, 1fr);
-  padding: 16px;
+  gap: 12px;
+  grid-template-columns: 28px minmax(0, 1fr);
+  padding: 14px 15px;
 }
 
 .place-page .comment-replies {
-  border-left: 2px solid rgba(24, 24, 27, 0.1);
+  border-left: 2px solid rgba(72, 58, 42, 0.12);
   gap: 10px;
-  margin-left: 28px;
-  padding-left: 16px;
+  margin-left: 22px;
+  padding-left: 14px;
 }
 
 .place-page .comment-author {
@@ -402,16 +403,16 @@ button {
 .place-page .comment-meta-row,
 .place-page .comment-timestamp,
 .place-page .comment-meta-divider {
-  color: #7a6d60;
+  color: #76695d;
 }
 
 .place-page .comment-body {
-  color: #2d2722;
-  line-height: 1.65;
+  color: #2f2822;
+  line-height: 1.6;
 }
 
 .place-page .comment-score {
-  color: #443a32;
+  color: #4c4034;
 }
 
 .place-page .reply-button,
@@ -471,17 +472,18 @@ button {
 }
 
 .leaflet-tooltip.place-hover-card {
-  background: rgba(255, 255, 255, 0.96);
-  border: 1px solid rgba(24, 24, 27, 0.12);
-  border-radius: 14px;
-  box-shadow: 0 16px 32px rgba(24, 24, 27, 0.14);
+  background: rgba(255, 253, 249, 0.97);
+  border: 1px solid rgba(72, 58, 42, 0.14);
+  border-radius: 12px;
+  box-shadow: 0 14px 28px rgba(24, 24, 27, 0.12);
   color: #18181b;
   min-width: 180px;
   padding: 12px;
+  pointer-events: auto;
 }
 
 .leaflet-tooltip.place-hover-card::before {
-  border-top-color: rgba(255, 255, 255, 0.96);
+  border-top-color: rgba(255, 253, 249, 0.97);
 }
 
 .place-hover-card-title {

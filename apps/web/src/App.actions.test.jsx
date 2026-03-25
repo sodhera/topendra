@@ -255,6 +255,41 @@ describe('App web actions', () => {
     });
   });
 
+  it('updates the place vote score immediately before the backend resolves', async () => {
+    let resolveVoteRequest;
+
+    voteForPlace.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveVoteRequest = resolve;
+        })
+    );
+
+    render(<App />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('account-button').textContent).toBe('Profile');
+    });
+
+    fireEvent.click(screen.getByTestId('desktop-map-open-place'));
+    expect(await screen.findByRole('heading', { name: 'Action Test Place' })).toBeTruthy();
+    expect(screen.getByText(/^0 points$/i)).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Upvote place' }));
+
+    expect(screen.getByText(/\+1 points/i)).toBeTruthy();
+
+    resolveVoteRequest?.();
+
+    await waitFor(() => {
+      expect(voteForPlace).toHaveBeenCalledWith({
+        placeId: 'place-1',
+        userId: 'user-123',
+        value: 1,
+      });
+    });
+  });
+
   it('adds a place and opens the new place page', async () => {
     render(<App />);
 
