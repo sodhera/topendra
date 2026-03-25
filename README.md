@@ -40,8 +40,8 @@ cd topey
   - thins marker density as the map zooms out so wide views do not render every place pin at once
   - `Profile` or `Sign in` button at the top right
   - one large `+` button at the bottom that opens the add-place flow
-  - tapping a dot opens the place modal directly on home instead of navigating away
-  - the modal uses a single metadata line, `Open location`, a participation row with stemmed arrow voting plus `Added by: <Username>`, and a compact threaded preview with replies nested under their parent
+  - tapping a dot opens place details immediately; on web this now routes to `/places/:id` while mobile still uses an in-map detail surface
+  - the place detail surface keeps `Open location`, a vote rail, `Added by: <Username>`, and the threaded discussion together in one black-and-white layout
 - Browse screen:
   - starts near the user’s current location when available, with up to 50 seeded demo dots still merged into the dataset
   - uses the same zoom-aware marker thinning so wide map views stay readable
@@ -59,18 +59,18 @@ cd topey
   - iOS, Android, and web now render a custom Topey location marker instead of relying on the platform default blue dot
   - the location marker is a solid black circle with a smaller white dot inside it so current position still reads separately from place drops without introducing extra color
 - Mobile and web now share a flatter, low-resource shell: dark primary buttons, bordered white cards, compact dialogs, and simpler marker chrome with no glow-heavy treatment.
-- Place discussions now stay compact end-to-end: the place sheet shows a short preview stack, while the full conversation opens in a separate modal with lightweight vote rails, nested replies, and reply counts grouped under the parent comment.
+- Place discussion now stays attached to the detail surface: the web route renders the full thread inline, while mobile still keeps a compact preview before deeper discussion affordances.
 - Place opens are tracked in Supabase so later area-notification work has usage history to build on.
 - Demo mode now ships with 50 deterministic Kathmandu places plus multiple seeded comment threads per place.
 - Account creation is email-only and asks the user to choose an anonymous public username for places and comments.
 - Location data is used to center the map, show nearby place drops, and save the coordinates of places the user adds.
-- Web now exists as a dedicated app in `apps/web`; it mirrors the app shell in the browser with the same map overlays, sheets, comments, and add-place flow on top of a real tile map.
+- Web now exists as a dedicated app in `apps/web`; it mirrors the map-first shell in the browser with routed place pages, lightweight overlays, and the same add-place flow on top of a real tile map.
 - The browser map now has desktop-first controls under that same shell: drag panning, two-finger trackpad panning, wheel/pinch zoom, double-click zoom, keyboard map movement, and keyboard place traversal.
-- On web, place details, auth, discussion, composer, and add-place content now open as centered desktop dialogs rather than mobile bottom sheets.
-- Web discussion flows now keep only one action dialog active at a time, so moving from place details to discussion to composer does not stack multiple fixed overlays on top of each other.
+- On web, place details now live at `/places/:id` as a dedicated full page; auth, composer, and add-place remain lightweight dialogs over the map shell.
 - When any browser dialog is open, the background shell is now dimmed and removed from the accessibility tree so the map HUD and floating actions do not compete with the active task.
-- Browser add-place mode now visually softens the existing place dots and disables their hit targets while the user is positioning a new drop, which keeps the pin flow calmer and prevents accidental modal jumps.
+- Browser add-place mode now visually softens the existing place dots, disables their hit targets, and uses a single outline pin icon while the user is positioning a new drop.
 - The Leaflet runtime now re-invalidates layout on viewport resize, browser zoom, and tab re-entry so the map stays aligned when the visible browser space changes.
+- The browser map also runs without tile post-processing, snaps to integer zoom levels, and leans harder on shared pin thinning as the viewport widens so zooming costs less work.
 - Web replies now persist a real `parent_comment_id`, so refreshes keep the same nested thread shape instead of flattening replies back into the main comment list.
 - After a successful browser add-place submit, the UI now reopens the new place from the freshly refreshed dataset instead of trying to resolve it from stale pre-refresh state.
 
@@ -92,7 +92,7 @@ packages/
 - Home and browse both stay directly draggable because only the actual buttons intercept touch events.
 - Mobile map views intentionally suppress native POIs, buildings, indoor labels, traffic, and toolbar chrome so Topey pins are the only location layer that stands out.
 - Home and browse derive a visible marker subset from the current viewport, ease marker density down as the map zooms out, and switch back to full visible-pin rendering once the user is zoomed in far enough.
-- Home place details open in a modal on dot tap, and browse previews also open only from explicit dot taps.
+- Mobile home place details open in a modal on dot tap, while the web map routes explicit dot taps into `/places/:id`.
 - `AddPlace` updates the pending coordinates from map movement and uses a fixed center pin overlay so the target never disappears.
 - `apps/web` uses a real browser map surface, derives a region-like viewport from settled Leaflet bounds, and feeds that viewport back into the shared place-thinning logic so desktop drag, wheel, trackpad, and keyboard inputs all stay aligned with marker density without forcing React to repaint on every drag tick.
 - Web place drops now render as canvas-backed Leaflet circle markers instead of DOM markers so zoomed-out views stay responsive even when more places are visible at once.
@@ -217,7 +217,7 @@ npm run web:test
 - sees the same custom location marker language as mobile when browser geolocation is available
 - can drag the map, pan with a trackpad, zoom with wheel or pinch, and double-click to zoom in
 - can use arrow keys to pan, `Page Up` and `Page Down` to change the selected place, and `0` to reset the camera
-- can click place dots and inspect compact metadata, creator attribution, minimal widget cards, thread previews, and full discussion sheets
+- can click place dots and land on a dedicated `/places/:id` page with creator attribution, voting, `Open location`, and the full threaded discussion inline
 - can sign in from the browser when Supabase is configured
 - can vote, post comments, and add places from the browser when signed in
 - can open the selected place in external maps

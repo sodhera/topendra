@@ -44,7 +44,7 @@ Responsibilities:
 - render a real browser tile map underneath that shell
 - derive a region-like viewport from the browser map bounds
 - translate drag, trackpad, wheel, pinch, double-click, and keyboard input through the browser map engine
-- expose the same place, auth, discussion, composer, and add-place flows in the browser, but as centered desktop dialogs rather than mobile bottom sheets
+- expose place details as a routed `/places/:id` page while keeping auth, composer, and add-place as lightweight browser dialogs
 - talk to Supabase directly when browser env config exists, while still falling back to the shared demo dataset
 
 ### Web desktop interaction model
@@ -57,16 +57,18 @@ Mechanism:
 2. the app derives a region-like viewport from settled Leaflet bounds after move-end and zoom-end events instead of streaming every drag tick into React state
 3. that viewport is fed into the shared `getMapPlacesForRegion` logic so desktop and mobile marker density stay aligned
 4. place drops render as canvas-backed Leaflet `CircleMarker` paths instead of DOM-backed marker icons so wider desktop views remain responsive as the visible place count grows
-5. the browser map still exposes extra keyboard affordances such as `Page Up`, `Page Down`, `Home`, `End`, `Enter`, and `0`
-6. add-place mode reads a pinned coordinate from an offset point inside the settled map viewport so the browser flow matches the mobile upper-half pin behavior without dragging the React tree through every movement frame
-7. when browser geolocation resolves, a custom black-with-white-center location marker is rendered separately from place drops so current position stays visually distinct
-8. the browser base map intentionally strips labels and most external iconography so Topey pins remain the primary landmarks
-9. the browser runtime explicitly re-invalidates the Leaflet layout on viewport resize, browser zoom, and tab re-entry so changing the visible browser space does not leave tiles or hit targets out of sync
-10. add-place mode visually softens the existing place markers and disables their hit targets so moving the map to position a new drop does not accidentally kick the user back into browse details
-11. the browser map stays visually hidden behind the same full-screen app shell used by the mobile experience
-12. place, auth, composer, and add-place dialogs intentionally reuse the same flat bordered card language so metadata, voting, and threading feel consistent across the browser flow
-13. when one of those dialogs is open, the background shell is dimmed and removed from the accessibility tree so only the active surface remains interactive
-14. threaded comments are assembled client-side from `parent_comment_id`, with root comments sorted newest-first and replies rendered inside a nested gutter beneath the parent comment
+5. the browser map disables zoom animation, snaps to integer zoom steps, and avoids raster tile post-processing so wheel and pinch zoom trigger less tile churn
+6. the browser map still exposes extra keyboard affordances such as `Page Up`, `Page Down`, `Home`, `End`, `Enter`, and `0`
+7. add-place mode reads a pinned coordinate from an offset point inside the settled map viewport so the browser flow matches the mobile upper-half pin behavior without dragging the React tree through every movement frame
+8. when browser geolocation resolves, a custom black-with-white-center location marker is rendered separately from place drops so current position stays visually distinct
+9. the browser base map intentionally strips labels and most external iconography so Topey pins remain the primary landmarks
+10. the browser runtime explicitly re-invalidates the Leaflet layout on viewport resize, browser zoom, and tab re-entry so changing the visible browser space does not leave tiles or hit targets out of sync
+11. shared place thinning now becomes more aggressive as the viewport widens so zoomed-out browser views trade marker density for faster interaction
+12. add-place mode visually softens the existing place markers, disables their hit targets, and renders a single outline pin icon so moving the map to position a new drop stays calm and legible
+13. the browser map stays visually hidden behind the same full-screen app shell used by the mobile experience
+14. the routed place page, auth dialog, composer dialog, and add-place dialog intentionally reuse the same flat bordered card language so metadata, voting, and threading feel consistent across the browser flow
+15. when one of those dialogs is open, the background shell is dimmed and removed from the accessibility tree so only the active surface remains interactive
+16. threaded comments are assembled client-side from `parent_comment_id`, with root comments sorted newest-first and replies rendered inside a nested gutter beneath the parent comment
 
 ### Web runtime state
 
@@ -78,9 +80,9 @@ Responsibilities:
 - restore or create an anonymous viewer session id in local storage
 - fetch places and votes for every viewer
 - fetch comments only when a session exists
-- open the auth, place, discussion, composer, and add-place sheets directly from the app shell
-- keep browser participation flows mutually exclusive so only one desktop dialog owns focus at a time
-- return the user to the correct parent surface after composer close or submit instead of leaving stacked dialogs alive underneath
+- keep the URL and selected place in sync so `/places/:id` remains the source of truth for web detail navigation
+- open the auth, composer, and add-place dialogs directly from the app shell
+- keep browser participation flows mutually exclusive so only one blocking dialog owns focus at a time
 - derive nested comment threads from the flat Supabase result so web can render mobile-Reddit-style reply stacks without a second backend query shape
 
 Browser-specific backend helpers live in:
@@ -273,9 +275,9 @@ Backend data helpers live in [backend.js](/Users/sirishjoshi/Desktop/Topey/apps/
 - `createPlaceOpenEvent`: records each place open with a viewer session id and source screen
 - after a successful `createPlace`, the web runtime now selects the new place from the just-refreshed dataset instead of the stale pre-refresh `places` closure
 
-### Place Sheet Participation Row
+### Place Detail Participation Row
 
-The place details modal now exposes place participation in one compact row:
+The routed place detail surface now exposes place participation in one compact row:
 
 - left side: place-level upvote and downvote arrows
 - right side: `Added by: <Username>` using the persisted `authorName`
