@@ -4,6 +4,7 @@ import {
   CircleMarker,
   MapContainer,
   TileLayer,
+  Tooltip,
   useMap,
   useMapEvents,
 } from 'react-leaflet';
@@ -108,6 +109,10 @@ function areRegionsEquivalent(left, right) {
     Math.abs(left.latitudeDelta - right.latitudeDelta) < 0.00001 &&
     Math.abs(left.longitudeDelta - right.longitudeDelta) < 0.00001
   );
+}
+
+function formatVoteScore(value) {
+  return value >= 0 ? `+${value}` : `${value}`;
 }
 
 function MapRuntimeBridge({
@@ -381,10 +386,15 @@ function MapRuntimeBridge({
 
 const PlaceMarkersLayer = React.memo(function PlaceMarkersLayer({
   addMode,
+  baseMapReady,
   onSelectPlace,
   selectedPlaceId,
   visiblePlaces,
 }) {
+  if (!baseMapReady) {
+    return null;
+  }
+
   return visiblePlaces.map((place) => {
     const isSelected = place.id === selectedPlaceId;
     const interactive = !addMode;
@@ -420,7 +430,28 @@ const PlaceMarkersLayer = React.memo(function PlaceMarkersLayer({
         pathOptions={pathOptions}
         radius={radius}
         renderer={CANVAS_RENDERER}
-      />
+      >
+        {interactive ? (
+          <Tooltip className="place-hover-card" direction="top" interactive offset={[0, -10]} opacity={1} sticky>
+            <div className="place-hover-card-title">{place.name}</div>
+            <div className="place-hover-card-meta">
+              <span>{formatVoteScore(place.voteBreakdown?.score ?? 0)} votes</span>
+              <span>{place.voteBreakdown?.ratioLabel ?? '0:0'} ratio</span>
+            </div>
+            <button
+              className="place-hover-card-button"
+              type="button"
+              onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                onSelectPlace(place.id);
+              }}
+            >
+              Open
+            </button>
+          </Tooltip>
+        ) : null}
+      </CircleMarker>
     );
   });
 });
@@ -445,6 +476,8 @@ const DesktopMap = React.memo(function DesktopMap({
     []
   );
   const [zoomLevel, setZoomLevel] = React.useState(DEFAULT_ZOOM);
+  const [baseMapReady, setBaseMapReady] = React.useState(false);
+  const hasLoadedInitialBaseMapRef = React.useRef(false);
   const tileUrl =
     supportsHiDpiTiles && zoomLevel >= HIGH_DETAIL_TILE_ZOOM
       ? HIGH_DETAIL_TILE_URL
@@ -474,6 +507,17 @@ const DesktopMap = React.memo(function DesktopMap({
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+          eventHandlers={{
+            loading: () => {
+              if (!hasLoadedInitialBaseMapRef.current) {
+                setBaseMapReady(false);
+              }
+            },
+            load: () => {
+              hasLoadedInitialBaseMapRef.current = true;
+              setBaseMapReady(true);
+            },
+          }}
           keepBuffer={TILE_KEEP_BUFFER}
           subdomains="abcd"
           updateWhenIdle={false}
@@ -496,12 +540,13 @@ const DesktopMap = React.memo(function DesktopMap({
 
         <PlaceMarkersLayer
           addMode={addMode}
+          baseMapReady={baseMapReady}
           onSelectPlace={handleSelectPlace}
           selectedPlaceId={selectedPlaceId}
           visiblePlaces={visiblePlaces}
         />
 
-        {userRegion ? (
+        {userRegion && baseMapReady ? (
           <CircleMarker
             center={[userRegion.latitude, userRegion.longitude]}
             interactive={false}
@@ -512,6 +557,8 @@ const DesktopMap = React.memo(function DesktopMap({
           />
         ) : null}
       </MapContainer>
+
+      {!baseMapReady ? <div className="map-loading-indicator">Loading map…</div> : null}
 
       <a
         className="map-attribution"

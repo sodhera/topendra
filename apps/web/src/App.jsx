@@ -304,7 +304,11 @@ export default function App() {
     [focusedPlaceId, places]
   );
   const visiblePlaces = React.useMemo(
-    () => getMapPlacesForRegion(places, mapRegion, votes, selectedPlaceId),
+    () =>
+      getMapPlacesForRegion(places, mapRegion, votes, selectedPlaceId).map((place) => ({
+        ...place,
+        voteBreakdown: getVoteBreakdown(votes, place.id),
+      })),
     [mapRegion, places, selectedPlaceId, votes]
   );
   const comments = React.useMemo(
@@ -1019,15 +1023,6 @@ function AppButton({
   );
 }
 
-function PreviewStat({ label, value }) {
-  return (
-    <div className="stat-card">
-      <div className="stat-label">{label}</div>
-      <div className="stat-value">{value}</div>
-    </div>
-  );
-}
-
 function PlacePage({
   accountLabel,
   commentThreads,
@@ -1043,6 +1038,8 @@ function PlacePage({
   place,
   voteBreakdown,
 }) {
+  const commentCount = place?.threadCount ?? comments.length;
+
   if (!place) {
     return (
       <main className="place-page">
@@ -1093,10 +1090,7 @@ function PlacePage({
               </aside>
 
               <div className="place-page-content">
-                <div className="place-page-kicker-row">
-                  <p className="place-page-kicker">r/topeyplaces</p>
-                  <span className="place-page-scene-label">third-place thread</span>
-                </div>
+                <p className="place-page-kicker">r/topeyplaces</p>
                 <h1 className="place-page-title">{place.name}</h1>
 
                 <div className="sheet-meta-row place-page-meta-row">
@@ -1105,16 +1099,13 @@ function PlacePage({
                   <span className="sheet-meta-inline">{formatRelativeTime(place.createdAt)}</span>
                 </div>
 
-                <p className="place-page-copy">{place.description}</p>
-
-                <div className="stats-row place-page-stats">
-                  <PreviewStat
-                    label="Score"
-                    value={`${voteBreakdown.score >= 0 ? '+' : ''}${voteBreakdown.score}`}
-                  />
-                  <PreviewStat label="Vote ratio" value={voteBreakdown.ratioLabel} />
-                  <PreviewStat label="Comments" value={`${place.threadCount ?? comments.length}`} />
+                <div className="place-page-summary-line">
+                  <span>{formatSignedValue(voteBreakdown.score)} votes</span>
+                  <span>{voteBreakdown.ratioLabel} ratio</span>
+                  <span>{commentCount} comments</span>
                 </div>
+
+                <p className="place-page-copy">{place.description}</p>
 
                 <div className="place-page-toolbar">
                   <AppButton
@@ -1124,12 +1115,8 @@ function PlacePage({
                     styleClassName="place-page-open-button"
                   />
                   <button className="place-page-thread-button" type="button" onClick={() => onCompose()}>
-                    Add comment
+                    Comment
                   </button>
-                </div>
-
-                <div className="place-page-added-by">
-                  Added by: <span>{formatUserHandle(place.authorName)}</span>
                 </div>
               </div>
             </div>
@@ -1141,11 +1128,8 @@ function PlacePage({
                 <div className="thread-kicker">Top comments</div>
                 <h2 className="thread-title place-page-thread-title">Community discussion</h2>
               </div>
-              <div className="place-page-thread-meta">
-                <div className="place-page-thread-sort">Sorted by newest</div>
-                <div className="place-page-comment-count">
-                  {comments.length ? `${comments.length} comments` : 'Start the thread'}
-                </div>
+              <div className="place-page-comment-count">
+                {comments.length ? `${comments.length} comments` : 'Start the thread'}
               </div>
             </div>
 

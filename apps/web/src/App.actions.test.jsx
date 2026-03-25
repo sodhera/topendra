@@ -195,7 +195,7 @@ describe('App web actions', () => {
     expect(window.location.pathname).toBe('/places/place-1');
     expect(screen.queryByRole('dialog')).toBeNull();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Add comment' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Comment' }));
 
     let dialog = await screen.findByRole('dialog');
     expect(within(dialog).getByRole('heading', { name: 'Add a comment' })).toBeTruthy();

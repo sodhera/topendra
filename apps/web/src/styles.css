@@ -1,9 +1,7 @@
-@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Syne:wght@700;800&display=swap");
-
 :root {
   color-scheme: light;
-  --font-ui: "Space Grotesk", "IBM Plex Sans", "Avenir Next", "Segoe UI", Arial, sans-serif;
-  --font-display: "Syne", "Avenir Next", "Segoe UI", Arial, sans-serif;
+  --font-ui: "IBM Plex Sans", "Avenir Next", "Segoe UI", Arial, sans-serif;
+  --font-display: "IBM Plex Sans", "Avenir Next", "Segoe UI", Arial, sans-serif;
   font-family: var(--font-ui);
   background: #f4f4f5;
   color: #18181b;
@@ -84,8 +82,10 @@ button {
 }
 
 .app-shell {
+  height: 100dvh;
   min-height: 100dvh;
   min-height: 100vh;
+  overflow: hidden;
 }
 
 .map-screen {
@@ -100,12 +100,15 @@ button {
 
 .place-page {
   background:
-    linear-gradient(180deg, rgba(251, 244, 230, 0.98), rgba(245, 236, 222, 0.98)),
+    radial-gradient(circle at 12% 18%, rgba(244, 197, 125, 0.22), transparent 20%),
+    radial-gradient(circle at 84% 14%, rgba(142, 188, 150, 0.2), transparent 18%),
+    linear-gradient(180deg, rgba(251, 244, 230, 0.98), rgba(245, 238, 226, 0.98)),
     #f3ebdf;
-  min-height: 100dvh;
+  height: 100dvh;
   overflow-y: auto;
   padding: var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left);
   position: relative;
+  -webkit-overflow-scrolling: touch;
 }
 
 .place-page::before,
@@ -118,18 +121,13 @@ button {
 
 .place-page::before {
   background:
-    radial-gradient(circle at 10% 18%, rgba(246, 181, 91, 0.34), transparent 24%),
-    radial-gradient(circle at 84% 14%, rgba(120, 171, 129, 0.3), transparent 20%),
-    radial-gradient(circle at 82% 76%, rgba(239, 141, 111, 0.24), transparent 22%),
-    radial-gradient(circle at 18% 82%, rgba(120, 153, 218, 0.16), transparent 16%);
+    radial-gradient(circle at 86% 72%, rgba(239, 141, 111, 0.16), transparent 18%),
+    radial-gradient(circle at 18% 80%, rgba(120, 153, 218, 0.1), transparent 14%);
 }
 
 .place-page::after {
-  background:
-    radial-gradient(circle at 1px 1px, rgba(24, 24, 27, 0.045) 1px, transparent 0),
-    linear-gradient(140deg, rgba(255, 255, 255, 0.12), transparent 32%, rgba(255, 255, 255, 0.08) 68%, transparent 100%);
-  background-size: 18px 18px, auto;
-  opacity: 0.55;
+  background: linear-gradient(140deg, rgba(255, 255, 255, 0.08), transparent 38%, rgba(255, 255, 255, 0.06) 72%, transparent 100%);
+  opacity: 0.5;
 }
 
 .place-page-shell {
@@ -154,8 +152,8 @@ button {
 
 .page-nav-button {
   align-items: center;
-  backdrop-filter: blur(14px);
-  background: rgba(255, 250, 244, 0.74);
+  backdrop-filter: blur(10px);
+  background: rgba(255, 250, 244, 0.82);
   border: 1px solid rgba(24, 24, 27, 0.12);
   border-radius: 999px;
   color: var(--color-text, #18181b);
@@ -166,18 +164,18 @@ button {
   letter-spacing: 0.01em;
   min-height: 42px;
   padding: 0 16px;
-  box-shadow: 0 14px 34px rgba(117, 88, 49, 0.12);
+  box-shadow: 0 10px 24px rgba(117, 88, 49, 0.09);
 }
 
 .place-page-card {
-  backdrop-filter: blur(18px);
-  background: rgba(255, 251, 246, 0.8);
+  backdrop-filter: blur(12px);
+  background: rgba(255, 253, 249, 0.9);
   border: 1px solid rgba(24, 24, 27, 0.12);
-  border-radius: 30px;
+  border-radius: 24px;
   box-shadow:
-    0 28px 80px rgba(121, 88, 44, 0.14),
+    0 18px 46px rgba(121, 88, 44, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.75);
-  padding: clamp(20px, 3vw, 36px);
+  padding: clamp(18px, 2.6vw, 30px);
   position: relative;
   overflow: hidden;
 }
@@ -185,9 +183,9 @@ button {
 .place-page-card::before {
   background: linear-gradient(90deg, rgba(255, 193, 119, 0.85), rgba(135, 184, 143, 0.72), rgba(255, 153, 121, 0.82));
   content: "";
-  height: 8px;
+  height: 4px;
   inset: 0 0 auto;
-  opacity: 0.72;
+  opacity: 0.48;
   position: absolute;
 }
 
@@ -215,73 +213,69 @@ button {
   min-width: 0;
 }
 
-.place-page-kicker-row {
-  align-items: center;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
 .place-page-kicker {
   color: #706356;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 800;
-  letter-spacing: 0.12em;
-  margin: 0;
-  text-transform: uppercase;
-}
-
-.place-page-scene-label {
-  background: rgba(255, 255, 255, 0.62);
-  border: 1px solid rgba(24, 24, 27, 0.1);
-  border-radius: 999px;
-  color: #52463c;
-  display: inline-flex;
-  font-size: 11px;
-  font-weight: 700;
   letter-spacing: 0.1em;
-  padding: 6px 11px;
+  margin: 0 0 8px;
   text-transform: uppercase;
 }
 
 .place-page-title {
   color: #18181b;
   font-family: var(--font-display);
-  font-size: clamp(42px, 5vw, 74px);
-  font-weight: 800;
-  letter-spacing: -0.05em;
-  line-height: 0.88;
-  margin: 10px 0 0;
-  max-width: 10ch;
+  font-size: clamp(34px, 4.5vw, 56px);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 0.94;
+  margin: 0;
+  max-width: 12ch;
 }
 
 .place-page-meta-row {
-  margin-top: 16px;
+  margin-top: 12px;
+}
+
+.place-page-summary-line {
+  color: #5f5449;
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 14px;
+  font-weight: 600;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.place-page-summary-line span {
+  position: relative;
+}
+
+.place-page-summary-line span + span::before {
+  color: rgba(24, 24, 27, 0.25);
+  content: "•";
+  margin-right: 10px;
 }
 
 .place-page-copy {
   color: #3d362f;
-  font-size: 18px;
-  line-height: 1.7;
-  margin: 20px 0 0;
+  font-size: 17px;
+  line-height: 1.6;
+  margin: 18px 0 0;
   max-width: 56ch;
-}
-
-.place-page-stats {
-  margin-top: 26px;
 }
 
 .place-page-toolbar {
   align-items: center;
   display: flex;
   flex-wrap: wrap;
-  gap: 14px;
-  margin-top: 26px;
+  gap: 12px;
+  margin-top: 22px;
 }
 
 .place-page-open-button {
-  box-shadow: 0 18px 38px rgba(24, 24, 27, 0.16);
-  min-width: min(300px, 100%);
+  box-shadow: 0 12px 24px rgba(24, 24, 27, 0.12);
+  min-width: min(240px, 100%);
 }
 
 .place-page-thread-button {
@@ -295,24 +289,9 @@ button {
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.1em;
-  min-height: 44px;
-  padding: 0 18px;
+  min-height: 42px;
+  padding: 0 16px;
   text-transform: uppercase;
-}
-
-.place-page-added-by {
-  border-top: 1px solid rgba(24, 24, 27, 0.08);
-  color: #6f6256;
-  font-size: 14px;
-  line-height: 20px;
-  margin-top: 24px;
-  padding-top: 18px;
-}
-
-.place-page-added-by span,
-.place-page-comment-count {
-  color: var(--color-text, #18181b);
-  font-weight: 800;
 }
 
 .place-page-thread-header {
@@ -322,33 +301,20 @@ button {
   padding-bottom: 18px;
 }
 
-.place-page-thread-meta {
-  align-items: flex-end;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.place-page-thread-sort {
-  color: #726658;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  margin-bottom: 18px;
-  text-transform: uppercase;
-}
-
 .place-page-thread-title {
-  font-family: var(--font-display);
-  font-size: clamp(30px, 3vw, 44px);
-  letter-spacing: -0.04em;
+  font-family: var(--font-ui);
+  font-size: clamp(24px, 3vw, 32px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
 .place-page-comment-count {
   background: rgba(255, 255, 255, 0.66);
   border: 1px solid rgba(24, 24, 27, 0.12);
   border-radius: 999px;
-  font-size: 15px;
+  color: var(--color-text, #18181b);
+  font-size: 14px;
+  font-weight: 700;
   padding: 8px 12px;
 }
 
@@ -376,33 +342,14 @@ button {
   color: #6f6258;
 }
 
-.place-page .stat-card {
-  background: rgba(255, 255, 255, 0.62);
-  border: 1px solid rgba(24, 24, 27, 0.1);
-  border-radius: 18px;
-  min-height: 98px;
-  padding: 16px 18px;
-}
-
-.place-page .stat-label {
-  color: #726658;
-  letter-spacing: 0.09em;
-}
-
-.place-page .stat-value {
-  color: #18181b;
-  font-size: 28px;
-  margin-top: 10px;
-}
-
 .place-page .vote-controls {
-  background: rgba(255, 255, 255, 0.78);
+  background: rgba(255, 255, 255, 0.9);
   border: 1px solid rgba(24, 24, 27, 0.12);
-  border-radius: 22px;
-  box-shadow: 0 16px 34px rgba(121, 88, 44, 0.12);
-  gap: 8px;
-  min-width: 68px;
-  padding: 12px 8px;
+  border-radius: 18px;
+  box-shadow: 0 10px 20px rgba(121, 88, 44, 0.08);
+  gap: 6px;
+  min-width: 60px;
+  padding: 10px 8px;
 }
 
 .place-page .vote-arrow {
@@ -420,9 +367,9 @@ button {
 }
 
 .place-page .vote-score {
-  font-family: var(--font-display);
-  font-size: 28px;
-  font-weight: 800;
+  font-family: var(--font-ui);
+  font-size: 24px;
+  font-weight: 700;
 }
 
 .place-page .comment-card,
@@ -521,6 +468,75 @@ button {
 
 .leaflet-container .leaflet-interactive {
   cursor: pointer;
+}
+
+.leaflet-tooltip.place-hover-card {
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(24, 24, 27, 0.12);
+  border-radius: 14px;
+  box-shadow: 0 16px 32px rgba(24, 24, 27, 0.14);
+  color: #18181b;
+  min-width: 180px;
+  padding: 12px;
+}
+
+.leaflet-tooltip.place-hover-card::before {
+  border-top-color: rgba(255, 255, 255, 0.96);
+}
+
+.place-hover-card-title {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.place-hover-card-meta {
+  color: var(--color-muted, #71717a);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 12px;
+  font-weight: 600;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.place-hover-card-button {
+  align-items: center;
+  background: #18181b;
+  border: 0;
+  border-radius: 999px;
+  color: #ffffff;
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 700;
+  justify-content: center;
+  margin-top: 10px;
+  min-height: 32px;
+  padding: 0 14px;
+}
+
+.map-loading-indicator {
+  align-items: center;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(244, 244, 245, 0.76)),
+    rgba(244, 244, 245, 0.72);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(24, 24, 27, 0.08);
+  border-radius: 999px;
+  box-shadow: 0 12px 24px rgba(24, 24, 27, 0.08);
+  color: #18181b;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 700;
+  left: 50%;
+  min-height: 36px;
+  padding: 0 14px;
+  pointer-events: none;
+  position: absolute;
+  top: calc(var(--safe-top) + 56px);
+  transform: translateX(-50%);
+  z-index: 2;
 }
 
 .map-attribution {
@@ -1328,17 +1344,9 @@ button {
     max-width: 100%;
   }
 
-  .place-page-stats {
-    grid-template-columns: 1fr;
-  }
-
   .place-page-thread-header {
     align-items: flex-start;
     gap: 14px;
-  }
-
-  .place-page-thread-meta {
-    align-items: flex-start;
   }
 
   .place-page-thread-title {
