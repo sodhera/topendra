@@ -192,20 +192,13 @@ button {
   padding-top: clamp(20px, 2.4vw, 24px);
 }
 
-.place-page-layout {
-  display: grid;
-  gap: clamp(16px, 1.6vw, 22px);
-  grid-template-columns: 68px minmax(0, 1fr);
-}
-
-.place-page-vote-column {
-  align-self: start;
-  position: sticky;
-  top: calc(var(--safe-top) + 8px);
-}
-
 .place-page-content {
   min-width: 0;
+}
+
+.place-page-post-content {
+  display: flex;
+  flex-direction: column;
 }
 
 .place-page-kicker {
@@ -276,12 +269,17 @@ button {
   max-width: 64ch;
 }
 
+.place-page-vote-bar {
+  align-self: flex-start;
+  margin-top: 20px;
+}
+
 .place-page-toolbar {
   align-items: center;
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  margin-top: 22px;
+  margin-top: 18px;
 }
 
 .place-page-open-button {
@@ -371,6 +369,68 @@ button {
   font-family: var(--font-ui);
   font-size: 22px;
   font-weight: 700;
+}
+
+.place-page .vote-controls.is-horizontal {
+  align-items: center;
+  flex-direction: row;
+  gap: 10px;
+  min-width: 0;
+  padding: 8px;
+}
+
+.place-page .vote-controls.is-horizontal.is-colorful {
+  background: rgba(255, 249, 241, 0.96);
+  border-color: rgba(196, 149, 114, 0.22);
+  box-shadow: 0 10px 24px rgba(180, 135, 89, 0.12);
+}
+
+.place-page .vote-controls.is-horizontal .vote-arrow {
+  height: 40px;
+  width: 40px;
+}
+
+.place-page .vote-controls.is-horizontal .vote-score {
+  align-items: center;
+  background: linear-gradient(180deg, rgba(255, 244, 224, 0.98), rgba(246, 231, 207, 0.98));
+  border: 1px solid rgba(196, 149, 114, 0.18);
+  border-radius: 999px;
+  color: #3e3228;
+  display: inline-flex;
+  justify-content: center;
+  min-height: 40px;
+  min-width: 78px;
+  padding: 0 16px;
+}
+
+.place-page .vote-controls.is-horizontal .vote-arrow.is-up {
+  background: rgba(236, 120, 75, 0.14);
+}
+
+.place-page .vote-controls.is-horizontal .vote-arrow.is-down {
+  background: rgba(74, 147, 171, 0.14);
+}
+
+.place-page .vote-controls.is-horizontal .vote-arrow.is-up span {
+  color: #c85a34;
+}
+
+.place-page .vote-controls.is-horizontal .vote-arrow.is-down span {
+  color: #2f7f98;
+}
+
+.place-page .vote-controls.is-horizontal .vote-arrow.is-up.is-active {
+  background: linear-gradient(180deg, #ea7449, #d95f33);
+  box-shadow: 0 10px 16px rgba(217, 95, 51, 0.2);
+}
+
+.place-page .vote-controls.is-horizontal .vote-arrow.is-down.is-active {
+  background: linear-gradient(180deg, #4c98af, #2f7f98);
+  box-shadow: 0 10px 16px rgba(47, 127, 152, 0.18);
+}
+
+.place-page .vote-controls.is-horizontal .vote-arrow.is-active span {
+  color: #ffffff;
 }
 
 .place-page .comment-card,
@@ -1307,12 +1367,8 @@ button {
   }
 
   .place-page-card {
-    border-radius: 24px;
+    border-radius: 18px;
     padding: 20px 18px;
-  }
-
-  .place-page-layout {
-    grid-template-columns: 1fr;
   }
 
   .place-page-stack {
@@ -1329,21 +1385,18 @@ button {
     width: 100%;
   }
 
-  .place-page-vote-column {
-    position: static;
-  }
-
-  .place-page-vote-column .vote-controls {
-    flex-direction: row;
-    gap: 10px;
-    justify-content: center;
-    min-width: 0;
-    width: fit-content;
-  }
-
   .place-page-title {
     font-size: clamp(38px, 12vw, 54px);
     max-width: 100%;
+  }
+
+  .place-page-vote-bar {
+    align-self: stretch;
+  }
+
+  .place-page .vote-controls.is-horizontal {
+    justify-content: space-between;
+    width: 100%;
   }
 
   .place-page-thread-header {

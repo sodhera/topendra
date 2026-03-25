@@ -1172,47 +1172,46 @@ function PlacePage({
 
         <div className="place-page-stack">
           <article className="place-page-card place-page-post-card">
-            <div className="place-page-layout">
-              <aside className="place-page-vote-column">
-                <VoteControls
-                  currentVote={currentVote}
-                  onDownvote={() => onVote(-1)}
-                  onUpvote={() => onVote(1)}
-                  score={voteBreakdown.score}
+            <div className="place-page-content place-page-post-content">
+              <div className="place-page-meta-row">
+                <span className="place-page-kicker">r/topeyplaces</span>
+                <span className="place-page-meta-dot">•</span>
+                <span className="place-page-meta-inline">
+                  Posted by {formatUserHandle(place.authorName)}
+                </span>
+                <span className="place-page-meta-dot">•</span>
+                <span className="place-page-meta-inline">{formatRelativeTime(place.createdAt)}</span>
+              </div>
+              <h1 className="place-page-title">{place.name}</h1>
+
+              <div className="place-page-summary-line">
+                <span>{formatSignedValue(voteBreakdown.score)} points</span>
+                <span>{commentCount} comments</span>
+                <span>{voteBreakdown.ratioLabel} split</span>
+              </div>
+
+              <p className="place-page-copy">{place.description}</p>
+
+              <VoteControls
+                className="place-page-vote-bar"
+                currentVote={currentVote}
+                direction="horizontal"
+                onDownvote={() => onVote(-1)}
+                onUpvote={() => onVote(1)}
+                score={voteBreakdown.score}
+                tone="colorful"
+              />
+
+              <div className="place-page-toolbar">
+                <AppButton
+                  label="Open location"
+                  size="default"
+                  onClick={onOpenLocation}
+                  styleClassName="place-page-open-button"
                 />
-              </aside>
-
-              <div className="place-page-content">
-                <div className="place-page-meta-row">
-                  <span className="place-page-kicker">r/topeyplaces</span>
-                  <span className="place-page-meta-dot">•</span>
-                  <span className="place-page-meta-inline">
-                    Posted by {formatUserHandle(place.authorName)}
-                  </span>
-                  <span className="place-page-meta-dot">•</span>
-                  <span className="place-page-meta-inline">{formatRelativeTime(place.createdAt)}</span>
-                </div>
-                <h1 className="place-page-title">{place.name}</h1>
-
-                <div className="place-page-summary-line">
-                  <span>{formatSignedValue(voteBreakdown.score)} points</span>
-                  <span>{commentCount} comments</span>
-                  <span>{voteBreakdown.ratioLabel} split</span>
-                </div>
-
-                <p className="place-page-copy">{place.description}</p>
-
-                <div className="place-page-toolbar">
-                  <AppButton
-                    label="Open location"
-                    size="default"
-                    onClick={onOpenLocation}
-                    styleClassName="place-page-open-button"
-                  />
-                  <button className="place-page-thread-button" type="button" onClick={() => onCompose()}>
-                    Comment
-                  </button>
-                </div>
+                <button className="place-page-thread-button" type="button" onClick={() => onCompose()}>
+                  Comment
+                </button>
               </div>
             </div>
           </article>
@@ -1253,14 +1252,36 @@ function PlacePage({
   );
 }
 
-function VoteControls({ currentVote, onDownvote, onUpvote, score }) {
+function VoteControls({
+  className = '',
+  currentVote,
+  direction = 'vertical',
+  onDownvote,
+  onUpvote,
+  score,
+  tone = 'default',
+}) {
   return (
-    <div className="vote-controls">
-      <button className="vote-arrow" type="button" onClick={onUpvote} aria-label="Upvote place">
+    <div
+      className={`vote-controls is-${direction}${tone === 'colorful' ? ' is-colorful' : ''}${
+        className ? ` ${className}` : ''
+      }`}
+    >
+      <button
+        className={`vote-arrow is-up${currentVote === 1 ? ' is-active' : ''}`}
+        type="button"
+        onClick={onUpvote}
+        aria-label="Upvote place"
+      >
         <span className={currentVote === 1 ? 'is-active' : ''}>▲</span>
       </button>
       <span className="vote-score">{formatSignedValue(score)}</span>
-      <button className="vote-arrow" type="button" onClick={onDownvote} aria-label="Downvote place">
+      <button
+        className={`vote-arrow is-down${currentVote === -1 ? ' is-active' : ''}`}
+        type="button"
+        onClick={onDownvote}
+        aria-label="Downvote place"
+      >
         <span className={currentVote === -1 ? 'is-active' : ''}>▼</span>
       </button>
     </div>
