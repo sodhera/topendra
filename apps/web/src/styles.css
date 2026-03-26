@@ -241,11 +241,15 @@ button {
 }
 
 .page-nav-button.is-icon {
-  font-size: 28px;
-  height: 48px;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  font-size: 34px;
   line-height: 1;
   padding: 0;
-  width: 48px;
+  width: auto;
+  min-height: 0;
 }
 
 .place-page-empty-card {
