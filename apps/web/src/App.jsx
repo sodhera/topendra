@@ -41,6 +41,12 @@ import {
   unsavePlace,
   uploadPlacePhotos,
 } from './lib/backend';
+import {
+  captureAnalyticsEvent,
+  identifyAnalyticsUser,
+  initializeAnalytics,
+  resetAnalyticsUser,
+} from './lib/analytics';
 import { getSafeSession, hasSupabaseConfig, supabase } from './lib/supabase';
 import { colors as sharedColors } from '@topey/shared/lib/theme';
 import DesktopMap from './components/DesktopMap';
@@ -349,6 +355,8 @@ export default function App() {
   const [colorMode, setColorMode] = React.useState(() => getStoredColorMode());
   const placeVoteRequestVersionRef = React.useRef({});
   const commentVoteRequestVersionRef = React.useRef({});
+  const lastAnalyticsRouteRef = React.useRef('');
+  const lastAnalyticsUserIdRef = React.useRef('');
   const tagMenuRef = React.useRef(null);
 
   const currentUser = React.useMemo(() => getUserIdentity(session?.user), [session]);
@@ -380,6 +388,10 @@ export default function App() {
 
     window.localStorage.setItem(COLOR_MODE_STORAGE_KEY, colorMode);
   }, [colorMode]);
+
+  React.useEffect(() => {
+    initializeAnalytics();
+  }, []);
 
   React.useEffect(() => {
     if (typeof window === 'undefined') {
@@ -450,6 +462,46 @@ export default function App() {
       window.clearTimeout(timeoutId);
     };
   }, [successMessage]);
+
+  React.useEffect(() => {
+    if (!isHydrated) {
+      return;
+    }
+
+    const nextUserId = session?.user?.id ?? '';
+    const previousUserId = lastAnalyticsUserIdRef.current;
+
+    if (nextUserId) {
+      identifyAnalyticsUser({
+        distinctId: nextUserId,
+        anonymousHandle: currentAnonymousHandle,
+        hasAnonymousHandle: hasAnonymousHandle(session?.user),
+      });
+    } else if (previousUserId) {
+      resetAnalyticsUser();
+    }
+
+    lastAnalyticsUserIdRef.current = nextUserId;
+  }, [currentAnonymousHandle, isHydrated, session?.user]);
+
+  React.useEffect(() => {
+    if (!isHydrated) {
+      return;
+    }
+
+    const trackedPlaceId = appRoute.view === 'place' ? appRoute.placeId : '';
+    const routeKey = `${appRoute.view}:${trackedPlaceId}`;
+
+    if (lastAnalyticsRouteRef.current === routeKey) {
+      return;
+    }
+
+    captureAnalyticsEvent('screen viewed', {
+      place_id: trackedPlaceId || null,
+      screen_name: appRoute.view === 'place' ? 'place_detail' : 'map_home',
+    });
+    lastAnalyticsRouteRef.current = routeKey;
+  }, [appRoute.placeId, appRoute.view, isHydrated]);
 
   const navigateToRoute = React.useCallback((nextRoute, { replace = false } = {}) => {
     const nextPath = nextRoute.view === 'place' ? getPlacePath(nextRoute.placeId) : '/';
@@ -620,9 +672,20 @@ export default function App() {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    } = supabase.auth.onAuthStateChange((event, nextSession) => {
       if (!active) {
         return;
+      }
+
+      if (event === 'SIGNED_IN' && nextSession?.user?.id) {
+        captureAnalyticsEvent('auth session started', {
+          auth_provider: 'google',
+          has_anonymous_handle: hasAnonymousHandle(nextSession.user),
+        });
+      }
+
+      if (event === 'SIGNED_OUT') {
+        captureAnalyticsEvent('auth session ended');
       }
 
       applySession(nextSession ?? null).catch(() => undefined);
@@ -770,6 +833,11 @@ export default function App() {
       );
 
       trackPlaceOpen(place.id, options.sourceScreen ?? 'web_place_page');
+      captureAnalyticsEvent('place detail opened', {
+        place_id: place.id,
+        place_tag: place.tag,
+        source_screen: options.sourceScreen ?? 'web_place_page',
+      });
     },
     [navigateToRoute, places, trackPlaceOpen]
   );
@@ -813,6 +881,7 @@ export default function App() {
     setCommentDraft('');
     setReplyTarget(null);
     setIsAuthModalVisible(true);
+    captureAnalyticsEvent('auth modal opened');
   }, []);
 
   const closeComposer = React.useCallback(() => {
@@ -826,6 +895,10 @@ export default function App() {
       return;
     }
 
+    captureAnalyticsEvent('place location opened', {
+      place_id: selectedPlace.id,
+      place_tag: selectedPlace.tag,
+    });
     window.open(openLocationHref(selectedPlace), '_blank', 'noreferrer');
   }, [selectedPlace]);
 
@@ -877,6 +950,11 @@ export default function App() {
           return nextVotes;
         });
         setErrorMessage('');
+        captureAnalyticsEvent('place vote changed', {
+          place_id: placeId,
+          place_tag: selectedPlace.tag,
+          vote_value: nextOptimisticValue,
+        });
       } catch (error) {
         if (placeVoteRequestVersionRef.current[voteKey] !== nextRequestVersion) {
           return;
@@ -903,8 +981,12 @@ export default function App() {
       setReplyTarget(nextReplyTarget);
       setCommentDraft(nextReplyTarget ? `@${nextReplyTarget.authorName || 'Zazaspot user'} ` : '');
       setIsComposerModalVisible(true);
+      captureAnalyticsEvent('comment composer opened', {
+        is_reply: Boolean(nextReplyTarget),
+        place_id: selectedPlace?.id ?? null,
+      });
     },
-    [isAuthenticated, openAuthModal]
+    [isAuthenticated, openAuthModal, selectedPlace?.id]
   );
 
   const handleSubmitComment = React.useCallback(async () => {
@@ -922,6 +1004,9 @@ export default function App() {
       closeComposer();
       setAuthNoticeMessage('Choose an anonymous name before posting or adding places.');
       setIsAuthModalVisible(true);
+      captureAnalyticsEvent('anonymous handle required', {
+        source: 'comment_submit',
+      });
       return;
     }
 
@@ -941,6 +1026,11 @@ export default function App() {
       await refreshData(session);
       setErrorMessage('');
       closeComposer();
+      captureAnalyticsEvent('comment created', {
+        comment_length: commentDraft.trim().length,
+        is_reply: Boolean(replyTarget),
+        place_id: selectedPlace.id,
+      });
     } catch (error) {
       setErrorMessage(error?.message ?? 'Comment failed.');
     } finally {
@@ -1001,6 +1091,11 @@ export default function App() {
           return nextVotes;
         });
         setErrorMessage('');
+        captureAnalyticsEvent('comment vote changed', {
+          comment_id: commentId,
+          place_id: selectedPlace?.id ?? null,
+          vote_value: nextOptimisticValue,
+        });
       } catch (error) {
         if (commentVoteRequestVersionRef.current[voteKey] !== nextRequestVersion) {
           return;
@@ -1027,6 +1122,9 @@ export default function App() {
       setIsAuthBusy(true);
       setErrorMessage('');
       setAuthNoticeMessage('');
+      captureAnalyticsEvent('google sign in requested', {
+        auth_provider: 'google',
+      });
       
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -1082,6 +1180,10 @@ export default function App() {
           : currentSession
       );
       setIsAuthModalVisible(false);
+      captureAnalyticsEvent('anonymous handle claimed', {
+        claim_source: 'auth_modal',
+        handle_length: claimedHandle.length,
+      });
     } catch (error) {
       setErrorMessage(error?.message ?? 'Anonymous name setup failed.');
       setAuthNoticeMessage('Pick a different anonymous name to continue.');
@@ -1121,6 +1223,7 @@ export default function App() {
     setFocusedPlaceId('');
     setCommentDraft('');
     setReplyTarget(null);
+    captureAnalyticsEvent('place add flow started');
   }, [mapRegion.latitude, mapRegion.longitude, navigateToRoute]);
   const handleOpenSelected = React.useCallback(() => {
     if (selectedPlaceId) {
@@ -1169,6 +1272,9 @@ export default function App() {
       setIsAddSheetVisible(false);
       setAuthNoticeMessage('Choose an anonymous name before posting or adding places.');
       setIsAuthModalVisible(true);
+      captureAnalyticsEvent('anonymous handle required', {
+        source: 'place_create',
+      });
       return;
     }
 
@@ -1200,6 +1306,12 @@ export default function App() {
       setIsAddMode(false);
       setErrorMessage('');
       setSuccessMessage('Place added successfully.');
+      captureAnalyticsEvent('place created', {
+        has_custom_tag: isCustomTagSelected,
+        photo_count: photoUrls.length,
+        place_name_length: newPlaceName.trim().length,
+        place_tag: resolvedNewPlaceTag,
+      });
     } catch (error) {
       setErrorMessage(error?.message ?? 'Save failed.');
     } finally {
@@ -1216,18 +1328,26 @@ export default function App() {
     refreshData,
     resolvedNewPlaceTag,
     session,
+    isCustomTagSelected,
   ]);
 
   const toggleTagFilter = React.useCallback((tagLabel) => {
+    const isSelected = activeTagFilters.includes(tagLabel);
+
     setActiveTagFilters((currentFilters) =>
       currentFilters.includes(tagLabel)
         ? currentFilters.filter((tag) => tag !== tagLabel)
         : [...currentFilters, tagLabel]
     );
-  }, []);
+    captureAnalyticsEvent('tag filter changed', {
+      is_selected: !isSelected,
+      tag_label: tagLabel,
+    });
+  }, [activeTagFilters]);
 
   const clearTagFilters = React.useCallback(() => {
     setActiveTagFilters([]);
+    captureAnalyticsEvent('tag filters cleared');
   }, []);
 
   const handleDeletePlace = React.useCallback(async (placeId) => {
@@ -1245,6 +1365,9 @@ export default function App() {
       setErrorMessage('');
       closePlacePanel();
       await refreshData();
+      captureAnalyticsEvent('place deleted', {
+        place_id: placeId,
+      });
     } catch (error) {
       setErrorMessage(error?.message ?? 'Delete failed.');
     }
@@ -1263,6 +1386,9 @@ export default function App() {
         await savePlace({ user: session.user, placeId });
       }
       await refreshData();
+      captureAnalyticsEvent(isCurrentlySaved ? 'place unsaved' : 'place saved', {
+        place_id: placeId,
+      });
     } catch (error) {
       setErrorMessage(error?.message ?? 'Unable to save place.');
     }

@@ -25,7 +25,11 @@ const appData = {
 
 const {
   authState,
+  captureAnalyticsEvent,
   claimAnonymousHandle,
+  identifyAnalyticsUser,
+  initializeAnalytics,
+  resetAnalyticsUser,
   signInWithOAuth,
   signOut,
 } = vi.hoisted(() => {
@@ -37,7 +41,11 @@ const {
 
   return {
     authState: state,
+    captureAnalyticsEvent: vi.fn(),
     claimAnonymousHandle: vi.fn(async ({ handle }) => handle),
+    identifyAnalyticsUser: vi.fn(),
+    initializeAnalytics: vi.fn(),
+    resetAnalyticsUser: vi.fn(),
     signInWithOAuth: vi.fn(async () => {
       state.session = state.nextSession;
       state.callback?.('SIGNED_IN', state.session);
@@ -50,6 +58,13 @@ const {
     }),
   };
 });
+
+vi.mock('./lib/analytics', () => ({
+  captureAnalyticsEvent,
+  identifyAnalyticsUser,
+  initializeAnalytics,
+  resetAnalyticsUser,
+}));
 
 vi.mock('./lib/backend', () => ({
   claimAnonymousHandle,
@@ -98,7 +113,11 @@ describe('App web auth', () => {
     authState.callback = null;
     authState.session = null;
     authState.nextSession = null;
+    captureAnalyticsEvent.mockClear();
     claimAnonymousHandle.mockClear();
+    identifyAnalyticsUser.mockClear();
+    initializeAnalytics.mockClear();
+    resetAnalyticsUser.mockClear();
     signInWithOAuth.mockClear();
     signOut.mockClear();
   });
@@ -131,6 +150,13 @@ describe('App web auth', () => {
         redirectTo: 'http://localhost:3000/',
       },
     });
+    expect(captureAnalyticsEvent).toHaveBeenCalledWith('google sign in requested', {
+      auth_provider: 'google',
+    });
+    expect(captureAnalyticsEvent).toHaveBeenCalledWith('auth session started', {
+      auth_provider: 'google',
+      has_anonymous_handle: true,
+    });
     expect(claimAnonymousHandle).toHaveBeenCalledWith({
       user: expect.objectContaining({
         email: 'testuser@zazaspot.app',
@@ -146,6 +172,7 @@ describe('App web auth', () => {
       expect(screen.getByTestId('account-button').textContent).toBe('Sign in');
     });
     expect(signOut).toHaveBeenCalledTimes(1);
+    expect(captureAnalyticsEvent).toHaveBeenCalledWith('auth session ended');
   });
 
   it('keeps the auth sheet open to claim a handle when email sign-in returns without one', async () => {
@@ -186,6 +213,10 @@ describe('App web auth', () => {
         email: 'signup@zazaspot.app',
       }),
       handle: 'Quiet Reader',
+    });
+    expect(captureAnalyticsEvent).toHaveBeenCalledWith('anonymous handle claimed', {
+      claim_source: 'auth_modal',
+      handle_length: 'quiet_reader'.length,
     });
   });
 

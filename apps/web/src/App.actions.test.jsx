@@ -50,10 +50,14 @@ const { authState, signOut } = vi.hoisted(() => {
 
 const {
   backendState,
+  captureAnalyticsEvent,
   createComment,
   createPlace,
   createPlaceOpenEvent,
   fetchAppData,
+  identifyAnalyticsUser,
+  initializeAnalytics,
+  resetAnalyticsUser,
   uploadPlacePhotos,
   voteForComment,
   voteForPlace,
@@ -66,6 +70,7 @@ const {
 
     return {
       backendState: state,
+    captureAnalyticsEvent: vi.fn(),
     createComment: vi.fn(async ({ placeId, parentCommentId = null, user, body }) => {
       state.appData = {
         ...state.appData,
@@ -109,11 +114,21 @@ const {
       comments: includeComments ? state.appData.comments : [],
       commentVotes: state.appData.commentVotes,
     })),
+    identifyAnalyticsUser: vi.fn(),
+    initializeAnalytics: vi.fn(),
+    resetAnalyticsUser: vi.fn(),
     uploadPlacePhotos: vi.fn(async () => []),
     voteForComment: vi.fn(async () => undefined),
     voteForPlace: vi.fn(async () => undefined),
   };
 });
+
+vi.mock('./lib/analytics', () => ({
+  captureAnalyticsEvent,
+  identifyAnalyticsUser,
+  initializeAnalytics,
+  resetAnalyticsUser,
+}));
 
 vi.mock('./lib/backend', () => ({
   claimAnonymousHandle: vi.fn(async ({ handle }) => handle),
@@ -186,10 +201,14 @@ describe('App web actions', () => {
     backendState.appData = createInitialAppData();
     backendState.nextCommentId = 1;
     backendState.nextPlaceId = 2;
+    captureAnalyticsEvent.mockClear();
     createComment.mockClear();
     createPlace.mockClear();
     createPlaceOpenEvent.mockClear();
     fetchAppData.mockClear();
+    identifyAnalyticsUser.mockClear();
+    initializeAnalytics.mockClear();
+    resetAnalyticsUser.mockClear();
     uploadPlacePhotos.mockClear();
     voteForPlace.mockClear();
     signOut.mockClear();
@@ -207,6 +226,11 @@ describe('App web actions', () => {
     expect(await screen.findByRole('heading', { name: 'Action Test Place' })).toBeTruthy();
     expect(window.location.pathname).toBe('/places/place-1');
     expect(screen.queryByRole('dialog')).toBeNull();
+    expect(captureAnalyticsEvent).toHaveBeenCalledWith('place detail opened', {
+      place_id: 'place-1',
+      place_tag: 'General',
+      source_screen: 'test_map',
+    });
 
     fireEvent.click(screen.getByRole('button', { name: 'Comment' }));
 
@@ -229,6 +253,11 @@ describe('App web actions', () => {
         placeId: 'place-1',
       })
     );
+    expect(captureAnalyticsEvent).toHaveBeenCalledWith('comment created', {
+      comment_length: 'Codex comment smoke alpha'.length,
+      is_reply: false,
+      place_id: 'place-1',
+    });
     expect(screen.queryByRole('dialog')).toBeNull();
 
     fireEvent.click(screen.getByRole('button', { name: 'Reply' }));
@@ -265,6 +294,11 @@ describe('App web actions', () => {
         userId: 'user-123',
         value: 1,
       });
+    });
+    expect(captureAnalyticsEvent).toHaveBeenCalledWith('place vote changed', {
+      place_id: 'place-1',
+      place_tag: 'General',
+      vote_value: 1,
     });
 
     expect(screen.getByTestId('desktop-map-open-place')).toBeTruthy();
@@ -346,6 +380,13 @@ describe('App web actions', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Place added successfully.')).toBeTruthy();
+    });
+    expect(captureAnalyticsEvent).toHaveBeenCalledWith('place add flow started');
+    expect(captureAnalyticsEvent).toHaveBeenCalledWith('place created', {
+      has_custom_tag: true,
+      photo_count: 0,
+      place_name_length: 'Codex place gamma'.length,
+      place_tag: 'Late night study',
     });
     expect(window.location.pathname).toBe('/');
     expect(screen.queryByRole('dialog')).toBeNull();

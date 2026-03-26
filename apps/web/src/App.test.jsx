@@ -61,6 +61,13 @@ vi.mock('./lib/supabase', () => ({
   },
 }));
 
+vi.mock('./lib/analytics', () => ({
+  captureAnalyticsEvent: vi.fn(),
+  identifyAnalyticsUser: vi.fn(),
+  initializeAnalytics: vi.fn(),
+  resetAnalyticsUser: vi.fn(),
+}));
+
 vi.mock('./components/DesktopMap', () => ({
   default: function DesktopMapMock({ addMode, colorMode, onSelectPlace }) {
     return (
