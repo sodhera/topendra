@@ -306,10 +306,19 @@ export async function deletePlace({ user, placeId }) {
     throw new Error('A logged-in user and place id are required.');
   }
 
-  const { error } = await supabase.from('places').delete().eq('id', placeId).eq('created_by', user.id);
+  const { data, error } = await supabase
+    .from('places')
+    .delete()
+    .eq('id', placeId)
+    .eq('created_by', user.id)
+    .select('id');
 
   if (error) {
     throw error;
+  }
+
+  if (!data?.length) {
+    throw new Error('You can only delete places you created.');
   }
 }
 
