@@ -4,15 +4,14 @@ import { LOCATION_DISCLOSURE_COPY } from '@topey/shared/lib/constants';
 import { colors, radius, spacing, typography } from '@topey/shared/lib/theme';
 import { ShadButton } from './ShadButton';
 
-export function EmailAuthCard({
+export function GoogleAuthCard({
   authBusy,
   helperText,
-  mode = 'email',
+  mode = 'auth',
   onClaimHandle,
   onRequestAccess,
   suggestedHandle = '',
 }) {
-  const [email, setEmail] = useState('');
   const [username, setUsername] = useState(suggestedHandle);
 
   useEffect(() => {
@@ -27,56 +26,42 @@ export function EmailAuthCard({
       return;
     }
 
-    onRequestAccess?.({ email, username });
+    onRequestAccess?.();
   }
 
   return (
     <View style={styles.card}>
       <Text style={styles.title}>
-        {isHandleMode ? 'Choose anonymous name' : 'Email access'}
+        {isHandleMode ? 'Choose anonymous name' : 'Sign in'}
       </Text>
       <Text style={styles.copy}>
         {isHandleMode
           ? 'Pick the public name other people will see when you comment, reply, or add places.'
-          : 'We only collect your email. Add an anonymous name now, or choose it after opening the sign-in link.'}
+          : 'Sign in with Google to post comments and add places. Your real name will not be shown to others.'}
       </Text>
 
-      {!isHandleMode ? (
+      {isHandleMode ? (
         <TextInput
           autoCapitalize="none"
           autoCorrect={false}
-          keyboardType="email-address"
-          placeholder="Email"
+          placeholder="Anonymous name"
           placeholderTextColor={colors.mutedText}
           style={styles.input}
-          value={email}
-          onChangeText={setEmail}
-          testID="auth-email-input"
+          value={username}
+          onChangeText={setUsername}
+          testID="auth-username-input"
         />
       ) : null}
-
-      <TextInput
-        autoCapitalize="none"
-        autoCorrect={false}
-        placeholder={
-          isHandleMode ? 'Anonymous name' : 'Anonymous name (optional for returning users)'
-        }
-        placeholderTextColor={colors.mutedText}
-        style={styles.input}
-        value={username}
-        onChangeText={setUsername}
-        testID="auth-username-input"
-      />
 
       <ShadButton
         label={
           authBusy
             ? isHandleMode
               ? 'Saving...'
-              : 'Sending link...'
+              : 'Signing in...'
             : isHandleMode
               ? 'Save anonymous name'
-              : 'Email me a sign-in link'
+              : 'Sign in with Google'
         }
         onPress={handleSubmit}
         disabled={authBusy}

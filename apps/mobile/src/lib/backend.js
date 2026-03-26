@@ -130,11 +130,12 @@ async function writeVoteRecord(table, matchColumn, entityId, userId, value) {
 }
 
 export async function fetchAppData() {
-  const [placesResult, votesResult, commentsResult, commentVotesResult] = await Promise.all([
+  const [placesResult, votesResult, commentsResult, commentVotesResult, savedResult] = await Promise.all([
     supabase.from('places').select('*').order('created_at', { ascending: false }),
     supabase.from('place_votes').select('*'),
     supabase.from('place_comments').select('*').order('created_at', { ascending: false }),
     supabase.from('place_comment_votes').select('*'),
+    supabase.from('saved_places').select('*'),
   ]);
 
   if (placesResult.error) {
@@ -153,11 +154,21 @@ export async function fetchAppData() {
     throw commentVotesResult.error;
   }
 
+  if (savedResult.error) {
+    throw savedResult.error;
+  }
+
   return {
     places: placesResult.data.map(mapPlace),
     votes: votesResult.data.map(mapVote),
     comments: commentsResult.data.map(mapComment),
     commentVotes: commentVotesResult.data.map(mapCommentVote),
+    savedPlaces: savedResult.data.map(row => ({
+      id: row.id,
+      userId: row.user_id,
+      placeId: row.place_id,
+      createdAt: row.created_at,
+    })),
   };
 }
 
@@ -254,6 +265,42 @@ export async function createPlace({ user, name, description, latitude, longitude
     created_by: user.id,
     author_name: authorHandle,
   });
+
+  if (error) {
+    throw error;
+  }
+}
+
+export async function deletePlace({ user, placeId }) {
+  if (!user?.id || !placeId) {
+    throw new Error('A logged-in user and place id are required.');
+  }
+
+  const { error } = await supabase.from('places').delete().eq('id', placeId).eq('created_by', user.id);
+
+  if (error) {
+    throw error;
+  }
+}
+
+export async function savePlace({ user, placeId }) {
+  if (!user?.id || !placeId) {
+    throw new Error('A logged-in user and place id are required.');
+  }
+
+  const { error } = await supabase.from('saved_places').insert({ user_id: user.id, place_id: placeId });
+
+  if (error) {
+    throw error;
+  }
+}
+
+export async function unsavePlace({ user, placeId }) {
+  if (!user?.id || !placeId) {
+    throw new Error('A logged-in user and place id are required.');
+  }
+
+  const { error } = await supabase.from('saved_places').delete().eq('user_id', user.id).eq('place_id', placeId);
 
   if (error) {
     throw error;

@@ -12,13 +12,13 @@ import {
   VIEWER_SESSION_KEY,
 } from '@topey/shared/lib/constants';
 import {
-  claimAnonymousHandle,
   createComment,
   createPlace,
+  deletePlace,
   createPlaceOpenEvent,
-  fetchAppData,
-  voteForComment,
   voteForPlace,
+  savePlace as backendSavePlace,
+  unsavePlace as backendUnsavePlace,
 } from '../lib/backend';
 import { getAuthRedirectUrl, getSafeSession, restoreSessionFromUrl, supabase } from '../lib/supabase';
 
@@ -65,6 +65,7 @@ export function AppProvider({ children }) {
   const [session, setSession] = useState(null);
   const [viewerSessionId, setViewerSessionId] = useState('');
   const [places, setPlaces] = useState([]);
+  const [savedPlaces, setSavedPlaces] = useState([]);
   const [votes, setVotes] = useState([]);
   const [comments, setComments] = useState([]);
   const [commentVotes, setCommentVotes] = useState([]);
@@ -87,6 +88,7 @@ export function AppProvider({ children }) {
       setVotes(data.votes);
       setComments(data.comments);
       setCommentVotes(data.commentVotes);
+      setSavedPlaces(data.savedPlaces || []);
       setErrorMessage('');
       return data;
     } catch (error) {
@@ -94,6 +96,7 @@ export function AppProvider({ children }) {
       setVotes([]);
       setComments([]);
       setCommentVotes([]);
+      setSavedPlaces([]);
       setErrorMessage(getReadableError(error, 'Topey could not reach Supabase right now.'));
       return {
         places: [],
@@ -241,44 +244,29 @@ export function AppProvider({ children }) {
     };
   }, [applySession]);
 
-  const requestEmailAccess = useCallback(async ({ email, username }) => {
-    const normalizedEmail = email.trim().toLowerCase();
-    const normalizedUsername = normalizeAnonymousUsername(username);
-
-    if (!normalizedEmail || !normalizedEmail.includes('@')) {
-      throw new Error('Enter a valid email address.');
-    }
-
-    if (normalizedUsername && normalizedUsername.length < 3) {
-      throw new Error('Choose an anonymous name with at least 3 characters.');
-    }
-
+  const requestGoogleAccess = useCallback(async () => {
     setIsEmailAuthLoading(true);
     setErrorMessage('');
     setAuthNoticeMessage('');
 
     try {
-      await writePendingAnonymousHandle(normalizedUsername);
-      const { error } = await supabase.auth.signInWithOtp({
-        email: normalizedEmail,
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
         options: {
-          shouldCreateUser: true,
-          emailRedirectTo: getAuthRedirectUrl(),
-          data: normalizedUsername ? { preferred_username: normalizedUsername } : undefined,
+          redirectTo: getAuthRedirectUrl(),
+          skipBrowserRedirect: true,
         },
       });
 
       if (error) {
         throw error;
       }
-
-      setAuthNoticeMessage(
-        normalizedUsername
-          ? 'Check your email for the sign-in link. We will finish claiming that anonymous name when you open it.'
-          : 'Check your email for the sign-in link. If this is your first time, you will choose an anonymous name after opening it.'
-      );
+      
+      if (data?.url) {
+        await Linking.openURL(data.url);
+      }
     } catch (error) {
-      setErrorMessage(getReadableError(error, 'Email sign-in failed.'));
+      setErrorMessage(getReadableError(error, 'Google sign-in failed.'));
       throw error;
     } finally {
       setIsEmailAuthLoading(false);
@@ -361,6 +349,22 @@ export function AppProvider({ children }) {
         description,
         latitude,
         longitude,
+      });
+
+      await refreshData(session);
+    },
+    [refreshData, session]
+  );
+
+  const removePlace = useCallback(
+    async ({ placeId }) => {
+      if (!session?.user) {
+        throw new Error('Login required before deleting a place.');
+      }
+
+      await deletePlace({
+        user: session.user,
+        placeId,
       });
 
       await refreshData(session);
@@ -464,10 +468,11 @@ export function AppProvider({ children }) {
       authNoticeMessage,
       errorMessage,
       refreshData,
-      requestEmailAccess,
+      requestGoogleAccess,
       claimHandle,
       signOut,
       addPlace,
+      removePlace,
       votePlace,
       addComment,
       voteComment,
@@ -480,6 +485,7 @@ export function AppProvider({ children }) {
       votes,
       comments,
       commentVotes,
+      savedPlaces,
       isHydrated,
       isRefreshing,
       isEmailAuthLoading,
@@ -487,10 +493,11 @@ export function AppProvider({ children }) {
       authNoticeMessage,
       errorMessage,
       refreshData,
-      requestEmailAccess,
+      requestGoogleAccess,
       claimHandle,
       signOut,
       addPlace,
+      removePlace,
       votePlace,
       addComment,
       voteComment,

@@ -13,7 +13,7 @@ import {
 import MapView from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CompactVoteControls } from '../components/CompactVoteControls';
-import { EmailAuthCard } from '../components/EmailAuthCard';
+import { GoogleAuthCard } from '../components/GoogleAuthCard';
 import { MapPlaceMarker } from '../components/MapPlaceMarker';
 import { MapUserLocationMarker } from '../components/MapUserLocationMarker';
 import { PlaceConversationSection } from '../components/PlaceConversationSection';
@@ -33,12 +33,15 @@ export function HomeScreen({ navigation }) {
     isEmailAuthLoading,
     authNoticeMessage,
     errorMessage,
-    requestEmailAccess,
+    requestGoogleAccess,
     claimHandle,
     signOut,
     addComment,
     voteComment,
     votePlace,
+    removePlace,
+    savePlace,
+    unsavePlace,
     trackPlaceOpen,
     isAuthModalVisible,
     setIsAuthModalVisible,
@@ -84,11 +87,11 @@ export function HomeScreen({ navigation }) {
     )?.value ?? 0;
   }, [selectedPlace, state.session?.user?.id, state.votes]);
 
-  async function handleRequestAccess({ email, username }) {
+  async function handleRequestAccess() {
     try {
-      await requestEmailAccess({ email, username });
+      await requestGoogleAccess();
     } catch (error) {
-      Alert.alert('Email sign-in failed', error.message);
+      Alert.alert('Google sign-in failed', error.message);
     }
   }
 
@@ -139,6 +142,50 @@ export function HomeScreen({ navigation }) {
       });
     } catch (error) {
       Alert.alert('Vote failed', error.message);
+    }
+  }
+
+  async function handleDeletePlace() {
+    if (!selectedPlace) {
+      return;
+    }
+
+    Alert.alert(
+      'Delete Place',
+      'Are you sure you want to delete this place?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await removePlace({ placeId: selectedPlace.id });
+              setIsPlaceModalVisible(false);
+            } catch (error) {
+              Alert.alert('Delete failed', error.message);
+            }
+          },
+        },
+      ]
+    );
+  }
+
+  async function handleToggleSavePlace() {
+    if (!isAuthenticated) {
+      setIsPlaceModalVisible(false);
+      setIsAuthModalVisible(true);
+      return;
+    }
+    const isSaved = state.savedPlaces?.some(s => s.placeId === selectedPlace?.id && s.userId === state.session?.user?.id);
+    try {
+      if (isSaved) {
+        await unsavePlace({ placeId: selectedPlace.id });
+      } else {
+        await savePlace({ placeId: selectedPlace.id });
+      }
+    } catch (error) {
+      Alert.alert('Save failed', error.message);
     }
   }
 
@@ -275,41 +322,70 @@ export function HomeScreen({ navigation }) {
             <View style={styles.sheetHandle} />
             {selectedPlace ? (
               <>
-                <Text style={styles.sheetTitle}>{selectedPlace.name}</Text>
-                <Text style={styles.sheetCopy}>{selectedPlace.description}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
+                  <View style={{ marginRight: 16 }}>
+                    <CompactVoteControls
+                      currentVote={currentVote}
+                      direction="vertical"
+                      onDownvote={() => handleVote(-1)}
+                      onUpvote={() => handleVote(1)}
+                      score={voteBreakdown.score}
+                      style={{ marginTop: 0 }}
+                      testIDPrefix="home-vote"
+                    />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.sheetTitle}>{selectedPlace.name}</Text>
+                    <Text style={styles.sheetCopy}>{selectedPlace.description}</Text>
 
-                <View style={styles.detailStats}>
-                  <PreviewStat
-                    label="Rating"
-                    value={`${voteBreakdown.score >= 0 ? '+' : ''}${voteBreakdown.score}`}
-                    align="left"
-                  />
-                  <PreviewStat label="Votes" value={voteBreakdown.ratioLabel} align="center" />
-                  <PreviewStat label="Threads" value={`${threadCount}`} align="right" />
-                </View>
+                    <View style={styles.detailStats}>
+                      <PreviewStat
+                        label="Rating"
+                        value={`${voteBreakdown.score >= 0 ? '+' : ''}${voteBreakdown.score}`}
+                        align="left"
+                      />
+                      <PreviewStat label="Votes" value={voteBreakdown.ratioLabel} align="center" />
+                      <PreviewStat label="Threads" value={`${threadCount}`} align="right" />
+                    </View>
 
-                <ShadButton
-                  label="Open location"
-                  size="default"
-                  shape="pill"
-                  onPress={handleOpenLocation}
-                  style={styles.locationButton}
-                  labelStyle={styles.locationButtonLabel}
-                  testID="home-open-location-button"
-                />
+                    <ShadButton
+                      label="Open location"
+                      size="default"
+                      shape="pill"
+                      onPress={handleOpenLocation}
+                      style={styles.locationButton}
+                      labelStyle={styles.locationButtonLabel}
+                      testID="home-open-location-button"
+                    />
 
-                <View style={styles.participationRow}>
-                  <CompactVoteControls
-                    currentVote={currentVote}
-                    onDownvote={() => handleVote(-1)}
-                    onUpvote={() => handleVote(1)}
-                    score={voteBreakdown.score}
-                    style={styles.voteControls}
-                    testIDPrefix="home-vote"
-                  />
-                  <Text style={styles.addedByLabel} testID="home-added-by-label">
-                    Added by: <Text style={styles.addedByValue}>{selectedPlace.authorName || 'Topey user'}</Text>
-                  </Text>
+                    <ShadButton
+                      label={state.savedPlaces?.some(s => s.placeId === selectedPlace?.id && s.userId === state.session?.user?.id) ? 'Unsave' : 'Save'}
+                      size="default"
+                      variant="secondary"
+                      shape="pill"
+                      onPress={handleToggleSavePlace}
+                      style={{ marginTop: 12, minHeight: 50 }}
+                      labelStyle={{ fontSize: 17, fontWeight: '600', letterSpacing: -0.35 }}
+                    />
+
+                    {isAuthenticated && state.session?.user?.id === selectedPlace?.createdBy ? (
+                      <ShadButton
+                        label="Delete place"
+                        size="default"
+                        variant="secondary"
+                        shape="pill"
+                        onPress={handleDeletePlace}
+                        style={{ marginTop: 12, minHeight: 50 }}
+                        labelStyle={{ fontSize: 17, fontWeight: '600', letterSpacing: -0.35, color: '#DC2626' }}
+                      />
+                    ) : null}
+
+                    <View style={styles.participationRow}>
+                      <Text style={[styles.addedByLabel, { textAlign: 'left', marginLeft: 0 }]} testID="home-added-by-label">
+                        Added by: <Text style={styles.addedByValue}>{selectedPlace.authorName || 'Topey user'}</Text>
+                      </Text>
+                    </View>
+                  </View>
                 </View>
 
                 <PlaceConversationSection
@@ -353,6 +429,33 @@ export function HomeScreen({ navigation }) {
                   <Text style={styles.sheetTitle}>Profile</Text>
                   <Text style={styles.profileName}>{currentUser.name}</Text>
                   {currentUser.email ? <Text style={styles.profileMeta}>{currentUser.email}</Text> : null}
+
+                  <View style={{ marginTop: 24, marginBottom: 24, width: '100%', alignItems: 'flex-start' }}>
+                    <Text style={[styles.sheetKicker, { marginBottom: 8 }]}>Saved Places</Text>
+                    {state.savedPlaces?.length === 0 ? (
+                      <Text style={[styles.sheetCopy, { textAlign: 'left' }]}>No saved places.</Text>
+                    ) : (
+                      state.savedPlaces?.map(saved => {
+                        const sp = state.places.find(p => p.id === saved.placeId);
+                        if (!sp) return null;
+                        return (
+                          <Pressable
+                            key={saved.id}
+                            style={{ paddingVertical: 8 }}
+                            onPress={() => {
+                              setIsAuthModalVisible(false);
+                              setSelectedPlace(sp);
+                              setIsPlaceModalVisible(true);
+                              mapRef.current?.animateCamera({ center: { latitude: sp.latitude, longitude: sp.longitude } });
+                            }}
+                          >
+                            <Text style={{ fontSize: 16, color: '#2563EB', fontWeight: '500' }}>{sp.name}</Text>
+                          </Pressable>
+                        );
+                      })
+                    )}
+                  </View>
+
                   <ShadButton
                     label="Sign out"
                     shape="pill"
@@ -362,7 +465,7 @@ export function HomeScreen({ navigation }) {
                   </>
                 ) : (
                   <>
-                    <EmailAuthCard
+                    <GoogleAuthCard
                       authBusy={isEmailAuthLoading}
                       helperText={authNoticeMessage}
                       mode="handle"
@@ -373,9 +476,10 @@ export function HomeScreen({ navigation }) {
                 )
               ) : (
                 <>
-                  <EmailAuthCard
+                  <GoogleAuthCard
                     authBusy={isEmailAuthLoading}
                     helperText={authNoticeMessage}
+                    mode="auth"
                     onRequestAccess={handleRequestAccess}
                   />
                   {errorMessage ? <Text style={styles.sheetMeta}>{errorMessage}</Text> : null}

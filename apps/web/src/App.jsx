@@ -35,6 +35,9 @@ import {
   fetchAppData,
   voteForComment,
   voteForPlace,
+  deletePlace,
+  savePlace,
+  unsavePlace,
 } from './lib/backend';
 import { getSafeSession, hasSupabaseConfig, supabase } from './lib/supabase';
 import DesktopMap from './components/DesktopMap';
@@ -220,6 +223,7 @@ export default function App() {
   const [session, setSession] = React.useState(null);
   const [viewerSessionId, setViewerSessionId] = React.useState('');
   const [places, setPlaces] = React.useState([]);
+  const [savedPlaces, setSavedPlaces] = React.useState([]);
   const [votes, setVotes] = React.useState([]);
   const [allComments, setAllComments] = React.useState([]);
   const [commentVotes, setCommentVotes] = React.useState([]);
@@ -851,22 +855,9 @@ export default function App() {
     [effectiveCommentVotes, isAuthenticated, openAuthModal, session]
   );
 
-  const handleRequestEmailAccess = React.useCallback(async ({ email, username }) => {
+  const handleGoogleSignIn = React.useCallback(async () => {
     if (!supabase) {
       setErrorMessage('Supabase is not configured for browser auth.');
-      return;
-    }
-
-    const normalizedEmail = email.trim().toLowerCase();
-    const normalizedUsername = normalizeAnonymousUsername(username);
-
-    if (!normalizedEmail || !normalizedEmail.includes('@')) {
-      setErrorMessage('Enter a valid email address.');
-      return;
-    }
-
-    if (normalizedUsername && normalizedUsername.length < 3) {
-      setErrorMessage('Choose an anonymous name with at least 3 characters.');
       return;
     }
 
@@ -874,28 +865,19 @@ export default function App() {
       setIsAuthBusy(true);
       setErrorMessage('');
       setAuthNoticeMessage('');
-      writePendingAnonymousHandle(normalizedUsername);
-      const { error } = await supabase.auth.signInWithOtp({
-        email: normalizedEmail,
+      
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
         options: {
-          shouldCreateUser: true,
-          emailRedirectTo: getWebAuthRedirectUrl(),
-          data: normalizedUsername ? { preferred_username: normalizedUsername } : undefined,
+          redirectTo: getWebAuthRedirectUrl(),
         },
       });
 
       if (error) {
         throw error;
       }
-
-      setAuthNoticeMessage(
-        normalizedUsername
-          ? 'Check your email for the sign-in link. We will finish claiming that anonymous name when you open it.'
-          : 'Check your email for the sign-in link. If this is your first time, you will choose an anonymous name after opening it.'
-      );
     } catch (error) {
-      setErrorMessage(error?.message ?? 'Email sign-in failed.');
-    } finally {
+      setErrorMessage(error?.message ?? 'Google sign-in failed.');
       setIsAuthBusy(false);
     }
   }, []);
@@ -1040,15 +1022,9 @@ export default function App() {
       setIsAddMode(false);
       setErrorMessage('');
 
-      if (newestPlace) {
-        setFocusedPlaceId(newestPlace.id);
-        setSelectedPlaceId(newestPlace.id);
-        openPlacePage(newestPlace.id, {
-          place: newestPlace,
-          replaceHistory: false,
-          sourceScreen: 'web_add_place',
-        });
-      }
+      window.setTimeout(() => {
+        window.alert('Place added successfully!');
+      }, 100);
     } catch (error) {
       setErrorMessage(error?.message ?? 'Save failed.');
     } finally {
@@ -1067,6 +1043,44 @@ export default function App() {
     refreshData,
     session,
   ]);
+
+  const handleDeletePlace = React.useCallback(async (placeId) => {
+    if (!isAuthenticated || !session?.user) {
+      openAuthModal();
+      return;
+    }
+    
+    if (!window.confirm('Are you sure you want to delete this place?')) {
+      return;
+    }
+
+    try {
+      await deletePlace({ user: session.user, placeId });
+      setErrorMessage('');
+      closePlacePanel();
+      await refreshData();
+    } catch (error) {
+      setErrorMessage(error?.message ?? 'Delete failed.');
+    }
+  }, [isAuthenticated, session, openAuthModal, closePlacePanel, refreshData]);
+
+  const handleToggleSavePlace = React.useCallback(async (placeId, isCurrentlySaved) => {
+    if (!isAuthenticated || !session?.user) {
+      openAuthModal();
+      return;
+    }
+
+    try {
+      if (isCurrentlySaved) {
+        await unsavePlace({ user: session.user, placeId });
+      } else {
+        await savePlace({ user: session.user, placeId });
+      }
+      await refreshData();
+    } catch (error) {
+      setErrorMessage(error?.message ?? 'Unable to save place.');
+    }
+  }, [isAuthenticated, session, openAuthModal, refreshData]);
 
   const topControls = isAddMode ? (
     <div className="hud-row">
@@ -1165,6 +1179,10 @@ export default function App() {
             onCompose={openComposer}
             onOpenLocation={handleOpenLocation}
             onVote={handleVote}
+            onDeletePlace={handleDeletePlace}
+            onToggleSave={handleToggleSavePlace}
+            isOwner={session?.user?.id && selectedPlace?.createdBy === session.user.id}
+            isSaved={savedPlaces.some(s => s.placeId === selectedPlace?.id && s.userId === session?.user?.id)}
             overlay
             place={selectedPlace}
             voteBreakdown={voteBreakdown}
@@ -1214,6 +1232,37 @@ export default function App() {
               <h2 className="sheet-title">Profile</h2>
               <div className="profile-name">{formatUserHandle(currentUser.name)}</div>
               {currentUser.email ? <div className="profile-meta">{currentUser.email}</div> : null}
+              
+              <div style={{ marginTop: '24px', marginBottom: '24px', textAlign: 'left', width: '100%' }}>
+                <p className="sheet-kicker" style={{ marginBottom: '8px' }}>Saved Places</p>
+                {savedPlaces.length === 0 ? (
+                  <p className="sheet-copy" style={{ margin: 0 }}>No saved places.</p>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-start' }}>
+                    {savedPlaces.map(saved => {
+                      const sp = places.find(p => p.id === saved.placeId);
+                      if (!sp) return null;
+                      return (
+                        <button
+                          key={saved.id}
+                          className="text-button"
+                          type="button"
+                          style={{ textAlign: 'left', padding: '4px 0', fontSize: '15px' }}
+                          onClick={() => {
+                            setIsAuthModalVisible(false);
+                            navigateToRoute({ placeId: sp.id, view: 'map' });
+                            setSelectedPlaceId(sp.id);
+                            setMapRegion({ latitude: sp.latitude, longitude: sp.longitude, latitudeDelta: 0.05, longitudeDelta: 0.05 });
+                          }}
+                        >
+                          {sp.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
               <AppButton
                 label="Sign out"
                 size="default"
@@ -1230,11 +1279,11 @@ export default function App() {
               onClaimHandle={handleClaimHandle}
             />
           ) : (
-            <AuthCard
+            <GoogleAuthCard
               authBusy={isAuthBusy}
               errorMessage={errorMessage}
               helperText={authNoticeMessage}
-              onRequestEmailAccess={handleRequestEmailAccess}
+              onGoogleSignIn={handleGoogleSignIn}
             />
           )}
         </SheetModal>
@@ -1406,6 +1455,10 @@ function PlacePage({
   onCompose,
   onOpenLocation,
   onVote,
+  onDeletePlace,
+  onToggleSave,
+  isOwner = false,
+  isSaved = false,
   overlay = false,
   place,
   voteBreakdown,
@@ -1459,6 +1512,17 @@ function PlacePage({
 
         <div className="place-page-stack">
           <article className="place-page-post">
+            <div className="place-page-vote-aside">
+              <VoteControls
+                className="place-page-vote-bar"
+                currentVote={currentVote}
+                direction="vertical"
+                onDownvote={() => onVote(-1)}
+                onUpvote={() => onVote(1)}
+                score={voteBreakdown.score}
+              />
+            </div>
+            
             <div className="place-page-content place-page-post-content">
               <div className="place-page-meta-row">
                 <span className="place-page-kicker">Topey</span>
@@ -1482,15 +1546,6 @@ function PlacePage({
 
               <p className="place-page-copy">{place.description}</p>
 
-              <VoteControls
-                className="place-page-vote-bar"
-                currentVote={currentVote}
-                direction="horizontal"
-                onDownvote={() => onVote(-1)}
-                onUpvote={() => onVote(1)}
-                score={voteBreakdown.score}
-              />
-
               <div className="place-page-toolbar">
                 <AppButton
                   label="Open location"
@@ -1501,6 +1556,16 @@ function PlacePage({
                 <button className="place-page-thread-button" type="button" onClick={() => onCompose()}>
                   Comment
                 </button>
+                {onToggleSave ? (
+                  <button className="place-page-thread-button" type="button" onClick={() => onToggleSave(place.id, isSaved)}>
+                    {isSaved ? 'Unsave' : 'Save'}
+                  </button>
+                ) : null}
+                {isOwner && onDeletePlace ? (
+                  <button className="place-page-thread-button" type="button" onClick={() => onDeletePlace(place.id)}>
+                    Delete
+                  </button>
+                ) : null}
               </div>
             </div>
           </article>
@@ -1680,46 +1745,25 @@ function CommentArrowButton({ direction, isActive, onClick }) {
   );
 }
 
-function AuthCard({
+function GoogleAuthCard({
   authBusy,
   errorMessage,
   helperText,
-  onRequestEmailAccess,
+  onGoogleSignIn,
 }) {
-  const [email, setEmail] = React.useState('');
-  const [username, setUsername] = React.useState('');
-
   return (
     <div className="auth-card">
       <p className="sheet-kicker">Topey</p>
-      <h2 className="sheet-title">Email access</h2>
+      <h2 className="sheet-title">Sign in</h2>
       <p className="sheet-copy">
-        We only collect your email. Add an anonymous name now, or choose it after you open the
-        sign-in link.
+        Sign in with Google to post comments and add places. Your real name will not be shown to others.
       </p>
 
-      <input
-        className="sheet-input"
-        autoCapitalize="none"
-        autoCorrect="off"
-        placeholder="Email"
-        type="email"
-        value={email}
-        onChange={(event) => setEmail(event.target.value)}
-      />
-      <input
-        className="sheet-input"
-        autoCapitalize="none"
-        autoCorrect="off"
-        placeholder="Anonymous name (optional for returning users)"
-        value={username}
-        onChange={(event) => setUsername(event.target.value)}
-      />
       <AppButton
-        label={authBusy ? 'Sending link...' : 'Email me a sign-in link'}
+        label={authBusy ? 'Signing in...' : 'Sign in with Google'}
         size="default"
-        styleClassName="auth-submit-button"
-        onClick={() => onRequestEmailAccess({ email, username })}
+        styleClassName="auth-submit-button auth-google-button"
+        onClick={onGoogleSignIn}
       />
       {helperText ? <p className="sheet-meta">{helperText}</p> : null}
       {!helperText && errorMessage ? <p className="sheet-meta">{errorMessage}</p> : null}

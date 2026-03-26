@@ -4,6 +4,7 @@ import { colors, spacing, typography } from '@topey/shared/lib/theme';
 
 export function CompactVoteControls({
   currentVote = 0,
+  direction = 'horizontal',
   onDownvote,
   onUpvote,
   score = 0,
@@ -13,7 +14,7 @@ export function CompactVoteControls({
   const scoreLabel = score > 0 ? `+${score}` : `${score}`;
 
   return (
-    <View style={[styles.container, style]}>
+    <View style={[styles.container, direction === 'vertical' && styles.containerVertical, style]}>
       <Pressable
         accessibilityRole="button"
         onPress={onUpvote}
@@ -42,6 +43,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.md,
     marginTop: spacing.sm,
+  },
+  containerVertical: {
+    flexDirection: 'column',
+    gap: spacing.xs,
   },
   arrowButton: {
     alignItems: 'center',

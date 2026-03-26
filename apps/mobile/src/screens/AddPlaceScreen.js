@@ -14,7 +14,7 @@ import {
 import MapView from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CenteredMapPin } from '../components/CenteredMapPin';
-import { EmailAuthCard } from '../components/EmailAuthCard';
+import { GoogleAuthCard } from '../components/GoogleAuthCard';
 import { MapUserLocationMarker } from '../components/MapUserLocationMarker';
 import { ShadButton } from '../components/ShadButton';
 import { useAppContext } from '../context/AppContext';
@@ -39,7 +39,7 @@ export function AddPlaceScreen({ navigation, route }) {
     isEmailAuthLoading,
     authNoticeMessage,
     errorMessage,
-    requestEmailAccess,
+    requestGoogleAccess,
     claimHandle,
     addPlace,
   } = useAppContext();
@@ -73,11 +73,11 @@ export function AddPlaceScreen({ navigation, route }) {
     setHasAutoScrolledToUserRegion(true);
   }, [hasAutoScrolledToUserRegion, hasResolvedInitialRegion, userRegion]);
 
-  async function handleRequestAccess({ email, username }) {
+  async function handleRequestAccess() {
     try {
-      await requestEmailAccess({ email, username });
+      await requestGoogleAccess();
     } catch (error) {
-      Alert.alert('Email sign-in failed', error.message);
+      Alert.alert('Google sign-in failed', error.message);
     }
   }
 
@@ -120,7 +120,16 @@ export function AddPlaceScreen({ navigation, route }) {
       setName('');
       setDescription('');
       setIsDetailsModalVisible(false);
-      navigation.navigate('Browse');
+      Alert.alert(
+        'Success',
+        'Place added successfully!',
+        [
+          {
+            text: 'OK',
+            onPress: () => navigation.navigate('Browse')
+          }
+        ]
+      );
     } catch (error) {
       Alert.alert('Save failed', error.message);
     } finally {
@@ -278,10 +287,10 @@ export function AddPlaceScreen({ navigation, route }) {
           <Pressable style={styles.modalBackdrop} onPress={() => setIsAuthModalVisible(false)} />
           <View style={styles.modalSheet}>
             <View style={styles.modalHandle} />
-            <EmailAuthCard
+            <GoogleAuthCard
               authBusy={isEmailAuthLoading}
               helperText={authNoticeMessage}
-              mode={isLoggedIn(state.session) && !hasAnonymousHandle(state.session?.user) ? 'handle' : 'email'}
+              mode={isLoggedIn(state.session) && !hasAnonymousHandle(state.session?.user) ? 'handle' : 'auth'}
               onClaimHandle={handleClaimHandle}
               onRequestAccess={handleRequestAccess}
             />
