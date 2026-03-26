@@ -46,6 +46,8 @@ If location permission is denied:
 
 The app records explicit place opens in `place_open_events`.
 
+The web app also sends browser analytics to PostHog when `VITE_POSTHOG_KEY` is configured.
+
 Each event stores:
 
 - `place_id`
@@ -53,6 +55,19 @@ Each event stores:
 - `viewer_session_id`
 - `source_screen`
 - `opened_at`
+
+PostHog receives:
+
+- anonymous visitor activity before login
+- routed screen views and autocaptured click interactions
+- explicit product events for auth, anonymous-handle claim, add-place, save, comment, and voting flows
+- the Supabase `user.id` as the analytics distinct id after login
+- the anonymous handle and `has_anonymous_handle` flag as person properties
+
+PostHog does not receive:
+
+- the user email as an analytics person property
+- unmasked form inputs in session replay
 
 ## Stored Surfaces
 
@@ -63,6 +78,7 @@ Each event stores:
 - `public.place_votes`: per-user place votes
 - `public.place_comment_votes`: per-user comment votes
 - `public.place_open_events`: place-open tracking
+- PostHog: browser analytics events, person profiles keyed by Supabase `user.id`, and optional masked session replay
 
 ## Developer Rule
 

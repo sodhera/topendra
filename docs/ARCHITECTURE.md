@@ -49,6 +49,7 @@ Responsibilities:
 
 - restore the browser Supabase session
 - restore or create a browser viewer session id
+- initialize PostHog when browser analytics env values are present
 - fetch places, place votes, comments, and comment votes
 - hydrate the shell before the first data refresh finishes so the loading screen clears faster
 - keep `/places/:id` in sync with the selected place
@@ -56,12 +57,14 @@ Responsibilities:
 - keep place votes optimistic in the routed place page
 - keep auth, composer, and add-place as lightweight dialogs over the map shell
 - upload place photos to the public `place-photos` storage bucket before inserting the place row
+- emit product analytics for routed screen views, auth, place detail, add-place, save, comment, vote, and tag-filter flows
 
 Browser backend helpers live in:
 
 - [apps/web/src/lib/supabase.js](/Users/sirishjoshi/Desktop/Topey/apps/web/src/lib/supabase.js)
 - [apps/web/src/lib/backend.js](/Users/sirishjoshi/Desktop/Topey/apps/web/src/lib/backend.js)
 - [apps/web/src/lib/runtimeConfig.js](/Users/sirishjoshi/Desktop/Topey/apps/web/src/lib/runtimeConfig.js)
+- [apps/web/src/lib/analytics.js](/Users/sirishjoshi/Desktop/Topey/apps/web/src/lib/analytics.js)
 
 ## Map Model
 
@@ -128,6 +131,18 @@ The apps block place creation and comment creation until the user has a valid an
 - `place_comments` stores top-level comments and replies through `parent_comment_id`
 - `place_comment_votes` stores one vote row per `(comment_id, user_id)`
 - both apps rebuild nested threads client-side from the flat comment result set
+
+## Analytics Model
+
+Web analytics lives in [apps/web/src/lib/analytics.js](/Users/sirishjoshi/Desktop/Topey/apps/web/src/lib/analytics.js).
+
+Mechanism:
+
+1. `App.jsx` initializes PostHog once when a `VITE_POSTHOG_KEY` is present
+2. PostHog autocaptures SPA pageview history changes and click interactions
+3. `App.jsx` identifies logged-in users by Supabase `user.id`, never by email
+4. explicit business events are emitted after successful writes so funnels line up with committed actions
+5. session replay is enabled by default when analytics is configured, but all inputs stay masked client-side
 
 ## Data Model
 
