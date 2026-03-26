@@ -343,7 +343,7 @@ export function AppProvider({ children }) {
         throw new Error('Choose an anonymous name before posting or adding places.');
       }
 
-      await createPlace({
+      const result = await createPlace({
         user: session.user,
         name,
         description,
@@ -352,6 +352,7 @@ export function AppProvider({ children }) {
       });
 
       await refreshData(session);
+      return result;
     },
     [refreshData, session]
   );

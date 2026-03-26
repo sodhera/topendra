@@ -110,7 +110,7 @@ export function AddPlaceScreen({ navigation, route }) {
 
     try {
       setIsSaving(true);
-      await addPlace({
+      const result = await addPlace({
         name,
         description,
         latitude: pin.latitude,
@@ -122,11 +122,13 @@ export function AddPlaceScreen({ navigation, route }) {
       setIsDetailsModalVisible(false);
       Alert.alert(
         'Success',
-        'Place added successfully!',
+        result?.tagFallbackApplied
+          ? 'Place added successfully. The backend is still catching up on tags, so this one was saved under the default tag.'
+          : 'Place added successfully!',
         [
           {
             text: 'OK',
-            onPress: () => navigation.navigate('Browse')
+            onPress: () => navigation.navigate('Home')
           }
         ]
       );

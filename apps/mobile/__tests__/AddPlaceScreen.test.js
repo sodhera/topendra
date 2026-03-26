@@ -1,4 +1,5 @@
 import React from 'react';
+import { Alert } from 'react-native';
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import { AddPlaceScreen } from '../src/screens/AddPlaceScreen';
 import { useAppContext } from '../src/context/AppContext';
@@ -84,8 +85,8 @@ jest.mock('react-native-safe-area-context', () => {
   };
 });
 
-jest.mock('../src/components/EmailAuthCard', () => ({
-  EmailAuthCard: () => {
+jest.mock('../src/components/GoogleAuthCard', () => ({
+  GoogleAuthCard: () => {
     const React = require('react');
     const { Text, View } = require('react-native');
 
@@ -108,6 +109,9 @@ describe('AddPlaceScreen', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.spyOn(Alert, 'alert').mockImplementation((_title, _message, buttons) => {
+      buttons?.[0]?.onPress?.();
+    });
 
     useAppContext.mockReturnValue({
       state: {
@@ -177,7 +181,7 @@ describe('AddPlaceScreen', () => {
       });
     });
 
-    expect(navigation.navigate).toHaveBeenCalledWith('Browse');
+    expect(navigation.navigate).toHaveBeenCalledWith('Home');
   });
 
   test('keeps add-here disabled until the initial location has resolved', () => {

@@ -1,5 +1,5 @@
 import { getAnonymousHandle, normalizeAnonymousUsername } from '@topey/shared/lib/auth';
-import { getPlaceTagLabel, normalizePlaceTag } from '@topey/shared/lib/placeTags';
+import { DEFAULT_PLACE_TAG, getPlaceTagLabel, normalizePlaceTag } from '@topey/shared/lib/placeTags';
 import { supabase } from './supabase';
 
 function normalizeText(value) {
@@ -67,6 +67,12 @@ function isHandleConflictError(error) {
 
 function createHandleTakenError(handle) {
   return new Error(`The anonymous name "${handle}" is already taken.`);
+}
+
+function shouldRetryPlaceInsertWithoutTag(error) {
+  return /could not find the 'tag' column of 'places' in the schema cache|column ['"]?tag['"]? of relation ['"]?places['"]? does not exist/i.test(
+    String(error?.message ?? error ?? '')
+  );
 }
 
 async function getStoredAnonymousHandle(client, userId) {
@@ -263,24 +269,43 @@ export async function createPlace({ user, name, description, latitude, longitude
   const normalizedDescription = normalizeText(description);
   const normalizedTag = normalizePlaceTag(tag);
 
-  if (!user?.id || !normalizedName || !normalizedDescription || !normalizedTag) {
-    throw new Error('A logged-in user, place name, description, and tag are required.');
+  if (!user?.id || !normalizedName || !normalizedDescription) {
+    throw new Error('A logged-in user, place name, and description are required.');
   }
 
   const authorHandle = await getAuthorHandle(client, user);
-  const { error } = await client.from('places').insert({
+  const basePayload = {
     name: normalizedName,
     description: normalizedDescription,
-    tag: normalizedTag,
     latitude,
     longitude,
     created_by: user.id,
     author_name: authorHandle,
-  });
+  };
+  const taggedPayload =
+    normalizedTag && normalizedTag !== DEFAULT_PLACE_TAG
+      ? {
+          ...basePayload,
+          tag: normalizedTag,
+        }
+      : basePayload;
+
+  let { error } = await client.from('places').insert(taggedPayload);
+  let tagFallbackApplied = false;
+
+  if (error && taggedPayload.tag && shouldRetryPlaceInsertWithoutTag(error)) {
+    const retryResult = await client.from('places').insert(basePayload);
+    error = retryResult.error;
+    tagFallbackApplied = !retryResult.error;
+  }
 
   if (error) {
     throw error;
   }
+
+  return {
+    tagFallbackApplied,
+  };
 }
 
 export async function deletePlace({ user, placeId }) {
