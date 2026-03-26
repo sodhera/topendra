@@ -31,6 +31,7 @@ import {
 import {
   claimAnonymousHandle,
   createComment,
+  createFeedbackSubmission,
   createPlace,
   createPlaceOpenEvent,
   fetchAppData,
@@ -352,6 +353,10 @@ export default function App() {
   const [optimisticCommentVotes, setOptimisticCommentVotes] = React.useState({});
   const [isAddMode, setIsAddMode] = React.useState(false);
   const [isAddSheetVisible, setIsAddSheetVisible] = React.useState(false);
+  const [isFeedbackModalVisible, setIsFeedbackModalVisible] = React.useState(false);
+  const [feedbackDraft, setFeedbackDraft] = React.useState('');
+  const [feedbackErrorMessage, setFeedbackErrorMessage] = React.useState('');
+  const [isSubmittingFeedback, setIsSubmittingFeedback] = React.useState(false);
   const [newPlaceName, setNewPlaceName] = React.useState('');
   const [newPlaceDescription, setNewPlaceDescription] = React.useState('');
   const [newPlaceTagOption, setNewPlaceTagOption] = React.useState(
@@ -1447,16 +1452,55 @@ export default function App() {
   }, [isAuthenticated, session, openAuthModal, refreshData]);
 
   const handleOpenFeedback = React.useCallback(() => {
-    if (typeof window === 'undefined') {
+    setIsAuthModalVisible(false);
+    setIsComposerModalVisible(false);
+    setIsAddSheetVisible(false);
+    setFeedbackErrorMessage('');
+    setIsFeedbackModalVisible(true);
+    captureAnalyticsEvent('feedback modal opened', {
+      place_id: selectedPlace?.id ?? null,
+      screen_name: appRoute.view === 'place' ? 'place_detail' : 'map_home',
+    });
+  }, [appRoute.view, selectedPlace?.id]);
+
+  const closeFeedbackModal = React.useCallback(() => {
+    setIsFeedbackModalVisible(false);
+    setFeedbackDraft('');
+    setFeedbackErrorMessage('');
+    setIsSubmittingFeedback(false);
+  }, []);
+
+  const handleSubmitFeedback = React.useCallback(async () => {
+    if (!feedbackDraft.trim()) {
+      setFeedbackErrorMessage('Write a short note before sending feedback.');
       return;
     }
 
-    const subject = encodeURIComponent('Zazaspot feedback');
-    const body = encodeURIComponent(
-      `Page: ${window.location.href}\n\nWhat happened?\n\nWhat should change?`
-    );
-    window.location.href = `mailto:feedback@zazaspot.com?subject=${subject}&body=${body}`;
-  }, []);
+    try {
+      setIsSubmittingFeedback(true);
+      setFeedbackErrorMessage('');
+      await createFeedbackSubmission({
+        body: feedbackDraft,
+        pagePath: typeof window === 'undefined' ? '/' : window.location.pathname,
+        placeId: selectedPlace?.id ?? null,
+        sourceScreen: appRoute.view === 'place' ? 'place_detail_feedback' : 'map_home_feedback',
+        userId: session?.user?.id ?? null,
+        viewerSessionId,
+      });
+      captureAnalyticsEvent('feedback submitted', {
+        has_place_context: Boolean(selectedPlace?.id),
+        message_length: feedbackDraft.trim().length,
+        screen_name: appRoute.view === 'place' ? 'place_detail' : 'map_home',
+      });
+      setErrorMessage('');
+      setSuccessMessage('Feedback sent.');
+      closeFeedbackModal();
+    } catch (error) {
+      setFeedbackErrorMessage(error?.message ?? 'Feedback failed to send.');
+    } finally {
+      setIsSubmittingFeedback(false);
+    }
+  }, [appRoute.view, closeFeedbackModal, feedbackDraft, selectedPlace?.id, session?.user?.id, viewerSessionId]);
 
   const topControls = isAddMode ? (
     <div className="hud-row">
@@ -1516,7 +1560,8 @@ export default function App() {
       />
     </div>
   );
-  const hasActiveModal = isAuthModalVisible || isComposerModalVisible || isAddSheetVisible;
+  const hasActiveModal =
+    isAuthModalVisible || isComposerModalVisible || isAddSheetVisible || isFeedbackModalVisible;
 
   if (!isHydrated) {
     return (
@@ -1901,6 +1946,40 @@ export default function App() {
               label={isSavingPlace ? 'Adding...' : 'Add'}
               size="compact"
               onClick={handleCreatePlace}
+            />
+          </div>
+        </SheetModal>
+      ) : null}
+
+      {isFeedbackModalVisible ? (
+        <SheetModal dialogClassName="sheet-feedback" onClose={closeFeedbackModal}>
+          <div className="sheet-header">
+            <div className="sheet-handle" />
+            <p className="sheet-kicker">Feedback</p>
+            <h2 className="sheet-title">Send feedback</h2>
+            <p className="sheet-copy">
+              Tell us what happened, what feels off, or what should change.
+            </p>
+          </div>
+
+          <textarea
+            autoFocus
+            className="composer-input"
+            placeholder="What should we fix or improve?"
+            value={feedbackDraft}
+            onChange={(event) => setFeedbackDraft(event.target.value)}
+          />
+
+          {feedbackErrorMessage ? <p className="sheet-meta">{feedbackErrorMessage}</p> : null}
+
+          <div className="composer-actions">
+            <button className="text-button" type="button" onClick={closeFeedbackModal}>
+              Cancel
+            </button>
+            <AppButton
+              label={isSubmittingFeedback ? 'Sending' : 'Send'}
+              size="compact"
+              onClick={handleSubmitFeedback}
             />
           </div>
         </SheetModal>

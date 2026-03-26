@@ -498,3 +498,35 @@ export async function createAnalyticsEvent({
     throw error;
   }
 }
+
+export async function createFeedbackSubmission({
+  body,
+  pagePath,
+  placeId = null,
+  sourceScreen,
+  userId = null,
+  viewerSessionId,
+}) {
+  const client = requireSupabase();
+  const normalizedBody = normalizeText(body);
+  const normalizedViewerSessionId = normalizeText(viewerSessionId);
+  const normalizedPagePath = normalizeText(pagePath) || '/';
+  const normalizedSourceScreen = normalizeText(sourceScreen) || 'unknown';
+
+  if (!normalizedBody || !normalizedViewerSessionId) {
+    throw new Error('Feedback requires a message and viewer session id.');
+  }
+
+  const { error } = await client.from('feedback_submissions').insert({
+    body: normalizedBody,
+    user_id: userId,
+    viewer_session_id: normalizedViewerSessionId,
+    page_path: normalizedPagePath,
+    place_id: placeId,
+    source_screen: normalizedSourceScreen,
+  });
+
+  if (error) {
+    throw error;
+  }
+}

@@ -52,6 +52,8 @@ Current custom events:
 - `comment composer opened`
 - `comment created`
 - `comment vote changed`
+- `feedback modal opened`
+- `feedback submitted`
 - `tag filter changed`
 - `tag filters cleared`
 - `ui element clicked`
@@ -60,6 +62,7 @@ Current event-property rules:
 
 - prefer ids, booleans, lengths, tags, and source labels
 - do not send comment bodies, place descriptions, or raw coordinates as analytics properties
+- do not send feedback bodies as analytics properties
 - do not store user email in analytics rows
 
 ## Table Shape

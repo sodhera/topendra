@@ -43,6 +43,7 @@ cd topendra
 - Places now store a single tag. Add-place uses `Zaza Spots`, `Zaza Friendly Restaurants`, or `Custom`, and the home map can filter visible places by those tag families.
 - Web add-place also supports image uploads backed by Supabase Storage.
 - The web shell includes an instant light/dark toggle and keeps the loading copy on the splash state instead of the live map HUD.
+- The web shell also exposes an icon-only feedback action that opens an in-app modal and stores submissions in Supabase.
 - The web shell now emits Supabase-backed analytics for routed screen views, auth funnels, place detail opens, adds, saves, comments, votes, tag-filter usage, and button/link clicks.
 - Place discussions support:
   - top-level comments

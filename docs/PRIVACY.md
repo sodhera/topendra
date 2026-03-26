@@ -69,6 +69,18 @@ Supabase analytics does not store:
 - the user email as an analytics field
 - raw comment bodies, place descriptions, or session replay data
 
+Feedback submissions store:
+
+- the written feedback body
+- the current page path
+- the viewer session id
+- the optional signed-in `user_id`
+- the optional current `place_id`
+
+Feedback submissions do not store:
+
+- the user email as a feedback field
+
 ## Stored Surfaces
 
 - Supabase Auth: email, session, synced `preferred_username`

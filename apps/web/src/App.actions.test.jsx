@@ -52,6 +52,7 @@ const {
   backendState,
   captureAnalyticsEvent,
   createComment,
+  createFeedbackSubmission,
   deletePlace,
   createPlace,
   createPlaceOpenEvent,
@@ -92,6 +93,7 @@ const {
         ],
       };
     }),
+    createFeedbackSubmission: vi.fn(async () => undefined),
     deletePlace: vi.fn(async ({ placeId, user }) => {
       state.appData = {
         ...state.appData,
@@ -149,6 +151,7 @@ vi.mock('./lib/analytics', () => ({
 vi.mock('./lib/backend', () => ({
   claimAnonymousHandle: vi.fn(async ({ handle }) => handle),
   createComment,
+  createFeedbackSubmission,
   deletePlace,
   createPlace,
   createPlaceOpenEvent,
@@ -222,6 +225,7 @@ describe('App web actions', () => {
     backendState.nextPlaceId = 2;
     captureAnalyticsEvent.mockClear();
     createComment.mockClear();
+    createFeedbackSubmission.mockClear();
     deletePlace.mockClear();
     createPlace.mockClear();
     createPlaceOpenEvent.mockClear();
@@ -484,5 +488,38 @@ describe('App web actions', () => {
     });
 
     confirmSpy.mockRestore();
+  });
+
+  it('opens the feedback modal and stores feedback in Supabase', async () => {
+    render(<App />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('account-button').textContent).toBe('Profile');
+    });
+
+    fireEvent.click(screen.getByTestId('feedback-button'));
+
+    const dialog = await screen.findByRole('dialog');
+    expect(within(dialog).getByRole('heading', { name: 'Send feedback' })).toBeTruthy();
+
+    fireEvent.change(screen.getByPlaceholderText('What should we fix or improve?'), {
+      target: { value: 'Please make delete confirmation clearer.' },
+    });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Send' }));
+
+    await waitFor(() => {
+      expect(createFeedbackSubmission).toHaveBeenCalledWith({
+        body: 'Please make delete confirmation clearer.',
+        pagePath: '/',
+        placeId: null,
+        sourceScreen: 'map_home_feedback',
+        userId: 'user-123',
+        viewerSessionId: expect.any(String),
+      });
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Feedback sent.')).toBeTruthy();
+    });
   });
 });

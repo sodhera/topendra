@@ -25,6 +25,10 @@ const { mockClient, deleteEqCreatedBy, deleteEqId, deleteSelect, insert, maybeSi
       return { insert };
     }
 
+    if (table === 'feedback_submissions') {
+      return { insert };
+    }
+
     throw new Error(`Unexpected table lookup: ${table}`);
   });
 
@@ -47,8 +51,7 @@ vi.mock('./supabase', () => ({
   supabase: mockClient,
 }));
 
-import { createPlace, deletePlace } from './backend';
-import { createAnalyticsEvent } from './backend';
+import { createAnalyticsEvent, createFeedbackSubmission, createPlace, deletePlace } from './backend';
 
 describe('createPlace', () => {
   beforeEach(() => {
@@ -196,6 +199,34 @@ describe('createAnalyticsEvent', () => {
         place_tag: 'Late night study',
       },
       source_screen: 'add_sheet',
+      user_id: 'user-1',
+      viewer_session_id: 'viewer-1',
+    });
+  });
+});
+
+describe('createFeedbackSubmission', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('writes a normalized feedback row to Supabase', async () => {
+    insert.mockResolvedValueOnce({ error: null });
+
+    await createFeedbackSubmission({
+      body: '  The delete flow is confusing on mobile.  ',
+      pagePath: ' /places/place-1 ',
+      placeId: 'place-1',
+      sourceScreen: ' place_detail_feedback ',
+      userId: 'user-1',
+      viewerSessionId: ' viewer-1 ',
+    });
+
+    expect(insert).toHaveBeenCalledWith({
+      body: 'The delete flow is confusing on mobile.',
+      page_path: '/places/place-1',
+      place_id: 'place-1',
+      source_screen: 'place_detail_feedback',
       user_id: 'user-1',
       viewer_session_id: 'viewer-1',
     });

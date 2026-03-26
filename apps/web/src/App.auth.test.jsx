@@ -72,6 +72,7 @@ vi.mock('./lib/analytics', () => ({
 vi.mock('./lib/backend', () => ({
   claimAnonymousHandle,
   createComment: vi.fn(),
+  createFeedbackSubmission: vi.fn(async () => undefined),
   createPlace: vi.fn(),
   createPlaceOpenEvent: vi.fn(),
   fetchAppData: vi.fn(async () => appData),

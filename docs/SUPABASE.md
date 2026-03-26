@@ -38,6 +38,7 @@ Supabase is responsible for:
 - storing place-open tracking events
 - storing first-party browser analytics events
 - storing uploaded place photos in Supabase Storage
+- storing feedback submissions from the web feedback modal
 
 ## Schema
 
@@ -50,6 +51,7 @@ Migration files:
 - [supabase/migrations/20260326110500_add_place_tags.sql](/Users/sirishjoshi/Desktop/Topey/supabase/migrations/20260326110500_add_place_tags.sql)
 - [supabase/migrations/20260326150000_add_place_photos.sql](/Users/sirishjoshi/Desktop/Topey/supabase/migrations/20260326150000_add_place_photos.sql)
 - [supabase/migrations/20260326164500_add_analytics_events.sql](/Users/sirishjoshi/Desktop/Topey/supabase/migrations/20260326164500_add_analytics_events.sql)
+- [supabase/migrations/20260326170000_add_feedback_submissions.sql](/Users/sirishjoshi/Desktop/Topey/supabase/migrations/20260326170000_add_feedback_submissions.sql)
 
 Primary tables:
 
@@ -158,6 +160,25 @@ Important rules:
 - `user_id` must either be `null` or match `auth.uid()`
 - app dashboards and ad-hoc queries should aggregate off this table instead of adding one-off tracking tables
 
+### `public.feedback_submissions`
+
+Important columns:
+
+- `body`
+- `user_id`
+- `viewer_session_id`
+- `page_path`
+- `place_id`
+- `source_screen`
+- `created_at`
+
+Important rules:
+
+- anon and authenticated visitors can submit rows
+- `viewer_session_id` is always required
+- `user_id` must either be `null` or match `auth.uid()`
+- feedback text is limited to 4000 trimmed characters
+
 ## Auth Model
 
 Current shipped flow:
@@ -194,6 +215,7 @@ Write helpers expose:
 - `claimAnonymousHandle`
 - `createPlaceOpenEvent`
 - `createAnalyticsEvent`
+- `createFeedbackSubmission`
 
 ### Place Creation Compatibility
 

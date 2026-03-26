@@ -34,6 +34,7 @@ const appData = {
 vi.mock('./lib/backend', () => ({
   claimAnonymousHandle: vi.fn(async ({ handle }) => handle),
   createComment: vi.fn(),
+  createFeedbackSubmission: vi.fn(async () => undefined),
   createPlace: vi.fn(),
   createPlaceOpenEvent: vi.fn(async () => undefined),
   fetchAppData: vi.fn(async () => appData),
