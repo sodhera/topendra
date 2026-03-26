@@ -3,6 +3,7 @@ import L from 'leaflet';
 import {
   CircleMarker,
   MapContainer,
+  Marker,
   TileLayer,
   Tooltip,
   useMap,
@@ -12,7 +13,6 @@ import { DEFAULT_REGION, KATHMANDU_EXPLORE_REGION } from '@topey/shared/lib/cons
 
 const DEFAULT_ZOOM = 13;
 const USER_LOCATION_ZOOM = 15;
-const ADD_PLACE_PIN_VERTICAL_FRACTION = 0.4;
 const HIGH_DETAIL_TILE_ZOOM = 15;
 const MAP_FLY_DURATION = 0.24;
 const MAP_FLY_DURATION_SLOW = 0.3;
@@ -61,6 +61,17 @@ const USER_LOCATION_MARKER_STYLE = Object.freeze({
   opacity: 1,
   weight: 3,
 });
+const ADD_PLACE_MARKER_ICON = L.divIcon({
+  className: 'add-place-marker-shell',
+  html: `
+    <svg aria-hidden="true" class="add-place-marker-svg" viewBox="0 0 48 60" xmlns="http://www.w3.org/2000/svg">
+      <path d="M24 58C24 58 42 38.936 42 23.5C42 13.835 33.941 6 24 6C14.059 6 6 13.835 6 23.5C6 38.936 24 58 24 58Z" fill="#E53935" stroke="#FFFFFF" stroke-width="4"/>
+      <circle cx="24" cy="24" r="7" fill="#FFFFFF"/>
+    </svg>
+  `,
+  iconAnchor: [24, 58],
+  iconSize: [48, 60],
+});
 
 function mapToRegion(map) {
   const center = map.getCenter();
@@ -72,31 +83,6 @@ function mapToRegion(map) {
     latitudeDelta: Math.abs(bounds.getNorth() - bounds.getSouth()),
     longitudeDelta: Math.abs(bounds.getEast() - bounds.getWest()),
   };
-}
-
-function buildCenterPinCoordinates(map) {
-  const size = map.getSize();
-  const point = {
-    x: size.x / 2,
-    y: size.y * ADD_PLACE_PIN_VERTICAL_FRACTION,
-  };
-  const latLng = map.containerPointToLatLng(point);
-
-  return {
-    latitude: latLng.lat,
-    longitude: latLng.lng,
-  };
-}
-
-function areCoordinatesEquivalent(left, right) {
-  if (!left || !right) {
-    return false;
-  }
-
-  return (
-    Math.abs(left.latitude - right.latitude) < 0.00001 &&
-    Math.abs(left.longitude - right.longitude) < 0.00001
-  );
 }
 
 function areRegionsEquivalent(left, right) {
@@ -117,9 +103,7 @@ function formatVoteScore(value) {
 }
 
 function MapRuntimeBridge({
-  addMode,
   focusedPlace,
-  onAddPinChange,
   onOpenSelected,
   onRegionChange,
   onSelectPlace,
@@ -130,7 +114,6 @@ function MapRuntimeBridge({
 }) {
   const map = useMap();
   const hasAppliedUserRegionRef = React.useRef(false);
-  const lastAddPinRef = React.useRef(null);
   const lastFocusedPlaceIdRef = React.useRef('');
   const lastRegionRef = React.useRef(null);
   const lastZoomLevelRef = React.useRef(null);
@@ -146,21 +129,6 @@ function MapRuntimeBridge({
     onRegionChange(nextRegion);
   }, [map, onRegionChange]);
 
-  const emitAddPin = React.useCallback(() => {
-    if (!addMode) {
-      return;
-    }
-
-    const nextCoordinates = buildCenterPinCoordinates(map);
-
-    if (areCoordinatesEquivalent(lastAddPinRef.current, nextCoordinates)) {
-      return;
-    }
-
-    lastAddPinRef.current = nextCoordinates;
-    onAddPinChange(nextCoordinates);
-  }, [addMode, map, onAddPinChange]);
-
   const emitZoomLevel = React.useCallback(() => {
     const nextZoomLevel = map.getZoom();
 
@@ -175,11 +143,9 @@ function MapRuntimeBridge({
   useMapEvents({
     moveend() {
       emitRegion();
-      emitAddPin();
     },
     zoomend() {
       emitRegion();
-      emitAddPin();
       emitZoomLevel();
     },
   });
@@ -195,7 +161,6 @@ function MapRuntimeBridge({
           pan: false,
         });
         emitRegion();
-        emitAddPin();
         emitZoomLevel();
         return;
       }
@@ -207,7 +172,6 @@ function MapRuntimeBridge({
           pan: false,
         });
         emitRegion();
-        emitAddPin();
         emitZoomLevel();
       });
     };
@@ -240,11 +204,7 @@ function MapRuntimeBridge({
       window.visualViewport?.removeEventListener('scroll', refreshLayout);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [emitAddPin, emitRegion, emitZoomLevel, map]);
-
-  React.useEffect(() => {
-    emitAddPin();
-  }, [addMode, emitAddPin]);
+  }, [emitRegion, emitZoomLevel, map]);
 
   React.useEffect(() => {
     emitZoomLevel();
@@ -385,6 +345,39 @@ function MapRuntimeBridge({
   return null;
 }
 
+const AddPlaceMarkerLayer = React.memo(function AddPlaceMarkerLayer({
+  addMode,
+  addPinCoordinates,
+  onAddPinChange,
+}) {
+  const eventHandlers = React.useMemo(
+    () => ({
+      dragend(event) {
+        const nextLatLng = event.target.getLatLng();
+        onAddPinChange({
+          latitude: nextLatLng.lat,
+          longitude: nextLatLng.lng,
+        });
+      },
+    }),
+    [onAddPinChange]
+  );
+
+  if (!addMode || !addPinCoordinates) {
+    return null;
+  }
+
+  return (
+    <Marker
+      draggable
+      eventHandlers={eventHandlers}
+      icon={ADD_PLACE_MARKER_ICON}
+      keyboard
+      position={[addPinCoordinates.latitude, addPinCoordinates.longitude]}
+    />
+  );
+});
+
 const PlaceMarkersLayer = React.memo(function PlaceMarkersLayer({
   addMode,
   baseMapReady,
@@ -518,6 +511,7 @@ const PlaceMarkersLayer = React.memo(function PlaceMarkersLayer({
 
 const DesktopMap = React.memo(function DesktopMap({
   addMode,
+  addPinCoordinates,
   focusedPlace,
   onAddPinChange,
   onOpenSelected,
@@ -586,9 +580,7 @@ const DesktopMap = React.memo(function DesktopMap({
         />
 
         <MapRuntimeBridge
-          addMode={addMode}
           focusedPlace={focusedPlace}
-          onAddPinChange={onAddPinChange}
           onOpenSelected={onOpenSelected}
           onRegionChange={onRegionChange}
           onSelectPlace={onSelectPlace}
@@ -604,6 +596,12 @@ const DesktopMap = React.memo(function DesktopMap({
           onSelectPlace={handleSelectPlace}
           selectedPlaceId={selectedPlaceId}
           visiblePlaces={visiblePlaces}
+        />
+
+        <AddPlaceMarkerLayer
+          addMode={addMode}
+          addPinCoordinates={addPinCoordinates}
+          onAddPinChange={onAddPinChange}
         />
 
         {userRegion && baseMapReady ? (

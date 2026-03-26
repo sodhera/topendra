@@ -304,7 +304,7 @@ describe('App web actions', () => {
     });
 
     fireEvent.click(screen.getByTestId('add-place-button'));
-    fireEvent.click(await screen.findByTestId('add-place-center-button'));
+    fireEvent.click(await screen.findByTestId('add-place-bottom-button'));
 
     const dialog = await screen.findByRole('dialog');
     expect(within(dialog).getByRole('heading', { name: 'Place details' })).toBeTruthy();

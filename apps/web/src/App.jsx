@@ -931,13 +931,17 @@ export default function App() {
 
   const beginAddPlace = React.useCallback(() => {
     navigateToRoute({ placeId: '', view: 'map' });
+    setAddPinCoordinates({
+      latitude: mapRegion.latitude,
+      longitude: mapRegion.longitude,
+    });
     setIsAddMode(true);
     setIsComposerModalVisible(false);
     setSelectedPlaceId('');
     setFocusedPlaceId('');
     setCommentDraft('');
     setReplyTarget(null);
-  }, [navigateToRoute]);
+  }, [mapRegion.latitude, mapRegion.longitude, navigateToRoute]);
   const handleOpenSelected = React.useCallback(() => {
     if (selectedPlaceId) {
       openPlacePage(selectedPlaceId, {
@@ -1017,9 +1021,8 @@ export default function App() {
   ]);
 
   const topControls = isAddMode ? (
-    <div className="hud-row hud-row-split">
+    <div className="hud-row">
       <AppButton label="Back" variant="secondary" size="compact" onClick={cancelAddPlace} />
-      <AppButton label="Add Place" size="compact" onClick={() => setIsAddSheetVisible(true)} />
     </div>
   ) : (
     <div className="hud-row hud-row-end">
@@ -1091,6 +1094,7 @@ export default function App() {
         >
           <DesktopMap
             addMode={isAddMode}
+            addPinCoordinates={addPinCoordinates}
             focusedPlace={focusedPlace}
             onAddPinChange={setAddPinCoordinates}
             onOpenSelected={handleOpenSelected}
@@ -1101,44 +1105,21 @@ export default function App() {
             visiblePlaces={visiblePlaces}
           />
 
+          <div className="map-hud map-hud-top">{topControls}</div>
+
           {isAddMode ? (
-            <>
-              <div
-                className="center-pin"
-                aria-hidden="true"
-                style={{ top: '40%' }}
-              >
-                <svg
-                  className="center-pin-icon"
-                  fill="none"
-                  viewBox="0 0 52 68"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M26 64C26 64 46 42.1234 46 24.9412C46 13.9274 37.0457 5 26 5C14.9543 5 6 13.9274 6 24.9412C6 42.1234 26 64 26 64Z"
-                    stroke="currentColor"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="3"
-                  />
-                  <circle cx="26" cy="25" r="8.5" stroke="currentColor" strokeWidth="3" />
-                </svg>
-              </div>
-              <div className="center-pin-action">
+            <div className="map-hud map-hud-bottom">
+              <div className="bottom-add-action">
                 <AppButton
                   label="Add Place"
                   size="default"
                   onClick={() => setIsAddSheetVisible(true)}
-                  styleClassName="center-pin-action-button"
-                  testId="add-place-center-button"
+                  styleClassName="bottom-add-action-button"
+                  testId="add-place-bottom-button"
                 />
               </div>
-            </>
-          ) : null}
-
-          <div className="map-hud map-hud-top">{topControls}</div>
-
-          {!isAddMode ? (
+            </div>
+          ) : (
             <div className="map-hud map-hud-bottom">
               <button
                 className="fab-button"
@@ -1150,7 +1131,7 @@ export default function App() {
                 +
               </button>
             </div>
-          ) : null}
+          )}
 
           {errorMessage && !isAuthModalVisible ? <div className="status-banner">{errorMessage}</div> : null}
         </main>
@@ -1356,7 +1337,7 @@ function PlacePage({
           </div>
 
           <section className="place-page-card place-page-empty-card">
-            <p className="place-page-kicker">r/topeyplaces</p>
+            <p className="place-page-kicker">Topey</p>
             <h1 className="place-page-title">Place not found</h1>
             <p className="place-page-copy">
               This place link does not match anything in the current dataset.
@@ -1383,7 +1364,7 @@ function PlacePage({
           <article className="place-page-post">
             <div className="place-page-content place-page-post-content">
               <div className="place-page-meta-row">
-                <span className="place-page-kicker">r/topeyplaces</span>
+                <span className="place-page-kicker">Topey</span>
                 <span className="place-page-meta-dot">•</span>
                 <span className="place-page-meta-inline">
                   Posted by {formatUserHandle(place.authorName)}
@@ -1427,7 +1408,7 @@ function PlacePage({
           <section className="place-page-comments">
             <div className="thread-header place-page-thread-header">
               <div>
-                <div className="thread-kicker">r/topeyplaces</div>
+                <div className="thread-kicker">Topey</div>
                 <h2 className="thread-title place-page-thread-title">Comments</h2>
               </div>
               <div className="place-page-comment-count">
@@ -1606,7 +1587,7 @@ function AuthCard({
 
   return (
     <div className="auth-card">
-      <p className="sheet-kicker">r/topeyplaces</p>
+      <p className="sheet-kicker">Topey</p>
       <h2 className="sheet-title">Email access</h2>
       <p className="sheet-copy">
         We only collect your email. Add an anonymous name now, or choose it after you open the

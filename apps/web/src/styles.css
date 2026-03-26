@@ -706,37 +706,28 @@ button {
   width: 56px;
 }
 
-.center-pin {
-  color: #18181b;
-  left: 50%;
-  pointer-events: none;
-  position: absolute;
-  transform: translateX(-50%);
-  z-index: 2;
-}
-
-.center-pin-action {
+.bottom-add-action {
   display: flex;
   justify-content: center;
-  left: 50%;
   pointer-events: none;
-  position: absolute;
-  top: calc(40% + 94px);
-  transform: translateX(-50%);
   width: min(100%, 320px);
-  z-index: 3;
 }
 
-.center-pin-action-button {
+.bottom-add-action-button {
   min-width: 172px;
   pointer-events: auto;
 }
 
-.center-pin-icon {
+.add-place-marker-shell {
+  background: none;
+  border: 0;
+}
+
+.add-place-marker-svg {
   display: block;
-  filter: drop-shadow(0 14px 20px rgba(24, 24, 27, 0.18));
-  height: 76px;
-  width: 58px;
+  filter: drop-shadow(0 14px 24px rgba(24, 24, 27, 0.24));
+  height: 60px;
+  width: 48px;
 }
 
 .status-banner {
@@ -1453,12 +1444,11 @@ button {
     min-width: 0;
   }
 
-  .center-pin-action {
-    top: calc(40% + 88px);
+  .bottom-add-action {
     width: calc(100vw - 32px);
   }
 
-  .center-pin-action-button {
+  .bottom-add-action-button {
     width: min(100%, 280px);
   }
 
