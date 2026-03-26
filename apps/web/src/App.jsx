@@ -49,23 +49,83 @@ const APP_TAGLINE =
   "Have Zaza but don't know where to smoke? Find user-added chill, zaza friendly spots around the globe.";
 const COLOR_MODE_STORAGE_KEY = 'zazaspot-color-mode';
 const MAX_PLACE_PHOTO_UPLOADS = 4;
-const LIGHT_WEB_SHELL_COLORS = sharedColors;
+const LIGHT_WEB_SHELL_COLORS = {
+  ...sharedColors,
+  focusRing: 'rgba(20, 150, 71, 0.3)',
+  gridLine: 'rgba(17, 17, 17, 0.06)',
+  loadingGradientStart: 'rgba(167, 255, 101, 0.28)',
+  loadingGradientEnd: 'rgba(255, 255, 255, 0.82)',
+  pageGridLine: 'rgba(17, 17, 17, 0.05)',
+  pageGradientStart: 'rgba(167, 255, 101, 0.42)',
+  pageGradientEnd: 'rgba(255, 255, 255, 0.92)',
+  pageDecorativeGlowA: 'rgba(209, 132, 98, 0.12)',
+  pageDecorativeGlowB: 'rgba(120, 153, 218, 0.08)',
+  pageGlareA: 'rgba(255, 255, 255, 0.08)',
+  pageGlareB: 'rgba(255, 255, 255, 0.05)',
+  metaDot: 'rgba(17, 17, 17, 0.52)',
+  summaryDot: 'rgba(17, 17, 17, 0.46)',
+  mapSurfaceBackground: '#dbe4e8',
+  mapTooltipBackground: 'rgba(255, 253, 249, 0.97)',
+  mapTooltipBorder: 'rgba(17, 17, 17, 0.16)',
+  mapTooltipShadow: 'rgba(24, 24, 27, 0.12)',
+  mapTooltipText: '#18181b',
+  mapTooltipButtonBackground: '#111111',
+  mapTooltipButtonText: '#ffffff',
+  mapLoadingBackgroundA: 'rgba(255, 255, 255, 0.72)',
+  mapLoadingBackgroundB: 'rgba(244, 244, 245, 0.76)',
+  mapLoadingBackgroundBase: 'rgba(244, 244, 245, 0.72)',
+  mapLoadingBorder: 'rgba(24, 24, 27, 0.08)',
+  mapLoadingShadow: 'rgba(24, 24, 27, 0.08)',
+  mapAttributionBackground: 'rgba(255, 255, 255, 0.96)',
+  mapAttributionShadow: 'rgba(24, 24, 27, 0.1)',
+  previewFadeMid: 'rgba(246, 255, 223, 0.92)',
+  previewFadeEnd: 'rgba(255, 255, 255, 1)',
+};
 const DARK_WEB_SHELL_COLORS = {
   ...sharedColors,
   background: '#0f160c',
-  card: '#f2ffe1',
-  elevatedCard: '#17331f',
-  border: '#f2ffe1',
-  separator: '#f2ffe1',
+  card: '#172118',
+  elevatedCard: '#223126',
+  border: '#ddffd4',
+  separator: '#7ecf7d',
   text: '#f3ffe8',
   mutedText: '#abd89f',
   primary: '#82f16a',
   primaryText: '#10210e',
-  secondary: '#17331f',
+  secondary: '#172118',
   accent: '#d7ff6d',
   mapOverlay: 'rgba(15, 22, 12, 0.72)',
   sheetBackdrop: 'rgba(8, 11, 7, 0.54)',
-  handle: '#f3ffe8',
+  handle: '#ddffd4',
+  focusRing: 'rgba(130, 241, 106, 0.42)',
+  gridLine: 'rgba(221, 255, 212, 0.08)',
+  loadingGradientStart: 'rgba(130, 241, 106, 0.22)',
+  loadingGradientEnd: 'rgba(15, 22, 12, 0.94)',
+  pageGridLine: 'rgba(221, 255, 212, 0.07)',
+  pageGradientStart: 'rgba(130, 241, 106, 0.14)',
+  pageGradientEnd: 'rgba(12, 18, 11, 0.96)',
+  pageDecorativeGlowA: 'rgba(130, 241, 106, 0.08)',
+  pageDecorativeGlowB: 'rgba(73, 135, 96, 0.12)',
+  pageGlareA: 'rgba(255, 255, 255, 0.03)',
+  pageGlareB: 'rgba(255, 255, 255, 0.02)',
+  metaDot: 'rgba(221, 255, 212, 0.44)',
+  summaryDot: 'rgba(221, 255, 212, 0.38)',
+  mapSurfaceBackground: '#111917',
+  mapTooltipBackground: 'rgba(23, 33, 24, 0.98)',
+  mapTooltipBorder: 'rgba(221, 255, 212, 0.28)',
+  mapTooltipShadow: 'rgba(0, 0, 0, 0.32)',
+  mapTooltipText: '#f3ffe8',
+  mapTooltipButtonBackground: '#d7ff6d',
+  mapTooltipButtonText: '#10210e',
+  mapLoadingBackgroundA: 'rgba(23, 33, 24, 0.9)',
+  mapLoadingBackgroundB: 'rgba(12, 18, 11, 0.94)',
+  mapLoadingBackgroundBase: 'rgba(12, 18, 11, 0.9)',
+  mapLoadingBorder: 'rgba(221, 255, 212, 0.22)',
+  mapLoadingShadow: 'rgba(0, 0, 0, 0.22)',
+  mapAttributionBackground: 'rgba(23, 33, 24, 0.92)',
+  mapAttributionShadow: 'rgba(0, 0, 0, 0.28)',
+  previewFadeMid: 'rgba(34, 49, 38, 0.94)',
+  previewFadeEnd: 'rgba(23, 33, 24, 1)',
 };
 const RELATIVE_TIME_FORMATTER = new Intl.RelativeTimeFormat('en', {
   numeric: 'auto',
@@ -1269,12 +1329,17 @@ export default function App() {
     return (
       <div
         className="loading-screen"
+        data-color-mode={colorMode}
         style={{
           '--color-background': webShellColors.background,
           '--color-card': webShellColors.card,
           '--color-text': webShellColors.text,
           '--color-muted': webShellColors.mutedText,
           '--color-border': webShellColors.border,
+          '--color-focus-ring': webShellColors.focusRing,
+          '--color-grid-line': webShellColors.gridLine,
+          '--color-loading-gradient-start': webShellColors.loadingGradientStart,
+          '--color-loading-gradient-end': webShellColors.loadingGradientEnd,
           colorScheme: colorMode,
         }}
       >
@@ -1288,6 +1353,7 @@ export default function App() {
   return (
     <div
       className={`app-shell${hasActiveModal ? ' has-modal' : ''}`}
+      data-color-mode={colorMode}
       style={{
         '--color-background': webShellColors.background,
         '--color-card': webShellColors.card,
@@ -1301,9 +1367,38 @@ export default function App() {
         '--color-accent': webShellColors.accent,
         '--color-backdrop': webShellColors.sheetBackdrop,
         '--color-handle': webShellColors.handle,
-        colorScheme: colorMode,
-      }}
-    >
+        '--color-focus-ring': webShellColors.focusRing,
+        '--color-grid-line': webShellColors.gridLine,
+        '--color-loading-gradient-start': webShellColors.loadingGradientStart,
+        '--color-loading-gradient-end': webShellColors.loadingGradientEnd,
+        '--color-page-grid-line': webShellColors.pageGridLine,
+        '--color-page-gradient-start': webShellColors.pageGradientStart,
+        '--color-page-gradient-end': webShellColors.pageGradientEnd,
+        '--color-page-glow-a': webShellColors.pageDecorativeGlowA,
+        '--color-page-glow-b': webShellColors.pageDecorativeGlowB,
+        '--color-page-glare-a': webShellColors.pageGlareA,
+        '--color-page-glare-b': webShellColors.pageGlareB,
+        '--color-meta-dot': webShellColors.metaDot,
+        '--color-summary-dot': webShellColors.summaryDot,
+        '--color-map-surface': webShellColors.mapSurfaceBackground,
+        '--color-map-tooltip-background': webShellColors.mapTooltipBackground,
+        '--color-map-tooltip-border': webShellColors.mapTooltipBorder,
+        '--color-map-tooltip-shadow': webShellColors.mapTooltipShadow,
+        '--color-map-tooltip-text': webShellColors.mapTooltipText,
+        '--color-map-tooltip-button-background': webShellColors.mapTooltipButtonBackground,
+        '--color-map-tooltip-button-text': webShellColors.mapTooltipButtonText,
+        '--color-map-loading-background-a': webShellColors.mapLoadingBackgroundA,
+        '--color-map-loading-background-b': webShellColors.mapLoadingBackgroundB,
+        '--color-map-loading-background-base': webShellColors.mapLoadingBackgroundBase,
+        '--color-map-loading-border': webShellColors.mapLoadingBorder,
+          '--color-map-loading-shadow': webShellColors.mapLoadingShadow,
+          '--color-map-attribution-background': webShellColors.mapAttributionBackground,
+          '--color-map-attribution-shadow': webShellColors.mapAttributionShadow,
+          '--color-preview-fade-mid': webShellColors.previewFadeMid,
+          '--color-preview-fade-end': webShellColors.previewFadeEnd,
+          colorScheme: colorMode,
+        }}
+      >
       <div className="sr-only" id={helpId}>
         Drag or two-finger scroll to pan. Pinch or scroll to zoom. Arrow keys and plus or minus
         keys work when the map is focused, and Page Up / Page Down move between visible places.
@@ -1318,6 +1413,7 @@ export default function App() {
         <DesktopMap
           addMode={isAddMode}
           addPinCoordinates={addPinCoordinates}
+          colorMode={colorMode}
           focusedPlace={focusedPlace}
           onAddPinChange={setAddPinCoordinates}
           onOpenSelected={handleOpenSelected}

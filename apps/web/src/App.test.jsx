@@ -62,10 +62,11 @@ vi.mock('./lib/supabase', () => ({
 }));
 
 vi.mock('./components/DesktopMap', () => ({
-  default: function DesktopMapMock({ addMode, onSelectPlace }) {
+  default: function DesktopMapMock({ addMode, colorMode, onSelectPlace }) {
     return (
       <div data-testid="desktop-map">
         <div data-testid="map-mode">{addMode ? 'add' : 'browse'}</div>
+        <div data-testid="map-color-mode">{colorMode}</div>
         <button
           aria-label="Select first place"
           type="button"
@@ -86,6 +87,7 @@ vi.mock('./components/DesktopMap', () => ({
 describe('App web shell', () => {
   beforeEach(() => {
     window.history.replaceState({}, '', '/');
+    window.localStorage.removeItem('zazaspot-color-mode');
   });
 
   it('renders the app-style home shell and opens a place page from the map', async () => {
@@ -96,6 +98,7 @@ describe('App web shell', () => {
     expect(screen.getByTestId('theme-toggle-button')).toBeTruthy();
     expect(screen.getByTestId('add-place-button').textContent).toBe('+');
     expect(screen.getByTestId('map-mode').textContent).toBe('browse');
+    expect(screen.getByTestId('map-color-mode').textContent).toBe('light');
 
     fireEvent.click(screen.getByLabelText('Select first place'));
 
@@ -107,6 +110,17 @@ describe('App web shell', () => {
     expect(window.location.pathname).toBe('/places/place-1');
     expect(screen.getByTestId('map-mode').textContent).toBe('browse');
     expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('switches the shell and map into dark mode from the icon toggle', async () => {
+    render(<App />);
+
+    const toggleButton = await screen.findByTestId('theme-toggle-button');
+    fireEvent.click(toggleButton);
+
+    expect(screen.getByTestId('map-color-mode').textContent).toBe('dark');
+    expect(window.localStorage.getItem('zazaspot-color-mode')).toBe('dark');
+    expect(screen.getByLabelText('Switch to light mode')).toBeTruthy();
   });
 
   it('switches into add-place mode from the floating plus button', async () => {

@@ -19,59 +19,87 @@ const MAP_FLY_DURATION_SLOW = 0.3;
 const CANVAS_RENDERER = L.canvas({ padding: 0.4 });
 const TILE_KEEP_BUFFER = 4;
 const HOVER_CARD_CLOSE_DELAY_MS = 120;
-const STANDARD_TILE_URL = 'https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png';
-const HIGH_DETAIL_TILE_URL = 'https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}@2x.png';
+const TILE_URLS = Object.freeze({
+  light: Object.freeze({
+    standard: 'https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png',
+    retina: 'https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}@2x.png',
+  }),
+  dark: Object.freeze({
+    standard: 'https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png',
+    retina: 'https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}@2x.png',
+  }),
+});
 const PLACE_MARKER_RADIUS = 7;
 const SELECTED_PLACE_MARKER_RADIUS = 10;
 const ADD_MODE_PLACE_MARKER_RADIUS = 5;
 const ADD_MODE_SELECTED_PLACE_MARKER_RADIUS = 7;
 const USER_LOCATION_MARKER_RADIUS = 8;
-const PLACE_MARKER_STYLE = Object.freeze({
-  color: '#111111',
-  fillColor: '#149647',
-  fillOpacity: 1,
-  opacity: 1,
-  weight: 3,
-});
-const SELECTED_PLACE_MARKER_STYLE = Object.freeze({
-  color: '#111111',
-  fillColor: '#A7FF65',
-  fillOpacity: 1,
-  opacity: 1,
-  weight: 3,
-});
-const ADD_MODE_PLACE_MARKER_STYLE = Object.freeze({
-  color: '#111111',
-  fillColor: '#149647',
-  fillOpacity: 0.34,
-  opacity: 0.5,
-  weight: 2,
-});
-const ADD_MODE_SELECTED_PLACE_MARKER_STYLE = Object.freeze({
-  color: '#111111',
-  fillColor: '#A7FF65',
-  fillOpacity: 0.72,
-  opacity: 0.8,
-  weight: 3,
-});
-const USER_LOCATION_MARKER_STYLE = Object.freeze({
-  color: '#111111',
-  fillColor: '#FFFFFF',
-  fillOpacity: 1,
-  opacity: 1,
-  weight: 3,
-});
-const ADD_PLACE_MARKER_ICON = L.divIcon({
-  className: 'add-place-marker-shell',
-  html: `
-    <svg aria-hidden="true" class="add-place-marker-svg" viewBox="0 0 48 60" xmlns="http://www.w3.org/2000/svg">
-      <path d="M24 58C24 58 42 38.936 42 23.5C42 13.835 33.941 6 24 6C14.059 6 6 13.835 6 23.5C6 38.936 24 58 24 58Z" fill="#149647" stroke="#111111" stroke-width="4"/>
-      <circle cx="24" cy="24" r="7" fill="#FFFFFF" stroke="#111111" stroke-width="2"/>
-    </svg>
-  `,
-  iconAnchor: [24, 58],
-  iconSize: [48, 60],
-});
+
+function buildMarkerStyleSet(colorMode) {
+  const borderColor = colorMode === 'dark' ? '#ddffd4' : '#111111';
+  const centerFillColor = colorMode === 'dark' ? '#172118' : '#FFFFFF';
+
+  return {
+    addModePlace: Object.freeze({
+      color: borderColor,
+      fillColor: '#149647',
+      fillOpacity: 0.34,
+      opacity: 0.72,
+      weight: 2,
+    }),
+    addModeSelectedPlace: Object.freeze({
+      color: borderColor,
+      fillColor: '#A7FF65',
+      fillOpacity: 0.78,
+      opacity: 0.92,
+      weight: 3,
+    }),
+    place: Object.freeze({
+      color: borderColor,
+      fillColor: '#149647',
+      fillOpacity: 1,
+      opacity: 1,
+      weight: 3,
+    }),
+    selectedPlace: Object.freeze({
+      color: borderColor,
+      fillColor: '#A7FF65',
+      fillOpacity: 1,
+      opacity: 1,
+      weight: 3,
+    }),
+    userLocation: Object.freeze({
+      color: borderColor,
+      fillColor: centerFillColor,
+      fillOpacity: 1,
+      opacity: 1,
+      weight: 3,
+    }),
+  };
+}
+
+function createAddPlaceMarkerIcon(colorMode) {
+  const borderColor = colorMode === 'dark' ? '#ddffd4' : '#111111';
+  const centerFillColor = colorMode === 'dark' ? '#172118' : '#FFFFFF';
+
+  return L.divIcon({
+    className: 'add-place-marker-shell',
+    html: `
+      <svg aria-hidden="true" class="add-place-marker-svg" viewBox="0 0 48 60" xmlns="http://www.w3.org/2000/svg">
+        <path d="M24 58C24 58 42 38.936 42 23.5C42 13.835 33.941 6 24 6C14.059 6 6 13.835 6 23.5C6 38.936 24 58 24 58Z" fill="#149647" stroke="${borderColor}" stroke-width="4"/>
+        <circle cx="24" cy="24" r="7" fill="${centerFillColor}" stroke="${borderColor}" stroke-width="2"/>
+      </svg>
+    `,
+    iconAnchor: [24, 58],
+    iconSize: [48, 60],
+  });
+}
+
+export function getBaseTileUrl({ colorMode = 'light', supportsHiDpiTiles = false, zoomLevel = DEFAULT_ZOOM }) {
+  const tileSet = colorMode === 'dark' ? TILE_URLS.dark : TILE_URLS.light;
+
+  return supportsHiDpiTiles && zoomLevel >= HIGH_DETAIL_TILE_ZOOM ? tileSet.retina : tileSet.standard;
+}
 
 function mapToRegion(map) {
   const center = map.getCenter();
@@ -348,6 +376,7 @@ function MapRuntimeBridge({
 const AddPlaceMarkerLayer = React.memo(function AddPlaceMarkerLayer({
   addMode,
   addPinCoordinates,
+  addPlaceMarkerIcon,
   onAddPinChange,
 }) {
   const eventHandlers = React.useMemo(
@@ -371,7 +400,7 @@ const AddPlaceMarkerLayer = React.memo(function AddPlaceMarkerLayer({
     <Marker
       draggable
       eventHandlers={eventHandlers}
-      icon={ADD_PLACE_MARKER_ICON}
+      icon={addPlaceMarkerIcon}
       keyboard
       position={[addPinCoordinates.latitude, addPinCoordinates.longitude]}
     />
@@ -381,6 +410,7 @@ const AddPlaceMarkerLayer = React.memo(function AddPlaceMarkerLayer({
 const PlaceMarkersLayer = React.memo(function PlaceMarkersLayer({
   addMode,
   baseMapReady,
+  markerStyles,
   onSelectPlace,
   selectedPlaceId,
   visiblePlaces,
@@ -443,11 +473,11 @@ const PlaceMarkersLayer = React.memo(function PlaceMarkersLayer({
         : PLACE_MARKER_RADIUS;
     const pathOptions = addMode
       ? isSelected
-        ? ADD_MODE_SELECTED_PLACE_MARKER_STYLE
-        : ADD_MODE_PLACE_MARKER_STYLE
+        ? markerStyles.addModeSelectedPlace
+        : markerStyles.addModePlace
       : isSelected
-        ? SELECTED_PLACE_MARKER_STYLE
-        : PLACE_MARKER_STYLE;
+        ? markerStyles.selectedPlace
+        : markerStyles.place;
     const eventHandlers = interactive
       ? {
           click: () => onSelectPlace(place.id),
@@ -512,6 +542,7 @@ const PlaceMarkersLayer = React.memo(function PlaceMarkersLayer({
 const DesktopMap = React.memo(function DesktopMap({
   addMode,
   addPinCoordinates,
+  colorMode = 'light',
   focusedPlace,
   onAddPinChange,
   onOpenSelected,
@@ -532,10 +563,17 @@ const DesktopMap = React.memo(function DesktopMap({
   const [zoomLevel, setZoomLevel] = React.useState(DEFAULT_ZOOM);
   const [baseMapReady, setBaseMapReady] = React.useState(false);
   const hasLoadedInitialBaseMapRef = React.useRef(false);
-  const tileUrl =
-    supportsHiDpiTiles && zoomLevel >= HIGH_DETAIL_TILE_ZOOM
-      ? HIGH_DETAIL_TILE_URL
-      : STANDARD_TILE_URL;
+  const tileUrl = React.useMemo(
+    () =>
+      getBaseTileUrl({
+        colorMode,
+        supportsHiDpiTiles,
+        zoomLevel,
+      }),
+    [colorMode, supportsHiDpiTiles, zoomLevel]
+  );
+  const markerStyles = React.useMemo(() => buildMarkerStyleSet(colorMode), [colorMode]);
+  const addPlaceMarkerIcon = React.useMemo(() => createAddPlaceMarkerIcon(colorMode), [colorMode]);
   const handleSelectPlace = React.useCallback(
     (placeId) => {
       onSelectPlace(placeId, {
@@ -551,6 +589,7 @@ const DesktopMap = React.memo(function DesktopMap({
       <MapContainer
         center={initialCenter}
         className="leaflet-map"
+        data-color-mode={colorMode}
         doubleClickZoom
         keyboard
         preferCanvas
@@ -560,6 +599,7 @@ const DesktopMap = React.memo(function DesktopMap({
         zoomControl={false}
       >
         <TileLayer
+          key={tileUrl}
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
           eventHandlers={{
             loading: () => {
@@ -593,6 +633,7 @@ const DesktopMap = React.memo(function DesktopMap({
         <PlaceMarkersLayer
           addMode={addMode}
           baseMapReady={baseMapReady}
+          markerStyles={markerStyles}
           onSelectPlace={handleSelectPlace}
           selectedPlaceId={selectedPlaceId}
           visiblePlaces={visiblePlaces}
@@ -601,6 +642,7 @@ const DesktopMap = React.memo(function DesktopMap({
         <AddPlaceMarkerLayer
           addMode={addMode}
           addPinCoordinates={addPinCoordinates}
+          addPlaceMarkerIcon={addPlaceMarkerIcon}
           onAddPinChange={onAddPinChange}
         />
 
@@ -609,7 +651,7 @@ const DesktopMap = React.memo(function DesktopMap({
             center={[userRegion.latitude, userRegion.longitude]}
             interactive={false}
             keyboard={false}
-            pathOptions={USER_LOCATION_MARKER_STYLE}
+            pathOptions={markerStyles.userLocation}
             radius={USER_LOCATION_MARKER_RADIUS}
             renderer={CANVAS_RENDERER}
           />

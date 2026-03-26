@@ -31,8 +31,8 @@ body {
   min-height: 100dvh;
   min-height: 100vh;
   background:
-    linear-gradient(rgba(17, 17, 17, 0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(17, 17, 17, 0.06) 1px, transparent 1px),
+    linear-gradient(var(--color-grid-line, rgba(17, 17, 17, 0.06)) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-grid-line, rgba(17, 17, 17, 0.06)) 1px, transparent 1px),
     var(--color-background, #e8ffc2);
   background-size: 28px 28px;
 }
@@ -62,7 +62,11 @@ button {
 .loading-screen {
   align-items: center;
   background:
-    linear-gradient(135deg, rgba(167, 255, 101, 0.28), rgba(255, 255, 255, 0.82)),
+    linear-gradient(
+      135deg,
+      var(--color-loading-gradient-start, rgba(167, 255, 101, 0.28)),
+      var(--color-loading-gradient-end, rgba(255, 255, 255, 0.82))
+    ),
     var(--color-background, #e8ffc2);
   color: var(--color-text, #111111);
   display: flex;
@@ -93,6 +97,16 @@ button {
   max-width: 540px;
 }
 
+.loading-screen[data-color-mode='light'],
+.app-shell[data-color-mode='light'] {
+  color-scheme: light;
+}
+
+.loading-screen[data-color-mode='dark'],
+.app-shell[data-color-mode='dark'] {
+  color-scheme: dark;
+}
+
 .app-shell {
   height: 100dvh;
   min-height: 100dvh;
@@ -112,9 +126,13 @@ button {
 
 .place-page {
   background:
-    linear-gradient(rgba(17, 17, 17, 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(17, 17, 17, 0.05) 1px, transparent 1px),
-    linear-gradient(160deg, rgba(167, 255, 101, 0.42), rgba(255, 255, 255, 0.92)),
+    linear-gradient(var(--color-page-grid-line, rgba(17, 17, 17, 0.05)) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-page-grid-line, rgba(17, 17, 17, 0.05)) 1px, transparent 1px),
+    linear-gradient(
+      160deg,
+      var(--color-page-gradient-start, rgba(167, 255, 101, 0.42)),
+      var(--color-page-gradient-end, rgba(255, 255, 255, 0.92))
+    ),
     var(--color-background, #e8ffc2);
   background-size: 30px 30px, 30px 30px, auto, auto;
   height: 100dvh;
@@ -145,12 +163,18 @@ button {
 
 .place-page::before {
   background:
-    radial-gradient(circle at 82% 76%, rgba(209, 132, 98, 0.12), transparent 18%),
-    radial-gradient(circle at 20% 82%, rgba(120, 153, 218, 0.08), transparent 14%);
+    radial-gradient(circle at 82% 76%, var(--color-page-glow-a, rgba(209, 132, 98, 0.12)), transparent 18%),
+    radial-gradient(circle at 20% 82%, var(--color-page-glow-b, rgba(120, 153, 218, 0.08)), transparent 14%);
 }
 
 .place-page::after {
-  background: linear-gradient(140deg, rgba(255, 255, 255, 0.08), transparent 42%, rgba(255, 255, 255, 0.05) 72%, transparent 100%);
+  background: linear-gradient(
+    140deg,
+    var(--color-page-glare-a, rgba(255, 255, 255, 0.08)),
+    transparent 42%,
+    var(--color-page-glare-b, rgba(255, 255, 255, 0.05)) 72%,
+    transparent 100%
+  );
   opacity: 0.42;
 }
 
@@ -308,7 +332,7 @@ button {
 }
 
 .place-page-meta-dot {
-  color: rgba(17, 17, 17, 0.52);
+  color: var(--color-meta-dot, rgba(17, 17, 17, 0.52));
 }
 
 .place-page-meta-inline {
@@ -331,7 +355,7 @@ button {
 }
 
 .place-page-summary-line span + span::before {
-  color: rgba(17, 17, 17, 0.46);
+  color: var(--color-summary-dot, rgba(17, 17, 17, 0.46));
   content: "•";
   margin-right: 8px;
 }
@@ -482,7 +506,7 @@ button {
   background: transparent;
   border: 0;
   border-radius: 0;
-  color: #3e3228;
+  color: var(--color-text, #111111);
   display: inline-flex;
   justify-content: center;
   min-height: 0;
@@ -585,7 +609,7 @@ button {
 }
 
 .leaflet-container {
-  background: #e6ebef;
+  background: var(--color-map-surface, #dbe4e8);
   outline: none;
 }
 
@@ -597,6 +621,7 @@ button {
 .leaflet-container:focus-visible,
 .app-button:focus-visible,
 .fab-button:focus-visible,
+.theme-icon-button:focus-visible,
 .compose-fab:focus-visible,
 .text-button:focus-visible,
 .toggle-auth-button:focus-visible,
@@ -605,7 +630,7 @@ button {
 .thread-link-button:focus-visible,
 .sheet-input:focus-visible,
 .composer-input:focus-visible {
-  outline: 2px solid rgba(37, 99, 235, 0.28);
+  outline: 2px solid var(--color-focus-ring, rgba(20, 150, 71, 0.3));
   outline-offset: 3px;
 }
 
@@ -618,18 +643,18 @@ button {
 }
 
 .leaflet-tooltip.place-hover-card {
-  background: rgba(255, 253, 249, 0.97);
-  border: 1px solid rgba(72, 58, 42, 0.14);
+  background: var(--color-map-tooltip-background, rgba(255, 253, 249, 0.97));
+  border: 2px solid var(--color-map-tooltip-border, rgba(72, 58, 42, 0.14));
   border-radius: 12px;
-  box-shadow: 0 14px 28px rgba(24, 24, 27, 0.12);
-  color: #18181b;
+  box-shadow: 6px 6px 0 var(--color-map-tooltip-shadow, rgba(24, 24, 27, 0.12));
+  color: var(--color-map-tooltip-text, #18181b);
   min-width: 180px;
   padding: 12px;
   pointer-events: auto;
 }
 
 .leaflet-tooltip.place-hover-card::before {
-  border-top-color: rgba(255, 253, 249, 0.97);
+  border-top-color: var(--color-map-tooltip-background, rgba(255, 253, 249, 0.97));
 }
 
 .place-hover-card-title {
@@ -650,10 +675,11 @@ button {
 
 .place-hover-card-button {
   align-items: center;
-  background: #18181b;
-  border: 0;
+  background: var(--color-map-tooltip-button-background, #18181b);
+  border: 2px solid var(--color-border, #111111);
   border-radius: 999px;
-  color: #ffffff;
+  box-shadow: 4px 4px 0 var(--color-map-tooltip-shadow, rgba(24, 24, 27, 0.12));
+  color: var(--color-map-tooltip-button-text, #ffffff);
   cursor: pointer;
   display: inline-flex;
   font-size: 12px;
@@ -667,13 +693,17 @@ button {
 .map-loading-indicator {
   align-items: center;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(244, 244, 245, 0.76)),
-    rgba(244, 244, 245, 0.72);
+    linear-gradient(
+      180deg,
+      var(--color-map-loading-background-a, rgba(255, 255, 255, 0.72)),
+      var(--color-map-loading-background-b, rgba(244, 244, 245, 0.76))
+    ),
+    var(--color-map-loading-background-base, rgba(244, 244, 245, 0.72));
   backdrop-filter: blur(8px);
-  border: 1px solid rgba(24, 24, 27, 0.08);
+  border: 2px solid var(--color-map-loading-border, rgba(24, 24, 27, 0.08));
   border-radius: 999px;
-  box-shadow: 0 12px 24px rgba(24, 24, 27, 0.08);
-  color: #18181b;
+  box-shadow: 6px 6px 0 var(--color-map-loading-shadow, rgba(24, 24, 27, 0.08));
+  color: var(--color-map-tooltip-text, #18181b);
   display: inline-flex;
   font-size: 12px;
   font-weight: 700;
@@ -688,12 +718,12 @@ button {
 }
 
 .map-attribution {
-  background: rgba(255, 255, 255, 0.96);
+  background: var(--color-map-attribution-background, rgba(255, 255, 255, 0.96));
   backdrop-filter: blur(12px);
-  border: 1px solid var(--color-border, #d4d4d8);
+  border: 2px solid var(--color-border, #d4d4d8);
   border-radius: 8px;
   bottom: var(--safe-bottom);
-  box-shadow: 0 12px 32px rgba(24, 24, 27, 0.1);
+  box-shadow: 6px 6px 0 var(--color-map-attribution-shadow, rgba(24, 24, 27, 0.1));
   color: var(--color-muted, #71717a);
   font-size: 11px;
   left: var(--safe-left);
@@ -1423,8 +1453,8 @@ button {
   background: linear-gradient(
     180deg,
     rgba(255, 255, 255, 0) 0%,
-    rgba(246, 255, 223, 0.92) 44%,
-    rgba(255, 255, 255, 1) 100%
+    var(--color-preview-fade-mid, rgba(246, 255, 223, 0.92)) 44%,
+    var(--color-preview-fade-end, rgba(255, 255, 255, 1)) 100%
   );
   bottom: 0;
   display: flex;
@@ -1481,7 +1511,7 @@ button {
 
 .composer-input,
 .sheet-input {
-  background: #ffffff;
+  background: var(--color-card, #ffffff);
   border: 3px solid var(--color-border, #111111);
   border-radius: 12px;
   color: var(--color-text, #111111);
@@ -1491,6 +1521,11 @@ button {
   padding: 12px 14px;
   transition: border-color 120ms ease;
   width: 100%;
+}
+
+.composer-input::placeholder,
+.sheet-input::placeholder {
+  color: var(--color-muted, #787c7e);
 }
 
 .sheet-field {
