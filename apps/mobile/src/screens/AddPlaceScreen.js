@@ -20,6 +20,11 @@ import { ShadButton } from '../components/ShadButton';
 import { useAppContext } from '../context/AppContext';
 import { hasAnonymousHandle, isLoggedIn } from '@topey/shared/lib/auth';
 import { DEFAULT_REGION } from '@topey/shared/lib/constants';
+import {
+  isCustomPlaceTagOption,
+  PLACE_TAG_PRESET_OPTIONS,
+  resolvePlaceTagValue,
+} from '@topey/shared/lib/placeTags';
 import { CLEAN_MOBILE_MAP_PROPS } from '@topey/shared/lib/mobileMap';
 import { colors, radius, shadows, spacing, typography } from '@topey/shared/lib/theme';
 import { useLiveLocation } from '../hooks/useLiveLocation';
@@ -58,10 +63,18 @@ export function AddPlaceScreen({ navigation, route }) {
   const [pin, setPin] = useState(getPinnedCoordinate(initialViewportRegion));
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [tag, setTag] = useState('');
+  const [selectedTagOption, setSelectedTagOption] = useState(
+    PLACE_TAG_PRESET_OPTIONS[0]?.value ?? 'zaza_spots'
+  );
+  const [customTag, setCustomTag] = useState('');
   const [isDetailsModalVisible, setIsDetailsModalVisible] = useState(false);
   const [isAuthModalVisible, setIsAuthModalVisible] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const isCustomTagSelected = isCustomPlaceTagOption(selectedTagOption);
+  const resolvedTag = resolvePlaceTagValue({
+    customTag,
+    selectedOption: selectedTagOption,
+  });
 
   useEffect(() => {
     if (!hasResolvedInitialRegion || hasAutoScrolledToUserRegion) {
@@ -104,7 +117,7 @@ export function AddPlaceScreen({ navigation, route }) {
       return;
     }
 
-    if (!name.trim() || !description.trim() || !tag.trim()) {
+    if (!name.trim() || !description.trim() || !resolvedTag.trim()) {
       Alert.alert('Missing details', 'Add a name, description, and tag before saving the place.');
       return;
     }
@@ -114,14 +127,15 @@ export function AddPlaceScreen({ navigation, route }) {
       const result = await addPlace({
         name,
         description,
-        tag,
+        tag: resolvedTag,
         latitude: pin.latitude,
         longitude: pin.longitude,
       });
 
       setName('');
       setDescription('');
-      setTag('');
+      setSelectedTagOption(PLACE_TAG_PRESET_OPTIONS[0]?.value ?? 'zaza_spots');
+      setCustomTag('');
       setIsDetailsModalVisible(false);
       Alert.alert(
         'Success',
@@ -250,13 +264,36 @@ export function AddPlaceScreen({ navigation, route }) {
                 onChangeText={setDescription}
                 multiline
               />
-              <TextInput
-                placeholder="Tag"
-                placeholderTextColor={colors.mutedText}
-                style={styles.input}
-                value={tag}
-                onChangeText={setTag}
-              />
+              <View style={styles.tagSection}>
+                <Text style={styles.tagLabel}>Tag</Text>
+                <View style={styles.tagOptions}>
+                  {PLACE_TAG_PRESET_OPTIONS.map((option) => {
+                    const isSelected = selectedTagOption === option.value;
+
+                    return (
+                      <Pressable
+                        key={option.value}
+                        accessibilityRole="button"
+                        onPress={() => setSelectedTagOption(option.value)}
+                        style={[styles.tagOption, isSelected && styles.tagOptionSelected]}
+                      >
+                        <Text style={[styles.tagOptionText, isSelected && styles.tagOptionTextSelected]}>
+                          {option.label}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
+              {isCustomTagSelected ? (
+                <TextInput
+                  placeholder="Custom tag"
+                  placeholderTextColor={colors.mutedText}
+                  style={styles.input}
+                  value={customTag}
+                  onChangeText={setCustomTag}
+                />
+              ) : null}
 
               <View style={styles.coordsCard}>
                 <Text style={styles.coordsLabel}>Adding at</Text>
@@ -385,6 +422,45 @@ const styles = StyleSheet.create({
     minHeight: 54,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
+  },
+  tagSection: {
+    marginTop: spacing.md,
+  },
+  tagLabel: {
+    color: colors.primary,
+    fontFamily: typography.semibold,
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+  },
+  tagOptions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    marginTop: spacing.sm,
+  },
+  tagOption: {
+    backgroundColor: colors.elevatedCard,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    borderWidth: 2,
+    minHeight: 44,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    ...shadows.floating,
+  },
+  tagOptionSelected: {
+    backgroundColor: colors.accent,
+  },
+  tagOptionText: {
+    color: colors.text,
+    fontFamily: typography.semibold,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  tagOptionTextSelected: {
+    color: colors.text,
   },
   multiline: {
     minHeight: 110,

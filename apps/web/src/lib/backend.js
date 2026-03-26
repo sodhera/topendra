@@ -16,6 +16,7 @@ function mapPlace(row) {
     authorName: row.author_name,
     createdAt: row.created_at,
     createdBy: row.created_by,
+    photoUrls: Array.isArray(row.photo_urls) ? row.photo_urls.filter(Boolean) : [],
     tag: getPlaceTagLabel(row.tag),
     threadCount: row.thread_count,
   };
@@ -263,11 +264,14 @@ export async function claimAnonymousHandle({ user, handle }) {
   return normalizedHandle;
 }
 
-export async function createPlace({ user, name, description, latitude, longitude, tag }) {
+export async function createPlace({ user, name, description, latitude, longitude, photoUrls = [], tag }) {
   const client = requireSupabase();
   const normalizedName = normalizeText(name);
   const normalizedDescription = normalizeText(description);
   const normalizedTag = normalizePlaceTag(tag);
+  const normalizedPhotoUrls = Array.isArray(photoUrls)
+    ? photoUrls.map((value) => normalizeText(value)).filter(Boolean)
+    : [];
 
   if (!user?.id || !normalizedName || !normalizedDescription) {
     throw new Error('A logged-in user, place name, and description are required.');
@@ -281,6 +285,7 @@ export async function createPlace({ user, name, description, latitude, longitude
     longitude,
     created_by: user.id,
     author_name: authorHandle,
+    photo_urls: normalizedPhotoUrls,
   };
   const taggedPayload =
     normalizedTag && normalizedTag !== DEFAULT_PLACE_TAG
@@ -306,6 +311,45 @@ export async function createPlace({ user, name, description, latitude, longitude
   return {
     tagFallbackApplied,
   };
+}
+
+export async function uploadPlacePhotos({ files, user }) {
+  const client = requireSupabase();
+
+  if (!user?.id) {
+    throw new Error('Login required before uploading photos.');
+  }
+
+  const normalizedFiles = Array.from(files ?? []).filter(Boolean);
+
+  if (!normalizedFiles.length) {
+    return [];
+  }
+
+  const uploadResults = await Promise.all(
+    normalizedFiles.map(async (file, index) => {
+      if (!String(file.type ?? '').startsWith('image/')) {
+        throw new Error('Only image uploads are supported.');
+      }
+
+      const extension = normalizeText(file.name).split('.').pop()?.toLowerCase() || 'jpg';
+      const filePath = `${user.id}/${Date.now()}-${index}-${Math.random().toString(36).slice(2, 10)}.${extension}`;
+      const uploadResult = await client.storage.from('place-photos').upload(filePath, file, {
+        cacheControl: '3600',
+        contentType: file.type || 'image/jpeg',
+        upsert: false,
+      });
+
+      if (uploadResult.error) {
+        throw uploadResult.error;
+      }
+
+      const publicUrlResult = client.storage.from('place-photos').getPublicUrl(filePath);
+      return publicUrlResult.data.publicUrl;
+    })
+  );
+
+  return uploadResults;
 }
 
 export async function deletePlace({ user, placeId }) {

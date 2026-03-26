@@ -14,7 +14,7 @@ import {
 import { colors, radius, shadows, spacing, typography } from '@topey/shared/lib/theme';
 
 function getAuthorName(comment) {
-  return comment?.authorName || 'Topey user';
+  return comment?.authorName || 'Zazaspot user';
 }
 
 function sortCommentsByCreatedAtDescending(left, right) {

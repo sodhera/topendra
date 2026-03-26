@@ -170,7 +170,8 @@ describe('AddPlaceScreen', () => {
 
     fireEvent.changeText(screen.getByPlaceholderText('Place name'), 'Corner Cafe');
     fireEvent.changeText(screen.getByPlaceholderText('Description'), 'Late-night coffee and Wi-Fi.');
-    fireEvent.changeText(screen.getByPlaceholderText('Tag'), 'Late night study');
+    fireEvent.press(screen.getByText('Custom'));
+    fireEvent.changeText(screen.getByPlaceholderText('Custom tag'), 'Late night study');
     fireEvent.press(screen.getByText('Add'));
 
     await waitFor(() => {

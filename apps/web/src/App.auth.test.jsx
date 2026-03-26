@@ -57,6 +57,7 @@ vi.mock('./lib/backend', () => ({
   createPlace: vi.fn(),
   createPlaceOpenEvent: vi.fn(),
   fetchAppData: vi.fn(async () => appData),
+  uploadPlacePhotos: vi.fn(async () => []),
   voteForComment: vi.fn(),
   voteForPlace: vi.fn(),
 }));

@@ -1,7 +1,7 @@
 import { USER_IDS } from '../lib/constants';
 
 export const DEMO_PLACE_COUNT = 50;
-export const DEMO_AUTHOR_NAME = 'Topey demo';
+export const DEMO_AUTHOR_NAME = 'Zazaspot demo';
 
 const KATHMANDU_CENTER = {
   latitude: 27.7172,

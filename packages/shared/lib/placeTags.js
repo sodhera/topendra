@@ -2,13 +2,28 @@ export const DEFAULT_PLACE_TAG = 'General';
 export const PLACE_TAG_FILTER_ALL = '__all__';
 export const PLACE_TAG_PRESET_OPTIONS = Object.freeze([
   {
-    value: 'zaza_spot',
-    label: 'Zaza spot',
+    value: 'zaza_spots',
+    label: 'Zaza Spots',
+  },
+  {
+    value: 'zaza_friendly_restaurants',
+    label: 'Zaza Friendly Restaurants',
   },
   {
     value: 'custom',
     label: 'Custom',
   },
+]);
+export const PLACE_TAG_FILTER_OPTIONS = Object.freeze(
+  PLACE_TAG_PRESET_OPTIONS.filter((option) => option.value !== 'custom')
+);
+
+const TAG_LABEL_ALIASES = new Map([
+  ['zaza spot', 'Zaza Spots'],
+  ['zaza spots', 'Zaza Spots'],
+  ['zazaspot', 'Zaza Spots'],
+  ['zaza friendly restaurant', 'Zaza Friendly Restaurants'],
+  ['zaza friendly restaurants', 'Zaza Friendly Restaurants'],
 ]);
 
 export function normalizePlaceTag(value) {
@@ -18,7 +33,13 @@ export function normalizePlaceTag(value) {
 }
 
 export function getPlaceTagLabel(value) {
-  return normalizePlaceTag(value) || DEFAULT_PLACE_TAG;
+  const normalizedValue = normalizePlaceTag(value);
+
+  if (!normalizedValue) {
+    return DEFAULT_PLACE_TAG;
+  }
+
+  return TAG_LABEL_ALIASES.get(normalizedValue.toLocaleLowerCase()) ?? normalizedValue;
 }
 
 export function isCustomPlaceTagOption(value) {

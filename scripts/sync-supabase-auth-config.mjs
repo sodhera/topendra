@@ -8,7 +8,7 @@ const { loadRootEnv } = require('./load-root-env.cjs');
 
 loadRootEnv();
 
-const MOBILE_AUTH_REDIRECT_URL = 'topey://auth/callback';
+const MOBILE_AUTH_REDIRECT_URL = 'zazaspot://auth/callback';
 const DEFAULT_WEB_AUTH_REDIRECT_URLS = [
   'http://localhost:5173/**',
   'http://127.0.0.1:5173/**',

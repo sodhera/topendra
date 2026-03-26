@@ -382,7 +382,7 @@ export function HomeScreen({ navigation }) {
 
                     <View style={styles.participationRow}>
                       <Text style={[styles.addedByLabel, { textAlign: 'left', marginLeft: 0 }]} testID="home-added-by-label">
-                        Added by: <Text style={styles.addedByValue}>{selectedPlace.authorName || 'Topey user'}</Text>
+                        Added by: <Text style={styles.addedByValue}>{selectedPlace.authorName || 'Zazaspot user'}</Text>
                       </Text>
                     </View>
                   </View>

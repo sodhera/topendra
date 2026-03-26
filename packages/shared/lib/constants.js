@@ -7,7 +7,7 @@ export const STORAGE_KEY = 'topey-mobile-state-v2';
 export const VIEWER_SESSION_KEY = 'topey-viewer-session-v1';
 export const PENDING_ANONYMOUS_HANDLE_KEY = 'topey-pending-anonymous-handle-v1';
 export const LOCATION_DISCLOSURE_COPY =
-  'Topey uses your location to center the map around you, show nearby place drops, and save coordinates for places you add.';
+  'Zazaspot uses your location to center the map around you, show nearby chill spots, and save coordinates for places you add.';
 
 export const DEFAULT_REGION = {
   latitude: 27.7172,

@@ -16,6 +16,7 @@ function mapPlace(row) {
     authorName: row.author_name,
     createdAt: row.created_at,
     createdBy: row.created_by,
+    photoUrls: Array.isArray(row.photo_urls) ? row.photo_urls.filter(Boolean) : [],
     tag: getPlaceTagLabel(row.tag),
     threadCount: row.thread_count,
   };
@@ -252,10 +253,13 @@ export async function claimAnonymousHandle({ user, handle }) {
   return normalizedHandle;
 }
 
-export async function createPlace({ user, name, description, latitude, longitude, tag }) {
+export async function createPlace({ user, name, description, latitude, longitude, photoUrls = [], tag }) {
   const normalizedName = normalizeText(name);
   const normalizedDescription = normalizeText(description);
   const normalizedTag = normalizePlaceTag(tag);
+  const normalizedPhotoUrls = Array.isArray(photoUrls)
+    ? photoUrls.map((value) => normalizeText(value)).filter(Boolean)
+    : [];
 
   if (!user?.id || !normalizedName || !normalizedDescription) {
     throw new Error('A logged-in user, place name, and description are required.');
@@ -269,6 +273,7 @@ export async function createPlace({ user, name, description, latitude, longitude
     longitude,
     created_by: user.id,
     author_name: authorHandle,
+    photo_urls: normalizedPhotoUrls,
   };
   const taggedPayload =
     normalizedTag && normalizedTag !== DEFAULT_PLACE_TAG

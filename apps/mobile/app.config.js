@@ -3,9 +3,9 @@ const { loadRootEnv } = require('../../scripts/load-root-env.cjs');
 loadRootEnv();
 
 module.exports = () => ({
-  name: 'Topey',
-  slug: 'topey',
-  scheme: 'topey',
+  name: 'Zazaspot',
+  slug: 'zazaspot',
+  scheme: 'zazaspot',
   version: '1.0.0',
   orientation: 'portrait',
   icon: './assets/icon.png',
@@ -16,15 +16,15 @@ module.exports = () => ({
     backgroundColor: '#121711',
   },
   ios: {
-    bundleIdentifier: 'com.spicedupfremen.topey',
+    bundleIdentifier: 'com.spicedupfremen.zazaspot',
     supportsTablet: true,
     infoPlist: {
       NSLocationWhenInUseUsageDescription:
-        'Topey uses your location to center the map around you, show nearby place drops, and save the coordinates of places you add.',
+        'Zazaspot uses your location to center the map around you, show nearby chill spots, and save the coordinates of places you add.',
     },
   },
   android: {
-    package: 'com.spicedupfremen.topey',
+    package: 'com.spicedupfremen.zazaspot',
     permissions: ['ACCESS_COARSE_LOCATION', 'ACCESS_FINE_LOCATION'],
     adaptiveIcon: {
       backgroundColor: '#E5E5EA',
@@ -41,7 +41,7 @@ module.exports = () => ({
       'expo-location',
       {
         locationWhenInUsePermission:
-          'Topey uses your location to center the map around you, show nearby place drops, and save the coordinates of places you add.',
+          'Zazaspot uses your location to center the map around you, show nearby chill spots, and save the coordinates of places you add.',
       },
     ],
   ],

@@ -26,7 +26,7 @@ export const supabase = createClient(supabaseUrl, supabasePublishableKey, {
 
 export function getAuthRedirectUrl() {
   return makeRedirectUri({
-    scheme: 'topey',
+    scheme: 'zazaspot',
     path: 'auth/callback',
   });
 }

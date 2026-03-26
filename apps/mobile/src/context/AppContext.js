@@ -100,7 +100,7 @@ export function AppProvider({ children }) {
       setComments([]);
       setCommentVotes([]);
       setSavedPlaces([]);
-      setErrorMessage(getReadableError(error, 'Topey could not reach Supabase right now.'));
+      setErrorMessage(getReadableError(error, 'Zazaspot could not reach Supabase right now.'));
       return {
         places: [],
         votes: [],
@@ -144,7 +144,7 @@ export function AppProvider({ children }) {
   }, []);
 
   const applySession = useCallback(
-    async (nextSession, { keepAuthModalOpen = false } = {}) => {
+    async (nextSession, { keepAuthModalOpen = false, deferRefresh = false } = {}) => {
       let resolvedSession = nextSession ?? null;
 
       if (resolvedSession?.user) {
@@ -171,7 +171,11 @@ export function AppProvider({ children }) {
         }
       }
 
-      await refreshData(resolvedSession);
+      if (deferRefresh) {
+        refreshData(resolvedSession).catch(() => undefined);
+      } else {
+        await refreshData(resolvedSession);
+      }
       return resolvedSession;
     },
     [maybeClaimPendingHandle, refreshData]
@@ -195,11 +199,12 @@ export function AppProvider({ children }) {
 
         setViewerSessionId(nextViewerSessionId);
         await applySession(safeSession ?? null, {
+          deferRefresh: true,
           keepAuthModalOpen: !hasAnonymousHandle(safeSession?.user),
         });
       } catch (error) {
         if (active) {
-          setErrorMessage(getReadableError(error, 'Topey could not restore the saved session.'));
+          setErrorMessage(getReadableError(error, 'Zazaspot could not restore the saved session.'));
         }
       } finally {
         if (active) {

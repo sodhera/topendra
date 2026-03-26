@@ -20,8 +20,8 @@ LogBox.ignoreLogs([
 function LoadingScreen() {
   return (
     <View style={styles.loading}>
-      <Text style={styles.loadingTitle}>Topey</Text>
-      <Text style={styles.loadingCopy}>Loading the map and latest place data.</Text>
+      <Text style={styles.loadingTitle}>Zazaspot</Text>
+      <Text style={styles.loadingCopy}>Loading the map faster and syncing the latest spots.</Text>
       <ActivityIndicator color={colors.primary} style={styles.spinner} />
       <StatusBar style="dark" />
     </View>

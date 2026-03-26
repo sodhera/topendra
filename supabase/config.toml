@@ -151,10 +151,10 @@ max_indexes = 5
 enabled = true
 # The base URL of your website. Used as an allow-list for redirects and for constructing URLs used
 # in emails.
-site_url = "topey://auth/callback"
+site_url = "zazaspot://auth/callback"
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
 additional_redirect_urls = [
-  "topey://auth/callback",
+  "zazaspot://auth/callback",
   "http://localhost:5173/**",
   "http://127.0.0.1:5173/**",
   "http://localhost:4173/**",

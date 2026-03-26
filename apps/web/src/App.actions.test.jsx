@@ -54,6 +54,7 @@ const {
   createPlace,
   createPlaceOpenEvent,
   fetchAppData,
+  uploadPlacePhotos,
   voteForComment,
   voteForPlace,
 } = vi.hoisted(() => {
@@ -63,8 +64,8 @@ const {
     nextPlaceId: 2,
   };
 
-  return {
-    backendState: state,
+    return {
+      backendState: state,
     createComment: vi.fn(async ({ placeId, parentCommentId = null, user, body }) => {
       state.appData = {
         ...state.appData,
@@ -104,9 +105,11 @@ const {
     createPlaceOpenEvent: vi.fn(async () => undefined),
     fetchAppData: vi.fn(async ({ includeComments }) => ({
       ...state.appData,
+      savedPlaces: state.appData.savedPlaces ?? [],
       comments: includeComments ? state.appData.comments : [],
       commentVotes: state.appData.commentVotes,
     })),
+    uploadPlacePhotos: vi.fn(async () => []),
     voteForComment: vi.fn(async () => undefined),
     voteForPlace: vi.fn(async () => undefined),
   };
@@ -118,6 +121,7 @@ vi.mock('./lib/backend', () => ({
   createPlace,
   createPlaceOpenEvent,
   fetchAppData,
+  uploadPlacePhotos,
   voteForComment,
   voteForPlace,
 }));
@@ -186,6 +190,7 @@ describe('App web actions', () => {
     createPlace.mockClear();
     createPlaceOpenEvent.mockClear();
     fetchAppData.mockClear();
+    uploadPlacePhotos.mockClear();
     voteForPlace.mockClear();
     signOut.mockClear();
   });
@@ -319,7 +324,10 @@ describe('App web actions', () => {
     fireEvent.change(screen.getByPlaceholderText('Description'), {
       target: { value: 'Codex add-place smoke description' },
     });
-    fireEvent.change(screen.getByTestId('place-tag-input'), {
+    fireEvent.change(screen.getByTestId('place-tag-select'), {
+      target: { value: 'custom' },
+    });
+    fireEvent.change(screen.getByTestId('place-custom-tag-input'), {
       target: { value: 'Late night study' },
     });
     fireEvent.click(within(dialog).getByRole('button', { name: 'Add' }));
@@ -351,7 +359,7 @@ describe('App web actions', () => {
           id: 'place-2',
           name: 'Zaza Research Spot',
           description: 'Tag-filter target',
-          tag: 'Zaza spot',
+          tag: 'Zaza Spots',
           latitude: 27.718,
           longitude: 85.325,
           authorName: 'Action Seeder',
@@ -369,12 +377,13 @@ describe('App web actions', () => {
     });
 
     fireEvent.click(screen.getByTestId('tag-filter-button'));
-    fireEvent.click(screen.getByTestId('tag-filter-option-Zaza spot'));
+    fireEvent.click(screen.getByTestId('tag-filter-option-Zaza Spots'));
     fireEvent.click(screen.getByTestId('desktop-map-open-place'));
 
     expect(await screen.findByRole('heading', { name: 'Zaza Research Spot' })).toBeTruthy();
-    expect(within(screen.getByLabelText('Place details panel')).getByText('Zaza spot')).toBeTruthy();
+    expect(within(screen.getByLabelText('Place details panel')).getByText('Zaza Spots')).toBeTruthy();
     expect(window.location.pathname).toBe('/places/place-2');
     expect(screen.getByTestId('desktop-map-open-place')).toBeTruthy();
+    expect(screen.getByTestId('tag-filter-button').textContent).toContain('Tags: 1');
   });
 });

@@ -15,6 +15,10 @@ import {
 import {
   doesPlaceMatchTagFilter,
   getPlaceTagLabel,
+  isCustomPlaceTagOption,
+  PLACE_TAG_FILTER_OPTIONS,
+  PLACE_TAG_PRESET_OPTIONS,
+  resolvePlaceTagValue,
 } from '@topey/shared/lib/placeTags';
 import {
   createRegionFromLocation,
@@ -34,14 +38,46 @@ import {
   deletePlace,
   savePlace,
   unsavePlace,
+  uploadPlacePhotos,
 } from './lib/backend';
 import { getSafeSession, hasSupabaseConfig, supabase } from './lib/supabase';
 import { colors as sharedColors } from '@topey/shared/lib/theme';
 import DesktopMap from './components/DesktopMap';
-const WEB_SHELL_COLORS = sharedColors;
+
+const APP_NAME = 'Zazaspot';
+const APP_TAGLINE =
+  'Have Zaza but where to smoke? Find user-added chill, zaza friendly spots around the globe.';
+const COLOR_MODE_STORAGE_KEY = 'zazaspot-color-mode';
+const MAX_PLACE_PHOTO_UPLOADS = 4;
+const LIGHT_WEB_SHELL_COLORS = sharedColors;
+const DARK_WEB_SHELL_COLORS = {
+  ...sharedColors,
+  background: '#0f160c',
+  card: '#f2ffe1',
+  elevatedCard: '#17331f',
+  border: '#f2ffe1',
+  separator: '#f2ffe1',
+  text: '#f3ffe8',
+  mutedText: '#abd89f',
+  primary: '#82f16a',
+  primaryText: '#10210e',
+  secondary: '#17331f',
+  accent: '#d7ff6d',
+  mapOverlay: 'rgba(15, 22, 12, 0.72)',
+  sheetBackdrop: 'rgba(8, 11, 7, 0.54)',
+  handle: '#f3ffe8',
+};
 const RELATIVE_TIME_FORMATTER = new Intl.RelativeTimeFormat('en', {
   numeric: 'auto',
 });
+
+function getStoredColorMode() {
+  if (typeof window === 'undefined') {
+    return 'light';
+  }
+
+  return window.localStorage.getItem(COLOR_MODE_STORAGE_KEY) === 'dark' ? 'dark' : 'light';
+}
 
 function getVoteKey(entityId, userId) {
   return `${entityId}:${userId}`;
@@ -231,7 +267,11 @@ export default function App() {
   const [isAddSheetVisible, setIsAddSheetVisible] = React.useState(false);
   const [newPlaceName, setNewPlaceName] = React.useState('');
   const [newPlaceDescription, setNewPlaceDescription] = React.useState('');
-  const [newPlaceTag, setNewPlaceTag] = React.useState('');
+  const [newPlaceTagOption, setNewPlaceTagOption] = React.useState(
+    PLACE_TAG_PRESET_OPTIONS[0]?.value ?? 'zaza_spots'
+  );
+  const [newPlaceCustomTag, setNewPlaceCustomTag] = React.useState('');
+  const [newPlacePhotos, setNewPlacePhotos] = React.useState([]);
   const [addPinCoordinates, setAddPinCoordinates] = React.useState({
     latitude: DEFAULT_REGION.latitude,
     longitude: DEFAULT_REGION.longitude,
@@ -239,6 +279,7 @@ export default function App() {
   const [activeTagFilters, setActiveTagFilters] = React.useState([]);
   const [isTagMenuOpen, setIsTagMenuOpen] = React.useState(false);
   const [isSavingPlace, setIsSavingPlace] = React.useState(false);
+  const [colorMode, setColorMode] = React.useState(() => getStoredColorMode());
   const placeVoteRequestVersionRef = React.useRef({});
   const commentVoteRequestVersionRef = React.useRef({});
   const tagMenuRef = React.useRef(null);
@@ -252,6 +293,26 @@ export default function App() {
   const canPostAnonymously = hasAnonymousHandle(session?.user);
   const isPlaceRoute = appRoute.view === 'place';
   const isPlacePanelVisible = isPlaceRoute || Boolean(selectedPlaceId);
+  const isCustomTagSelected = isCustomPlaceTagOption(newPlaceTagOption);
+  const resolvedNewPlaceTag = React.useMemo(
+    () =>
+      resolvePlaceTagValue({
+        customTag: newPlaceCustomTag,
+        selectedOption: newPlaceTagOption,
+      }),
+    [newPlaceCustomTag, newPlaceTagOption]
+  );
+  const selectedTagCount = activeTagFilters.length;
+  const webShellColors = colorMode === 'dark' ? DARK_WEB_SHELL_COLORS : LIGHT_WEB_SHELL_COLORS;
+  const tagButtonLabel = selectedTagCount ? `Tags: ${selectedTagCount}` : 'Tags: All';
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    window.localStorage.setItem(COLOR_MODE_STORAGE_KEY, colorMode);
+  }, [colorMode]);
 
   React.useEffect(() => {
     if (typeof window === 'undefined') {
@@ -371,12 +432,14 @@ export default function App() {
   const refreshData = React.useCallback(async (activeSession) => {
     if (!hasSupabaseConfig) {
       setPlaces([]);
+      setSavedPlaces([]);
       setVotes([]);
       setAllComments([]);
       setCommentVotes([]);
       setErrorMessage('Supabase environment variables are missing for the web app.');
       return {
         places: [],
+        savedPlaces: [],
         votes: [],
         comments: [],
         commentVotes: [],
@@ -389,6 +452,7 @@ export default function App() {
       });
 
       setPlaces(nextData.places);
+      setSavedPlaces(nextData.savedPlaces ?? []);
       setVotes(nextData.votes);
       setAllComments(nextData.comments);
       setCommentVotes(nextData.commentVotes);
@@ -397,12 +461,14 @@ export default function App() {
       return nextData;
     } catch (error) {
       setPlaces([]);
+      setSavedPlaces([]);
       setVotes([]);
       setAllComments([]);
       setCommentVotes([]);
-      setErrorMessage(error?.message ?? 'Topey could not reach Supabase right now.');
+      setErrorMessage(error?.message ?? 'Zazaspot could not reach Supabase right now.');
       return {
         places: [],
+        savedPlaces: [],
         votes: [],
         comments: [],
         commentVotes: [],
@@ -411,7 +477,7 @@ export default function App() {
   }, []);
 
   const applySession = React.useCallback(
-    async (nextSession, { keepAuthModalOpen = false } = {}) => {
+    async (nextSession, { keepAuthModalOpen = false, deferRefresh = false } = {}) => {
       let resolvedSession = nextSession ?? null;
 
       if (resolvedSession?.user) {
@@ -438,7 +504,11 @@ export default function App() {
         }
       }
 
-      await refreshData(resolvedSession);
+      if (deferRefresh) {
+        refreshData(resolvedSession).catch(() => undefined);
+      } else {
+        await refreshData(resolvedSession);
+      }
       setIsAuthBusy(false);
       return resolvedSession;
     },
@@ -459,11 +529,12 @@ export default function App() {
 
         setViewerSessionId(nextViewerSessionId);
         await applySession(safeSession ?? null, {
+          deferRefresh: true,
           keepAuthModalOpen: !hasAnonymousHandle(safeSession?.user),
         });
       } catch (error) {
         if (active) {
-          setErrorMessage(error?.message ?? 'Topey could not restore the saved session.');
+          setErrorMessage(error?.message ?? 'Zazaspot could not restore the saved session.');
         }
       } finally {
         if (active) {
@@ -552,10 +623,8 @@ export default function App() {
     [effectiveVotes, filteredPlaces, mapRegion, selectedPlaceId]
   );
   const availableTagFilters = React.useMemo(() => {
-    return Array.from(new Set(places.map((place) => getPlaceTagLabel(place.tag)))).sort((left, right) =>
-      left.localeCompare(right)
-    );
-  }, [places]);
+    return PLACE_TAG_FILTER_OPTIONS.map((option) => option.label);
+  }, []);
   const comments = React.useMemo(
     () => getCommentsForPlace(allComments, selectedPlace?.id),
     [allComments, selectedPlace]
@@ -765,7 +834,7 @@ export default function App() {
       }
 
       setReplyTarget(nextReplyTarget);
-      setCommentDraft(nextReplyTarget ? `@${nextReplyTarget.authorName || 'Topey user'} ` : '');
+      setCommentDraft(nextReplyTarget ? `@${nextReplyTarget.authorName || 'Zazaspot user'} ` : '');
       setIsComposerModalVisible(true);
     },
     [isAuthenticated, openAuthModal]
@@ -999,13 +1068,26 @@ export default function App() {
     setIsAddSheetVisible(false);
     setNewPlaceName('');
     setNewPlaceDescription('');
-    setNewPlaceTag('');
+    setNewPlaceTagOption(PLACE_TAG_PRESET_OPTIONS[0]?.value ?? 'zaza_spots');
+    setNewPlaceCustomTag('');
+    setNewPlacePhotos([]);
+  }, []);
+
+  const handlePhotoInputChange = React.useCallback((event) => {
+    const nextFiles = Array.from(event.target.files ?? []);
+
+    if (nextFiles.length > MAX_PLACE_PHOTO_UPLOADS) {
+      setErrorMessage(`Choose up to ${MAX_PLACE_PHOTO_UPLOADS} photos per place.`);
+      setNewPlacePhotos(nextFiles.slice(0, MAX_PLACE_PHOTO_UPLOADS));
+      return;
+    }
+
+    setErrorMessage('');
+    setNewPlacePhotos(nextFiles);
   }, []);
 
   const handleCreatePlace = React.useCallback(async () => {
-    const resolvedTag = newPlaceTag.trim();
-
-    if (!newPlaceName.trim() || !newPlaceDescription.trim() || !resolvedTag) {
+    if (!newPlaceName.trim() || !newPlaceDescription.trim() || !resolvedNewPlaceTag) {
       setErrorMessage('Add a name, description, and tag before saving the place.');
       return;
     }
@@ -1025,20 +1107,28 @@ export default function App() {
 
     try {
       setIsSavingPlace(true);
+      const photoUrls = newPlacePhotos.length
+        ? await uploadPlacePhotos({
+            files: newPlacePhotos,
+            user: session.user,
+          })
+        : [];
       const result = await createPlace({
         user: session.user,
         name: newPlaceName,
         description: newPlaceDescription,
         latitude: addPinCoordinates.latitude,
         longitude: addPinCoordinates.longitude,
-        tag: resolvedTag,
+        photoUrls,
+        tag: resolvedNewPlaceTag,
       });
 
-      const nextData = await refreshData(session);
-      const newestPlace = nextData.places[0];
+      await refreshData(session);
       setNewPlaceName('');
       setNewPlaceDescription('');
-      setNewPlaceTag('');
+      setNewPlaceTagOption(PLACE_TAG_PRESET_OPTIONS[0]?.value ?? 'zaza_spots');
+      setNewPlaceCustomTag('');
+      setNewPlacePhotos([]);
       setIsAddSheetVisible(false);
       setIsAddMode(false);
       setErrorMessage('');
@@ -1058,10 +1148,10 @@ export default function App() {
     isAuthenticated,
     newPlaceDescription,
     newPlaceName,
-    newPlaceTag,
+    newPlacePhotos,
     openAuthModal,
-    openPlacePage,
     refreshData,
+    resolvedNewPlaceTag,
     session,
   ]);
 
@@ -1120,69 +1210,89 @@ export default function App() {
       <AppButton label="Back" variant="secondary" size="compact" onClick={cancelAddPlace} />
     </div>
   ) : (
-    <div className="hud-row hud-row-end">
-      <div
-        className={`tag-filter-control${isTagMenuOpen ? ' is-open' : ''}`}
-        ref={tagMenuRef}
-      >
-        <button
-          className="tag-filter-button"
-          data-testid="tag-filter-button"
-          type="button"
-          aria-expanded={isTagMenuOpen}
-          aria-haspopup="menu"
-          onClick={() => setIsTagMenuOpen((currentValue) => !currentValue)}
-        >
-          <span>Zaza Spots</span>
-          <span className="tag-filter-count">
-            {activeTagFilters.length ? activeTagFilters.length : 'All'}
-          </span>
-        </button>
-        {isTagMenuOpen ? (
-          <div className="tag-filter-menu" data-testid="tag-filter-menu" role="menu">
-            <div className="tag-filter-menu-header">
-              <p className="tag-filter-title">Zaza Spots</p>
-              <button
-                className="tag-filter-clear"
-                data-testid="tag-filter-clear"
-                type="button"
-                onClick={clearTagFilters}
-              >
-                Show all
-              </button>
-            </div>
-            <div className="tag-filter-options">
-              {availableTagFilters.map((tagLabel) => (
-                <label className="tag-filter-option" key={tagLabel}>
-                  <input
-                    checked={activeTagFilters.includes(tagLabel)}
-                    data-testid={`tag-filter-option-${tagLabel}`}
-                    onChange={() => toggleTagFilter(tagLabel)}
-                    type="checkbox"
-                  />
-                  <span>{tagLabel}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-        ) : null}
+    <div className="hud-row hud-row-split">
+      <div className="brand-copy-card">
+        <p className="brand-copy-kicker">{APP_NAME}</p>
+        <p className="brand-copy-body">{APP_TAGLINE}</p>
       </div>
-      <AppButton
-        label={isAuthenticated ? 'Profile' : 'Sign in'}
-        variant="secondary"
-        size="compact"
-        onClick={openAuthModal}
-        testId="account-button"
-      />
+      <div className="hud-actions">
+        <div
+          className={`tag-filter-control${isTagMenuOpen ? ' is-open' : ''}`}
+          ref={tagMenuRef}
+        >
+          <button
+            className="tag-filter-button"
+            data-testid="tag-filter-button"
+            type="button"
+            aria-expanded={isTagMenuOpen}
+            aria-haspopup="menu"
+            onClick={() => setIsTagMenuOpen((currentValue) => !currentValue)}
+          >
+            <span>{tagButtonLabel}</span>
+          </button>
+          {isTagMenuOpen ? (
+            <div className="tag-filter-menu" data-testid="tag-filter-menu" role="menu">
+              <div className="tag-filter-menu-header">
+                <p className="tag-filter-title">Tags</p>
+                <button
+                  className="tag-filter-clear"
+                  data-testid="tag-filter-clear"
+                  type="button"
+                  onClick={clearTagFilters}
+                >
+                  Show all
+                </button>
+              </div>
+              <div className="tag-filter-options">
+                {availableTagFilters.map((tagLabel) => (
+                  <label className="tag-filter-option" key={tagLabel}>
+                    <input
+                      checked={activeTagFilters.includes(tagLabel)}
+                      data-testid={`tag-filter-option-${tagLabel}`}
+                      onChange={() => toggleTagFilter(tagLabel)}
+                      type="checkbox"
+                    />
+                    <span>{tagLabel}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </div>
+        <AppButton
+          label={colorMode === 'dark' ? 'Light mode' : 'Dark mode'}
+          variant="secondary"
+          size="compact"
+          onClick={() => setColorMode((currentMode) => (currentMode === 'dark' ? 'light' : 'dark'))}
+          testId="theme-toggle-button"
+        />
+        <AppButton
+          label={isAuthenticated ? 'Profile' : 'Sign in'}
+          variant="secondary"
+          size="compact"
+          onClick={openAuthModal}
+          testId="account-button"
+        />
+      </div>
     </div>
   );
   const hasActiveModal = isAuthModalVisible || isComposerModalVisible || isAddSheetVisible;
 
   if (!isHydrated) {
     return (
-      <div className="loading-screen">
-        <div className="loading-title">Topey</div>
-        <p className="loading-copy">Share Spaces</p>
+      <div
+        className="loading-screen"
+        style={{
+          '--color-background': webShellColors.background,
+          '--color-card': webShellColors.card,
+          '--color-text': webShellColors.text,
+          '--color-muted': webShellColors.mutedText,
+          '--color-border': webShellColors.border,
+          colorScheme: colorMode,
+        }}
+      >
+        <div className="loading-title">{APP_NAME}</div>
+        <p className="loading-copy">Loading the map faster and syncing the latest spots.</p>
       </div>
     );
   }
@@ -1191,18 +1301,19 @@ export default function App() {
     <div
       className={`app-shell${hasActiveModal ? ' has-modal' : ''}`}
       style={{
-        '--color-background': WEB_SHELL_COLORS.background,
-        '--color-card': WEB_SHELL_COLORS.card,
-        '--color-elevated': WEB_SHELL_COLORS.elevatedCard,
-        '--color-border': WEB_SHELL_COLORS.border,
-        '--color-separator': WEB_SHELL_COLORS.separator,
-        '--color-text': WEB_SHELL_COLORS.text,
-        '--color-muted': WEB_SHELL_COLORS.mutedText,
-        '--color-primary': WEB_SHELL_COLORS.primary,
-        '--color-primary-text': WEB_SHELL_COLORS.primaryText,
-        '--color-accent': WEB_SHELL_COLORS.accent,
-        '--color-backdrop': WEB_SHELL_COLORS.sheetBackdrop,
-        '--color-handle': WEB_SHELL_COLORS.handle,
+        '--color-background': webShellColors.background,
+        '--color-card': webShellColors.card,
+        '--color-elevated': webShellColors.elevatedCard,
+        '--color-border': webShellColors.border,
+        '--color-separator': webShellColors.separator,
+        '--color-text': webShellColors.text,
+        '--color-muted': webShellColors.mutedText,
+        '--color-primary': webShellColors.primary,
+        '--color-primary-text': webShellColors.primaryText,
+        '--color-accent': webShellColors.accent,
+        '--color-backdrop': webShellColors.sheetBackdrop,
+        '--color-handle': webShellColors.handle,
+        colorScheme: colorMode,
       }}
     >
       <div className="sr-only" id={helpId}>
@@ -1428,13 +1539,51 @@ export default function App() {
             value={newPlaceDescription}
             onChange={(event) => setNewPlaceDescription(event.target.value)}
           />
-          <input
-            className="sheet-input"
-            data-testid="place-tag-input"
-            placeholder="Tag"
-            value={newPlaceTag}
-            onChange={(event) => setNewPlaceTag(event.target.value)}
-          />
+          <label className="sheet-field">
+            <span className="sheet-field-label">Tag</span>
+            <select
+              className="sheet-input sheet-select"
+              data-testid="place-tag-select"
+              value={newPlaceTagOption}
+              onChange={(event) => setNewPlaceTagOption(event.target.value)}
+            >
+              {PLACE_TAG_PRESET_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          {isCustomTagSelected ? (
+            <input
+              className="sheet-input"
+              data-testid="place-custom-tag-input"
+              placeholder="Custom tag"
+              value={newPlaceCustomTag}
+              onChange={(event) => setNewPlaceCustomTag(event.target.value)}
+            />
+          ) : null}
+          <label className="sheet-field">
+            <span className="sheet-field-label">Photos</span>
+            <input
+              className="sheet-input sheet-file-input"
+              data-testid="place-photo-input"
+              accept="image/*"
+              multiple
+              type="file"
+              onChange={handlePhotoInputChange}
+            />
+          </label>
+          {newPlacePhotos.length ? (
+            <div className="photo-list-card">
+              <div className="coords-label">Selected photos</div>
+              <ul className="photo-list">
+                {newPlacePhotos.map((file) => (
+                  <li key={`${file.name}-${file.size}`}>{file.name}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
 
           <div className="coords-card">
             <div className="coords-label">Adding at</div>
@@ -1534,7 +1683,7 @@ function PlacePage({
           </div>
 
           <section className="place-page-card place-page-empty-card">
-            <p className="place-page-kicker">Topey</p>
+            <p className="place-page-kicker">{APP_NAME}</p>
             <h1 className="place-page-title">Place not found</h1>
             <p className="place-page-copy">
               This place link does not match anything in the current dataset.
@@ -1575,7 +1724,7 @@ function PlacePage({
             
             <div className="place-page-content place-page-post-content">
               <div className="place-page-meta-row">
-                <span className="place-page-kicker">Topey</span>
+                <span className="place-page-kicker">{APP_NAME}</span>
                 <span className="place-page-meta-dot">•</span>
                 <span className="place-page-meta-inline">
                   Posted by {formatUserHandle(place.authorName)}
@@ -1595,6 +1744,18 @@ function PlacePage({
               </div>
 
               <p className="place-page-copy">{place.description}</p>
+              {place.photoUrls?.length ? (
+                <div className="place-photo-grid">
+                  {place.photoUrls.map((photoUrl, index) => (
+                    <img
+                      key={photoUrl}
+                      alt={`${place.name} photo ${index + 1}`}
+                      className="place-photo"
+                      src={photoUrl}
+                    />
+                  ))}
+                </div>
+              ) : null}
 
               <div className="place-page-toolbar">
                 <AppButton
@@ -1623,7 +1784,7 @@ function PlacePage({
           <section className="place-page-comments">
             <div className="thread-header place-page-thread-header">
               <div>
-                <div className="thread-kicker">Topey</div>
+                <div className="thread-kicker">{APP_NAME}</div>
                 <h2 className="thread-title place-page-thread-title">Comments</h2>
               </div>
               <div className="place-page-comment-count">
@@ -1803,7 +1964,7 @@ function GoogleAuthCard({
 }) {
   return (
     <div className="auth-card">
-      <p className="sheet-kicker">Topey</p>
+      <p className="sheet-kicker">{APP_NAME}</p>
       <h2 className="sheet-title">Sign in</h2>
       <p className="sheet-copy">
         Sign in with Google to post comments and add places. Your real name will not be shown to others.
@@ -1871,7 +2032,7 @@ function formatSignedValue(value) {
 }
 
 function formatUserHandle(name) {
-  const normalized = `${name || 'Topey user'}`
+  const normalized = `${name || 'Zazaspot user'}`
     .trim()
     .replace(/\s+/g, '_');
 

@@ -340,6 +340,23 @@ button {
   max-width: 64ch;
 }
 
+.place-photo-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  margin-top: 18px;
+}
+
+.place-photo {
+  aspect-ratio: 4 / 3;
+  border: 3px solid var(--color-border, #111111);
+  border-radius: 14px;
+  box-shadow: 6px 6px 0 rgba(17, 17, 17, 0.92);
+  display: block;
+  object-fit: cover;
+  width: 100%;
+}
+
 .place-page-vote-bar {
   align-self: flex-start;
   margin-top: 18px;
@@ -705,6 +722,7 @@ button {
 }
 
 .hud-row {
+  align-items: flex-start;
   display: flex;
   gap: var(--shell-space-tight);
   pointer-events: auto;
@@ -713,6 +731,43 @@ button {
 .hud-row-end {
   justify-content: flex-end;
   margin-left: auto;
+}
+
+.hud-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--shell-space-tight);
+  justify-content: flex-end;
+}
+
+.brand-copy-card {
+  background: var(--color-card, #ffffff);
+  border: 3px solid var(--color-border, #111111);
+  border-radius: 14px;
+  box-shadow: 8px 8px 0 rgba(17, 17, 17, 0.92);
+  max-width: min(560px, calc(100vw - 220px));
+  padding: 14px 16px;
+}
+
+.brand-copy-kicker {
+  color: var(--color-primary, #149647);
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.brand-copy-body {
+  color: var(--color-text, #111111);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.45;
+  margin: 8px 0 0;
+  max-width: 46ch;
 }
 
 .tag-filter-control {
@@ -734,7 +789,7 @@ button {
   gap: 12px;
   justify-content: space-between;
   min-height: 42px;
-  min-width: 188px;
+  min-width: 132px;
   padding: 0 14px;
   text-transform: uppercase;
 }
@@ -1477,6 +1532,13 @@ button {
   min-height: 44px;
 }
 
+.sheet-file-input {
+  cursor: pointer;
+  min-height: 56px;
+  padding-bottom: 14px;
+  padding-top: 14px;
+}
+
 .composer-input,
 .sheet-input-multiline {
   min-height: 132px;
@@ -1538,6 +1600,7 @@ button {
 
 .auth-callout,
 .coords-card,
+.photo-list-card,
 .empty-state {
   background: var(--color-elevated, #fafafa);
   border: 3px solid var(--color-border, #111111);
@@ -1563,6 +1626,14 @@ button {
   color: var(--color-muted, #787c7e);
   font-size: 14px;
   margin-top: 6px;
+}
+
+.photo-list {
+  color: var(--color-text, #111111);
+  display: grid;
+  gap: 6px;
+  margin: 8px 0 0;
+  padding-left: 18px;
 }
 
 .app-shell.has-modal .map-hud,
@@ -1657,6 +1728,20 @@ button {
   .hud-row-end {
     flex-wrap: wrap;
     justify-content: flex-end;
+  }
+
+  .hud-row-split {
+    flex-direction: column;
+  }
+
+  .hud-actions {
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  .brand-copy-card {
+    max-width: none;
+    width: 100%;
   }
 
   .tag-filter-control,
