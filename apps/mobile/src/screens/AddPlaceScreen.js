@@ -124,7 +124,7 @@ export function AddPlaceScreen({ navigation, route }) {
 
     try {
       setIsSaving(true);
-      const result = await addPlace({
+      await addPlace({
         name,
         description,
         tag: resolvedTag,
@@ -137,18 +137,12 @@ export function AddPlaceScreen({ navigation, route }) {
       setSelectedTagOption(PLACE_TAG_PRESET_OPTIONS[0]?.value ?? 'zaza_spots');
       setCustomTag('');
       setIsDetailsModalVisible(false);
-      Alert.alert(
-        'Success',
-        result?.tagFallbackApplied
-          ? 'Place added successfully. The backend is still catching up on tags, so this one was saved under the default tag.'
-          : 'Place added successfully!',
-        [
-          {
-            text: 'OK',
-            onPress: () => navigation.navigate('Home')
-          }
-        ]
-      );
+      Alert.alert('Success', 'Place added successfully.', [
+        {
+          text: 'OK',
+          onPress: () => navigation.navigate('Home'),
+        },
+      ]);
     } catch (error) {
       Alert.alert('Save failed', error.message);
     } finally {

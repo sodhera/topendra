@@ -1180,7 +1180,7 @@ export default function App() {
             user: session.user,
           })
         : [];
-      const result = await createPlace({
+      await createPlace({
         user: session.user,
         name: newPlaceName,
         description: newPlaceDescription,
@@ -1199,11 +1199,7 @@ export default function App() {
       setIsAddSheetVisible(false);
       setIsAddMode(false);
       setErrorMessage('');
-      setSuccessMessage(
-        result?.tagFallbackApplied
-          ? 'Place added. The backend tag schema is still catching up, so it was saved with the default tag.'
-          : 'Place added successfully.'
-      );
+      setSuccessMessage('Place added successfully.');
     } catch (error) {
       setErrorMessage(error?.message ?? 'Save failed.');
     } finally {
