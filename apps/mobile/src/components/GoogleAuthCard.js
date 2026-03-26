@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import { LOCATION_DISCLOSURE_COPY } from '@topey/shared/lib/constants';
+import { AUTH_PRIVACY_COPY, LOCATION_DISCLOSURE_COPY } from '@topey/shared/lib/constants';
 import { colors, radius, shadows, spacing, typography } from '@topey/shared/lib/theme';
 import { ShadButton } from './ShadButton';
 
@@ -37,7 +37,7 @@ export function GoogleAuthCard({
       <Text style={styles.copy}>
         {isHandleMode
           ? 'Pick the public name other people will see when you comment, reply, or add places.'
-          : 'Sign in with Google to post comments and add places. Your real name will not be shown to others.'}
+          : 'Sign in with Google to post comments and add places. Your real name and email are never shown to other users.'}
       </Text>
 
       {isHandleMode ? (
@@ -73,6 +73,7 @@ export function GoogleAuthCard({
 
       {!isHandleMode ? (
         <Pressable accessibilityRole="text" style={styles.disclosureRow}>
+          <Text style={styles.disclosureText}>{AUTH_PRIVACY_COPY}</Text>
           <Text style={styles.disclosureText}>{LOCATION_DISCLOSURE_COPY}</Text>
         </Pressable>
       ) : null}

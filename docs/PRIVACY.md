@@ -8,7 +8,7 @@ Zazaspot is anonymous-by-default in the public UI.
 
 What the app collects:
 
-- email address for authentication
+- email address through Google and Supabase Auth for authentication
 - an optional suggested anonymous handle during sign-in
 - a required unique anonymous handle before the user can post places or comments
 
@@ -21,7 +21,13 @@ Rules:
 
 - public identity comes from the claimed anonymous handle
 - public UI must not fall back to real-world identity fields
+- public profile and author surfaces must not display the stored email address
 - if a handle has not been claimed yet, the UI uses `Anonymous member` locally and blocks posting until setup is complete
+
+Current in-product disclosure:
+
+- the sign-in sheet tells the user that Google and Supabase Auth process the email for login
+- the sign-in sheet tells the user that Zazaspot never shows the email publicly and uses the anonymous handle for public activity
 
 ## Location Data
 

@@ -428,7 +428,6 @@ export function HomeScreen({ navigation }) {
                   <>
                   <Text style={styles.sheetTitle}>Profile</Text>
                   <Text style={styles.profileName}>{currentUser.name}</Text>
-                  {currentUser.email ? <Text style={styles.profileMeta}>{currentUser.email}</Text> : null}
 
                   <View style={{ marginTop: 24, marginBottom: 24, width: '100%', alignItems: 'flex-start' }}>
                     <Text style={[styles.sheetKicker, { marginBottom: 8 }]}>Saved Places</Text>

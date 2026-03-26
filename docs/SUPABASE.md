@@ -34,7 +34,7 @@ Supabase is responsible for:
 - storing comment votes
 - storing claimed anonymous handles
 - persisting auth sessions
-- handling email-link auth
+- handling Google auth
 - storing place-open tracking events
 - storing uploaded place photos in Supabase Storage
 
@@ -134,14 +134,14 @@ Important columns:
 
 Current shipped flow:
 
-1. client collects email
-2. client may collect a suggested anonymous handle
-3. client calls `supabase.auth.signInWithOtp`
-4. email callback restores the session
-5. client claims the final unique handle in `public.user_handles`
-6. client syncs the claimed handle back to auth metadata as `preferred_username`
+1. client opens Google sign-in through Supabase Auth
+2. Google returns the authenticated identity to Supabase
+3. the callback restores the Supabase session in the client
+4. client claims the final unique handle in `public.user_handles`
+5. client syncs the claimed handle back to auth metadata as `preferred_username`
 
 The apps never use `full_name`, `user_name`, or similar real-world metadata as the public author label.
+The apps also remove direct email display from public-facing and profile UI, but Supabase Auth still stores the email for account login.
 
 ## App-Side Data Flow
 
@@ -204,4 +204,4 @@ Operational note:
 
 [scripts/create-test-user.mjs](/Users/sirishjoshi/Desktop/Topey/scripts/create-test-user.mjs) still exists for developer QA against Supabase Auth.
 
-It is not the shipped user flow. The product UI is email-link only.
+It is not the shipped user flow. The product UI uses Google sign-in.

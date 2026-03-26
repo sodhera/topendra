@@ -14,7 +14,7 @@ The live product is backed by Supabase for:
 - comment votes
 - anonymous handle claims
 - session persistence
-- email-link auth
+- Google auth
 - place-open tracking
 
 ## Repo
@@ -43,9 +43,10 @@ cd topendra
   - one vote row per user per comment
 - Browser place votes are optimistic in the UI.
 - Account setup is anonymous-by-default:
-  - users enter email for auth
+  - users sign in with Google auth
   - users claim a unique anonymous handle for public activity
   - public UI never falls back to real-world identity fields
+  - the product discloses that email is processed by Google and Supabase Auth for sign-in, but never shown publicly inside Zazaspot
 - Placeholder demo/team place rows are removed by the seed cleanup path instead of being recreated.
 
 ## Workspace Layout
@@ -134,8 +135,9 @@ npm run web:test
 
 ### Auth
 
-- Shipped auth is email-link only.
-- A user can request the sign-in link with just email, or provide an anonymous handle up front.
+- Shipped auth uses Google sign-in through Supabase Auth.
+- The auth provider processes the user email for sign-in and session recovery.
+- The product never shows the email publicly in places, comments, or profile surfaces.
 - If the user signs in without a handle, the app keeps setup open until a unique anonymous handle is claimed.
 - Public authorship comes from the claimed handle in `user_handles` and synced auth metadata.
 

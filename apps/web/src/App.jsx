@@ -7,6 +7,7 @@ import {
   normalizeAnonymousUsername,
 } from '@topey/shared/lib/auth';
 import {
+  AUTH_PRIVACY_COPY,
   DEFAULT_REGION,
   KATHMANDU_EXPLORE_REGION,
   PENDING_ANONYMOUS_HANDLE_KEY,
@@ -51,6 +52,7 @@ const COLOR_MODE_STORAGE_KEY = 'zazaspot-color-mode';
 const MAX_PLACE_PHOTO_UPLOADS = 4;
 const LIGHT_WEB_SHELL_COLORS = {
   ...sharedColors,
+  accentText: '#111111',
   focusRing: 'rgba(20, 150, 71, 0.3)',
   gridLine: 'rgba(17, 17, 17, 0.06)',
   loadingGradientStart: 'rgba(167, 255, 101, 0.28)',
@@ -80,6 +82,8 @@ const LIGHT_WEB_SHELL_COLORS = {
   mapAttributionShadow: 'rgba(24, 24, 27, 0.1)',
   previewFadeMid: 'rgba(246, 255, 223, 0.92)',
   previewFadeEnd: 'rgba(255, 255, 255, 1)',
+  shadowStrong: 'rgba(17, 17, 17, 0.92)',
+  shadowContrast: 'rgba(17, 17, 17, 0.92)',
 };
 const DARK_WEB_SHELL_COLORS = {
   ...sharedColors,
@@ -94,6 +98,7 @@ const DARK_WEB_SHELL_COLORS = {
   primaryText: '#10210e',
   secondary: '#172118',
   accent: '#d7ff6d',
+  accentText: '#10210e',
   mapOverlay: 'rgba(15, 22, 12, 0.72)',
   sheetBackdrop: 'rgba(8, 11, 7, 0.54)',
   handle: '#ddffd4',
@@ -126,6 +131,8 @@ const DARK_WEB_SHELL_COLORS = {
   mapAttributionShadow: 'rgba(0, 0, 0, 0.28)',
   previewFadeMid: 'rgba(34, 49, 38, 0.94)',
   previewFadeEnd: 'rgba(23, 33, 24, 1)',
+  shadowStrong: 'rgba(0, 0, 0, 0.68)',
+  shadowContrast: 'rgba(221, 255, 212, 0.26)',
 };
 const RELATIVE_TIME_FORMATTER = new Intl.RelativeTimeFormat('en', {
   numeric: 'auto',
@@ -1365,6 +1372,7 @@ export default function App() {
         '--color-primary': webShellColors.primary,
         '--color-primary-text': webShellColors.primaryText,
         '--color-accent': webShellColors.accent,
+        '--color-accent-text': webShellColors.accentText,
         '--color-backdrop': webShellColors.sheetBackdrop,
         '--color-handle': webShellColors.handle,
         '--color-focus-ring': webShellColors.focusRing,
@@ -1392,13 +1400,15 @@ export default function App() {
         '--color-map-loading-background-base': webShellColors.mapLoadingBackgroundBase,
         '--color-map-loading-border': webShellColors.mapLoadingBorder,
           '--color-map-loading-shadow': webShellColors.mapLoadingShadow,
-          '--color-map-attribution-background': webShellColors.mapAttributionBackground,
-          '--color-map-attribution-shadow': webShellColors.mapAttributionShadow,
-          '--color-preview-fade-mid': webShellColors.previewFadeMid,
-          '--color-preview-fade-end': webShellColors.previewFadeEnd,
-          colorScheme: colorMode,
-        }}
-      >
+        '--color-map-attribution-background': webShellColors.mapAttributionBackground,
+        '--color-map-attribution-shadow': webShellColors.mapAttributionShadow,
+        '--color-preview-fade-mid': webShellColors.previewFadeMid,
+        '--color-preview-fade-end': webShellColors.previewFadeEnd,
+        '--color-shadow-strong': webShellColors.shadowStrong,
+        '--color-shadow-contrast': webShellColors.shadowContrast,
+        colorScheme: colorMode,
+      }}
+    >
       <div className="sr-only" id={helpId}>
         Drag or two-finger scroll to pan. Pinch or scroll to zoom. Arrow keys and plus or minus
         keys work when the map is focused, and Page Up / Page Down move between visible places.
@@ -1505,7 +1515,6 @@ export default function App() {
               <p className="sheet-kicker">Account</p>
               <h2 className="sheet-title">Profile</h2>
               <div className="profile-name">{formatUserHandle(currentUser.name)}</div>
-              {currentUser.email ? <div className="profile-meta">{currentUser.email}</div> : null}
               
               <div style={{ marginTop: '24px', marginBottom: '24px', textAlign: 'left', width: '100%' }}>
                 <p className="sheet-kicker" style={{ marginBottom: '8px' }}>Saved Places</p>
@@ -2064,8 +2073,9 @@ function GoogleAuthCard({
       <p className="sheet-kicker">{APP_NAME}</p>
       <h2 className="sheet-title">Sign in</h2>
       <p className="sheet-copy">
-        Sign in with Google to post comments and add places. Your real name will not be shown to others.
+        Sign in with Google to post comments and add places. Your real name and email are never shown to other users.
       </p>
+      <p className="sheet-meta">{AUTH_PRIVACY_COPY}</p>
 
       <AppButton
         label={authBusy ? 'Signing in...' : 'Sign in with Google'}

@@ -35,7 +35,7 @@ Runtime state lives in [apps/mobile/src/context/AppContext.js](/Users/sirishjosh
 Responsibilities:
 
 - restore the Supabase session
-- restore email-link auth from `zazaspot://auth/callback`
+- restore Google auth from `zazaspot://auth/callback`
 - restore or create a viewer session id
 - fetch places, place votes, comments, and comment votes
 - enforce anonymous-handle completion before posting places or comments
@@ -52,7 +52,7 @@ Responsibilities:
 - fetch places, place votes, comments, and comment votes
 - hydrate the shell before the first data refresh finishes so the loading screen clears faster
 - keep `/places/:id` in sync with the selected place
-- run email-link auth and anonymous-handle completion
+- run Google auth and anonymous-handle completion
 - keep place votes optimistic in the routed place page
 - keep auth, composer, and add-place as lightweight dialogs over the map shell
 - upload place photos to the public `place-photos` storage bucket before inserting the place row
@@ -106,13 +106,12 @@ Shared auth helpers live in [packages/shared/lib/auth.js](/Users/sirishjoshi/Des
 
 Current flow:
 
-1. user enters an email address
-2. user may also suggest an anonymous handle up front
-3. app calls `supabase.auth.signInWithOtp`
-4. session is restored from the email callback
-5. app claims a unique handle in `public.user_handles`
-6. the claimed handle is synced back into auth metadata as `preferred_username`
-7. public UI uses only the anonymous handle, never real-world identity fields
+1. user signs in with Google through Supabase Auth
+2. Supabase restores the authenticated session in the app callback
+3. user may also suggest or claim an anonymous handle during setup
+4. app claims a unique handle in `public.user_handles`
+5. the claimed handle is synced back into auth metadata as `preferred_username`
+6. public UI uses only the anonymous handle, never real-world identity fields
 
 The apps block place creation and comment creation until the user has a valid anonymous handle.
 

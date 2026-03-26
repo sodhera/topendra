@@ -8,6 +8,8 @@ export const VIEWER_SESSION_KEY = 'topey-viewer-session-v1';
 export const PENDING_ANONYMOUS_HANDLE_KEY = 'topey-pending-anonymous-handle-v1';
 export const LOCATION_DISCLOSURE_COPY =
   'Zazaspot uses your location to center the map around you, show nearby chill spots, and save coordinates for places you add.';
+export const AUTH_PRIVACY_COPY =
+  'Google and Supabase Auth process your email to sign you in. Zazaspot never shows your email publicly, and all public activity uses your anonymous handle instead.';
 
 export const DEFAULT_REGION = {
   latitude: 27.7172,

@@ -562,18 +562,49 @@ const DesktopMap = React.memo(function DesktopMap({
   );
   const [zoomLevel, setZoomLevel] = React.useState(DEFAULT_ZOOM);
   const [baseMapReady, setBaseMapReady] = React.useState(false);
+  const [loadedTileThemes, setLoadedTileThemes] = React.useState({
+    dark: false,
+    light: false,
+  });
   const hasLoadedInitialBaseMapRef = React.useRef(false);
-  const tileUrl = React.useMemo(
-    () =>
-      getBaseTileUrl({
-        colorMode,
+  const tileUrls = React.useMemo(
+    () => ({
+      dark: getBaseTileUrl({
+        colorMode: 'dark',
         supportsHiDpiTiles,
         zoomLevel,
       }),
-    [colorMode, supportsHiDpiTiles, zoomLevel]
+      light: getBaseTileUrl({
+        colorMode: 'light',
+        supportsHiDpiTiles,
+        zoomLevel,
+      }),
+    }),
+    [supportsHiDpiTiles, zoomLevel]
   );
   const markerStyles = React.useMemo(() => buildMarkerStyleSet(colorMode), [colorMode]);
   const addPlaceMarkerIcon = React.useMemo(() => createAddPlaceMarkerIcon(colorMode), [colorMode]);
+  const markThemeLoaded = React.useCallback((theme) => {
+    hasLoadedInitialBaseMapRef.current = true;
+    setLoadedTileThemes((currentThemes) =>
+      currentThemes[theme] ? currentThemes : { ...currentThemes, [theme]: true }
+    );
+    setBaseMapReady(true);
+  }, []);
+  const handleThemeLoading = React.useCallback(
+    (theme) => {
+      if (!hasLoadedInitialBaseMapRef.current && theme === colorMode) {
+        setBaseMapReady(false);
+      }
+    },
+    [colorMode]
+  );
+
+  React.useEffect(() => {
+    if (loadedTileThemes[colorMode]) {
+      setBaseMapReady(true);
+    }
+  }, [colorMode, loadedTileThemes]);
   const handleSelectPlace = React.useCallback(
     (placeId) => {
       onSelectPlace(placeId, {
@@ -598,26 +629,23 @@ const DesktopMap = React.memo(function DesktopMap({
         zoom={DEFAULT_ZOOM}
         zoomControl={false}
       >
-        <TileLayer
-          key={tileUrl}
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-          eventHandlers={{
-            loading: () => {
-              if (!hasLoadedInitialBaseMapRef.current) {
-                setBaseMapReady(false);
-              }
-            },
-            load: () => {
-              hasLoadedInitialBaseMapRef.current = true;
-              setBaseMapReady(true);
-            },
-          }}
-          keepBuffer={TILE_KEEP_BUFFER}
-          subdomains="abcd"
-          updateWhenIdle={false}
-          updateWhenZooming={false}
-          url={tileUrl}
-        />
+        {(['light', 'dark']).map((theme) => (
+          <TileLayer
+            key={theme}
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+            eventHandlers={{
+              loading: () => handleThemeLoading(theme),
+              load: () => markThemeLoaded(theme),
+            }}
+            keepBuffer={TILE_KEEP_BUFFER}
+            opacity={colorMode === theme ? 1 : 0}
+            subdomains="abcd"
+            updateWhenIdle={false}
+            updateWhenZooming={false}
+            url={tileUrls[theme]}
+            zIndex={colorMode === theme ? 1 : 0}
+          />
+        ))}
 
         <MapRuntimeBridge
           focusedPlace={focusedPlace}
