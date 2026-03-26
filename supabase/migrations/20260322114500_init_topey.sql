@@ -7,7 +7,7 @@ create table if not exists public.places (
   latitude double precision not null,
   longitude double precision not null,
   created_by uuid references auth.users (id) on delete set null,
-  author_name text not null default 'Topey member',
+  author_name text not null default 'Zazaspot member',
   created_at timestamptz not null default timezone('utc', now())
 );
 
@@ -27,7 +27,7 @@ create table if not exists public.place_comments (
   id uuid primary key default gen_random_uuid(),
   place_id uuid not null references public.places (id) on delete cascade,
   user_id uuid references auth.users (id) on delete cascade,
-  author_name text not null default 'Topey member',
+  author_name text not null default 'Zazaspot member',
   body text not null check (char_length(trim(body)) > 0),
   created_at timestamptz not null default timezone('utc', now())
 );

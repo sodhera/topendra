@@ -8,8 +8,8 @@ const { loadRootEnv } = require('./load-root-env.cjs');
 
 loadRootEnv();
 
-const TEST_EMAIL = 'testuser@topey.app';
-const TEST_PASSWORD = 'TopeyTest123!';
+const TEST_EMAIL = 'testuser@zazaspot.app';
+const TEST_PASSWORD = 'ZazaspotTest123!';
 
 async function main() {
   const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
@@ -31,7 +31,7 @@ async function main() {
     password: TEST_PASSWORD,
     options: {
       data: {
-        full_name: 'Topey Test User',
+        full_name: 'Zazaspot Test User',
       },
     },
   });

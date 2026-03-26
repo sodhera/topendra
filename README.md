@@ -1,6 +1,6 @@
-# Topey
+# Zazaspot
 
-Topey is a map-first monorepo with:
+Zazaspot is a map-first monorepo with:
 
 - `apps/mobile`: the Expo app for iOS and Android
 - `apps/web`: the Vite browser app
@@ -33,7 +33,9 @@ cd topendra
 - The web app still deep-links place details at `/places/:id`, but renders them as a left-side map overlay so the map stays interactive while researching multiple places.
 - The mobile app still opens place details inside native modal surfaces.
 - Web add mode now uses a draggable red pin plus a bottom `Add Place` CTA, so the placement flow stays anchored to the map instead of the center of the viewport.
-- Places now store a single tag. The web add flow currently offers the `Zaza spot` preset plus a custom tag path, and the home map can filter visible places by tag.
+- Places now store a single tag. Add-place uses `Zaza Spots`, `Zaza Friendly Restaurants`, or `Custom`, and the home map can filter visible places by those tag families.
+- Web add-place also supports image uploads backed by Supabase Storage.
+- The web shell includes an instant light/dark toggle and keeps the loading copy on the splash state instead of the live map HUD.
 - Place discussions support:
   - top-level comments
   - replies through `parent_comment_id`
@@ -44,7 +46,7 @@ cd topendra
   - users enter email for auth
   - users claim a unique anonymous handle for public activity
   - public UI never falls back to real-world identity fields
-- Placeholder `Topey demo` / `Topey team` place rows are now removed by the seed cleanup path instead of being recreated.
+- Placeholder demo/team place rows are removed by the seed cleanup path instead of being recreated.
 
 ## Workspace Layout
 

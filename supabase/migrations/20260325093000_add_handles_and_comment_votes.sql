@@ -155,7 +155,7 @@ where users.id = user_handles.user_id
 with demo_places as (
   select id
   from public.places
-  where author_name in ('Topey team', 'Topey demo')
+  where author_name in ('Zazaspot team', 'Zazaspot demo')
 ),
 demo_comments as (
   select id
@@ -169,15 +169,15 @@ delete from public.place_comments
 where place_id in (
   select id
   from public.places
-  where author_name in ('Topey team', 'Topey demo')
+  where author_name in ('Zazaspot team', 'Zazaspot demo')
 );
 
 delete from public.place_votes
 where place_id in (
   select id
   from public.places
-  where author_name in ('Topey team', 'Topey demo')
+  where author_name in ('Zazaspot team', 'Zazaspot demo')
 );
 
 delete from public.places
-where author_name in ('Topey team', 'Topey demo');
+where author_name in ('Zazaspot team', 'Zazaspot demo');

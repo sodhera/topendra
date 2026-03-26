@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document describes the live backend contract used by both Topey clients.
+This document describes the live backend contract used by both Zazaspot clients.
 
 Both `apps/mobile` and `apps/web` now depend on Supabase directly for runtime data. The shared Kathmandu fixture catalog remains test-only and is no longer merged into live reads.
 
@@ -36,6 +36,7 @@ Supabase is responsible for:
 - persisting auth sessions
 - handling email-link auth
 - storing place-open tracking events
+- storing uploaded place photos in Supabase Storage
 
 ## Schema
 
@@ -46,6 +47,7 @@ Migration files:
 - [supabase/migrations/20260322173000_add_place_open_events.sql](/Users/sirishjoshi/Desktop/Topey/supabase/migrations/20260322173000_add_place_open_events.sql)
 - [supabase/migrations/20260323074500_add_place_comment_threads.sql](/Users/sirishjoshi/Desktop/Topey/supabase/migrations/20260323074500_add_place_comment_threads.sql)
 - [supabase/migrations/20260326110500_add_place_tags.sql](/Users/sirishjoshi/Desktop/Topey/supabase/migrations/20260326110500_add_place_tags.sql)
+- [supabase/migrations/20260326150000_add_place_photos.sql](/Users/sirishjoshi/Desktop/Topey/supabase/migrations/20260326150000_add_place_photos.sql)
 
 Primary tables:
 
@@ -57,6 +59,7 @@ Important columns:
 - `name`
 - `description`
 - `tag`
+- `photo_urls`
 - `latitude`
 - `longitude`
 - `created_by`
@@ -68,6 +71,12 @@ Tag rules:
 - `tag` defaults to `General`
 - `tag` is `NOT NULL`
 - blank tags are rejected by a table constraint
+
+Photo rules:
+
+- `photo_urls` defaults to an empty array
+- web uploads store files in the public `place-photos` bucket before the place row is inserted
+- authenticated users can upload, update, and delete their own objects in that bucket
 
 ### `public.place_votes`
 
@@ -185,7 +194,7 @@ Files:
 Current behavior:
 
 - `npm run supabase:migrate` applies every `.sql` file in `supabase/migrations`
-- `npm run supabase:seed` removes placeholder `Topey demo` / `Topey team` rows and their dependent votes/comments/comment-votes
+- `npm run supabase:seed` removes placeholder demo/team rows and their dependent votes/comments/comment-votes
 
 Operational note:
 

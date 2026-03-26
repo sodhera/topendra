@@ -1,6 +1,6 @@
 # Docs Index
 
-This folder is for repo-local project documentation that explains how Topey works.
+This folder is for repo-local project documentation that explains how Zazaspot works.
 
 ## Read In This Order
 

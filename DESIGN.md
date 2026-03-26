@@ -2,7 +2,7 @@
 
 ## Intent
 
-Topey now uses a **neo-brutalist green-and-white** system across mobile and web.
+Zazaspot now uses a **neo-brutalist green-and-white** system across mobile and web.
 
 The product should feel:
 
@@ -64,8 +64,11 @@ Rules:
 ### Home
 
 - live map remains the main canvas
+- loading copy lives on the splash screen, not the live map HUD
 - floating actions should read like physical controls dropped on the map
 - the add button is a major affordance and should stay visually dominant
+- tag filters stay minimal in the top-right chrome
+- the dark-mode toggle should stay low-friction and icon-based
 
 ### Browse
 
@@ -75,6 +78,8 @@ Rules:
 ### Add Place
 
 - the pin-on-map interaction stays simple
+- tags should default to curated presets with a clear custom path
+- web add-place can attach photos directly to the place record
 - after a successful add:
   - confirm to the user that the place was added
   - return them to the main screen

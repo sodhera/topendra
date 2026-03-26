@@ -1,8 +1,8 @@
-# Topey Architecture
+# Zazaspot Architecture
 
 ## Scope
 
-Topey is a monorepo with:
+Zazaspot is a monorepo with:
 
 - `apps/mobile`: Expo runtime for iOS and Android
 - `apps/web`: Vite + React browser runtime
@@ -35,7 +35,7 @@ Runtime state lives in [apps/mobile/src/context/AppContext.js](/Users/sirishjosh
 Responsibilities:
 
 - restore the Supabase session
-- restore email-link auth from `topey://auth/callback`
+- restore email-link auth from `zazaspot://auth/callback`
 - restore or create a viewer session id
 - fetch places, place votes, comments, and comment votes
 - enforce anonymous-handle completion before posting places or comments
@@ -50,10 +50,12 @@ Responsibilities:
 - restore the browser Supabase session
 - restore or create a browser viewer session id
 - fetch places, place votes, comments, and comment votes
+- hydrate the shell before the first data refresh finishes so the loading screen clears faster
 - keep `/places/:id` in sync with the selected place
 - run email-link auth and anonymous-handle completion
 - keep place votes optimistic in the routed place page
 - keep auth, composer, and add-place as lightweight dialogs over the map shell
+- upload place photos to the public `place-photos` storage bucket before inserting the place row
 
 Browser backend helpers live in:
 

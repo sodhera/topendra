@@ -2,7 +2,7 @@
 
 ## Product Intent
 
-Topey is anonymous-by-default in the public UI.
+Zazaspot is anonymous-by-default in the public UI.
 
 ## Identity Data
 

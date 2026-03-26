@@ -107,7 +107,7 @@ describe('App web auth', () => {
     authState.nextSession = {
       user: {
         id: 'user-123',
-        email: 'testuser@topey.app',
+        email: 'testuser@zazaspot.app',
         user_metadata: {
           preferred_username: 'quiet_reader',
         },
@@ -133,7 +133,7 @@ describe('App web auth', () => {
     });
     expect(claimAnonymousHandle).toHaveBeenCalledWith({
       user: expect.objectContaining({
-        email: 'testuser@topey.app',
+        email: 'testuser@zazaspot.app',
       }),
       handle: 'quiet_reader',
     });
@@ -152,7 +152,7 @@ describe('App web auth', () => {
     authState.nextSession = {
       user: {
         id: 'user-signup',
-        email: 'signup@topey.app',
+        email: 'signup@zazaspot.app',
         user_metadata: {},
       },
     };
@@ -183,7 +183,7 @@ describe('App web auth', () => {
 
     expect(claimAnonymousHandle).toHaveBeenCalledWith({
       user: expect.objectContaining({
-        email: 'signup@topey.app',
+        email: 'signup@zazaspot.app',
       }),
       handle: 'Quiet Reader',
     });

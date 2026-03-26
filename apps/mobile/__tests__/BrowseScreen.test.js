@@ -117,7 +117,7 @@ describe('BrowseScreen', () => {
         session: {
           user: {
             id: 'user-1',
-            email: 'testuser@topey.app',
+            email: 'testuser@zazaspot.app',
           },
         },
       },
@@ -165,7 +165,7 @@ describe('BrowseScreen', () => {
         session: {
           user: {
             id: 'user-1',
-            email: 'testuser@topey.app',
+            email: 'testuser@zazaspot.app',
           },
         },
       },

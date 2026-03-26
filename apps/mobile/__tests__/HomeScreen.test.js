@@ -117,7 +117,7 @@ describe('HomeScreen', () => {
         session: {
           user: {
             id: 'user-1',
-            email: 'testuser@topey.app',
+            email: 'testuser@zazaspot.app',
           },
         },
       },

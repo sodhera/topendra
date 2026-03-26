@@ -2,7 +2,7 @@
 
 ## Project Context
 
-- **Project:** Topey
+- **Project:** Zazaspot
 - **Current shape:** a monorepo with `apps/mobile`, `apps/web`, and `packages/shared`
 - **Important change:** earlier moderation-heavy planning docs are historical only; the current repo implements a much smaller product
 
@@ -14,7 +14,7 @@
   - one large `+` add button at the bottom
   - pin taps should open the place modal directly on home
   - no center-floating action row or oversized homepage widget
-- Browsing happens inside the Topey app, not by kicking the user out to Apple Maps or Google Maps.
+- Browsing happens inside the Zazaspot app, not by kicking the user out to Apple Maps or Google Maps.
 - Logged-in users can upvote, downvote, and comment.
 - Guests can browse places, but adding a place remains login-gated.
 - Account creation and sign-in should use email only plus an anonymous public username.

@@ -92,8 +92,8 @@ describe('App web shell', () => {
     render(<App />);
 
     expect((await screen.findByTestId('account-button')).textContent).toBe('Sign in');
-    expect(screen.getByText('Have Zaza but where to smoke? Find user-added chill, zaza friendly spots around the globe.')).toBeTruthy();
     expect(screen.getByTestId('tag-filter-button').textContent).toContain('Tags: All');
+    expect(screen.getByTestId('theme-toggle-button')).toBeTruthy();
     expect(screen.getByTestId('add-place-button').textContent).toBe('+');
     expect(screen.getByTestId('map-mode').textContent).toBe('browse');
 

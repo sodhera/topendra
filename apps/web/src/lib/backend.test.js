@@ -65,6 +65,7 @@ describe('createPlace', () => {
       longitude: 85.324,
       created_by: 'user-1',
       author_name: 'quiet_reader',
+      photo_urls: [],
     });
     expect(result).toEqual({
       tagFallbackApplied: false,
@@ -98,6 +99,7 @@ describe('createPlace', () => {
       longitude: 85.324,
       created_by: 'user-1',
       author_name: 'quiet_reader',
+      photo_urls: [],
     });
     expect(insert).toHaveBeenNthCalledWith(2, {
       name: 'Corner Cafe',
@@ -106,6 +108,7 @@ describe('createPlace', () => {
       longitude: 85.324,
       created_by: 'user-1',
       author_name: 'quiet_reader',
+      photo_urls: [],
     });
     expect(result).toEqual({
       tagFallbackApplied: true,

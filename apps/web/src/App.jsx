@@ -46,7 +46,7 @@ import DesktopMap from './components/DesktopMap';
 
 const APP_NAME = 'Zazaspot';
 const APP_TAGLINE =
-  'Have Zaza but where to smoke? Find user-added chill, zaza friendly spots around the globe.';
+  "Have Zaza but don't know where to smoke? Find user-added chill, zaza friendly spots around the globe.";
 const COLOR_MODE_STORAGE_KEY = 'zazaspot-color-mode';
 const MAX_PLACE_PHOTO_UPLOADS = 4;
 const LIGHT_WEB_SHELL_COLORS = sharedColors;
@@ -1210,70 +1210,57 @@ export default function App() {
       <AppButton label="Back" variant="secondary" size="compact" onClick={cancelAddPlace} />
     </div>
   ) : (
-    <div className="hud-row hud-row-split">
-      <div className="brand-copy-card">
-        <p className="brand-copy-kicker">{APP_NAME}</p>
-        <p className="brand-copy-body">{APP_TAGLINE}</p>
-      </div>
-      <div className="hud-actions">
-        <div
-          className={`tag-filter-control${isTagMenuOpen ? ' is-open' : ''}`}
-          ref={tagMenuRef}
+    <div className="hud-row hud-row-end">
+      <div
+        className={`tag-filter-control${isTagMenuOpen ? ' is-open' : ''}`}
+        ref={tagMenuRef}
+      >
+        <button
+          className="tag-filter-button"
+          data-testid="tag-filter-button"
+          type="button"
+          aria-expanded={isTagMenuOpen}
+          aria-haspopup="menu"
+          onClick={() => setIsTagMenuOpen((currentValue) => !currentValue)}
         >
-          <button
-            className="tag-filter-button"
-            data-testid="tag-filter-button"
-            type="button"
-            aria-expanded={isTagMenuOpen}
-            aria-haspopup="menu"
-            onClick={() => setIsTagMenuOpen((currentValue) => !currentValue)}
-          >
-            <span>{tagButtonLabel}</span>
-          </button>
-          {isTagMenuOpen ? (
-            <div className="tag-filter-menu" data-testid="tag-filter-menu" role="menu">
-              <div className="tag-filter-menu-header">
-                <p className="tag-filter-title">Tags</p>
-                <button
-                  className="tag-filter-clear"
-                  data-testid="tag-filter-clear"
-                  type="button"
-                  onClick={clearTagFilters}
-                >
-                  Show all
-                </button>
-              </div>
-              <div className="tag-filter-options">
-                {availableTagFilters.map((tagLabel) => (
-                  <label className="tag-filter-option" key={tagLabel}>
-                    <input
-                      checked={activeTagFilters.includes(tagLabel)}
-                      data-testid={`tag-filter-option-${tagLabel}`}
-                      onChange={() => toggleTagFilter(tagLabel)}
-                      type="checkbox"
-                    />
-                    <span>{tagLabel}</span>
-                  </label>
-                ))}
-              </div>
+          <span>{tagButtonLabel}</span>
+        </button>
+        {isTagMenuOpen ? (
+          <div className="tag-filter-menu" data-testid="tag-filter-menu" role="menu">
+            <div className="tag-filter-menu-header">
+              <p className="tag-filter-title">Tags</p>
+              <button
+                className="tag-filter-clear"
+                data-testid="tag-filter-clear"
+                type="button"
+                onClick={clearTagFilters}
+              >
+                Show all
+              </button>
             </div>
-          ) : null}
-        </div>
-        <AppButton
-          label={colorMode === 'dark' ? 'Light mode' : 'Dark mode'}
-          variant="secondary"
-          size="compact"
-          onClick={() => setColorMode((currentMode) => (currentMode === 'dark' ? 'light' : 'dark'))}
-          testId="theme-toggle-button"
-        />
-        <AppButton
-          label={isAuthenticated ? 'Profile' : 'Sign in'}
-          variant="secondary"
-          size="compact"
-          onClick={openAuthModal}
-          testId="account-button"
-        />
+            <div className="tag-filter-options">
+              {availableTagFilters.map((tagLabel) => (
+                <label className="tag-filter-option" key={tagLabel}>
+                  <input
+                    checked={activeTagFilters.includes(tagLabel)}
+                    data-testid={`tag-filter-option-${tagLabel}`}
+                    onChange={() => toggleTagFilter(tagLabel)}
+                    type="checkbox"
+                  />
+                  <span>{tagLabel}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        ) : null}
       </div>
+      <AppButton
+        label={isAuthenticated ? 'Profile' : 'Sign in'}
+        variant="secondary"
+        size="compact"
+        onClick={openAuthModal}
+        testId="account-button"
+      />
     </div>
   );
   const hasActiveModal = isAuthModalVisible || isComposerModalVisible || isAddSheetVisible;
@@ -1293,6 +1280,7 @@ export default function App() {
       >
         <div className="loading-title">{APP_NAME}</div>
         <p className="loading-copy">Loading the map faster and syncing the latest spots.</p>
+        <p className="loading-copy loading-copy-tagline">{APP_TAGLINE}</p>
       </div>
     );
   }
@@ -1378,17 +1366,30 @@ export default function App() {
             </div>
           </div>
         ) : (
-          <div className="map-hud map-hud-bottom">
-            <button
-              className="fab-button"
-              type="button"
-              onClick={beginAddPlace}
-              aria-label="Add a place"
-              data-testid="add-place-button"
-            >
-              +
-            </button>
-          </div>
+          <>
+            <div className="map-hud map-hud-bottom-left">
+              <button
+                aria-label={colorMode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+                className="theme-icon-button"
+                data-testid="theme-toggle-button"
+                type="button"
+                onClick={() => setColorMode((currentMode) => (currentMode === 'dark' ? 'light' : 'dark'))}
+              >
+                <span aria-hidden="true">{colorMode === 'dark' ? '☀' : '☾'}</span>
+              </button>
+            </div>
+            <div className="map-hud map-hud-bottom">
+              <button
+                className="fab-button"
+                type="button"
+                onClick={beginAddPlace}
+                aria-label="Add a place"
+                data-testid="add-place-button"
+              >
+                +
+              </button>
+            </div>
+          </>
         )}
 
         {errorMessage && !isAuthModalVisible ? <div className="status-banner">{errorMessage}</div> : null}

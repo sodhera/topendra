@@ -31,7 +31,7 @@ const { authState, signOut } = vi.hoisted(() => {
     session: {
       user: {
         id: 'user-123',
-        email: 'testuser@topey.app',
+        email: 'testuser@zazaspot.app',
         user_metadata: {
           preferred_username: 'quiet_reader',
         },
@@ -177,7 +177,7 @@ describe('App web actions', () => {
     authState.session = {
       user: {
         id: 'user-123',
-        email: 'testuser@topey.app',
+        email: 'testuser@zazaspot.app',
         user_metadata: {
           preferred_username: 'quiet_reader',
         },
