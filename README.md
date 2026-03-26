@@ -30,9 +30,10 @@ cd topey
 
 - Both apps are live-data clients. Demo fixtures remain in `packages/shared/data` for tests, not for runtime fallback.
 - The mobile and web maps now keep every visible place dot; wide zoom levels do not thin or drop markers anymore.
-- The web app routes place details to `/places/:id`.
+- The web app still deep-links place details at `/places/:id`, but renders them as a left-side map overlay so the map stays interactive while researching multiple places.
 - The mobile app still opens place details inside native modal surfaces.
-- Web add mode now exposes the `Add Place` CTA directly under the placement pin as well as in the top bar, so saving a new place does not depend on reaching into the corner controls.
+- Web add mode now uses a draggable red pin plus a bottom `Add Place` CTA, so the placement flow stays anchored to the map instead of the center of the viewport.
+- Places now store a single tag. The web add flow currently offers the `Zaza spot` preset plus a custom tag path, and the home map can filter visible places by tag.
 - Place discussions support:
   - top-level comments
   - replies through `parent_comment_id`

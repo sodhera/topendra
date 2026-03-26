@@ -11,6 +11,7 @@ function createInitialAppData() {
         id: 'place-1',
         name: 'Action Test Place',
         description: 'Action test description',
+        tag: 'General',
         latitude: 27.7172,
         longitude: 85.324,
         authorName: 'Action Seeder',
@@ -81,7 +82,7 @@ const {
         ],
       };
     }),
-    createPlace: vi.fn(async ({ user, name, description, latitude, longitude }) => {
+    createPlace: vi.fn(async ({ user, name, description, latitude, longitude, tag }) => {
       state.appData = {
         ...state.appData,
         places: [
@@ -89,6 +90,7 @@ const {
             id: `place-${state.nextPlaceId += 1}`,
             name,
             description,
+            tag,
             latitude,
             longitude,
             authorName: user.user_metadata?.preferred_username ?? 'Anonymous member',
@@ -259,6 +261,8 @@ describe('App web actions', () => {
         value: 1,
       });
     });
+
+    expect(screen.getByTestId('desktop-map-open-place')).toBeTruthy();
   });
 
   it('updates the place vote score immediately before the backend resolves', async () => {
@@ -315,6 +319,12 @@ describe('App web actions', () => {
     fireEvent.change(screen.getByPlaceholderText('Description'), {
       target: { value: 'Codex add-place smoke description' },
     });
+    fireEvent.change(screen.getByTestId('place-tag-select'), {
+      target: { value: 'custom' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('Custom tag'), {
+      target: { value: 'Late night study' },
+    });
     fireEvent.click(within(dialog).getByRole('button', { name: 'Add' }));
 
     await waitFor(() => {
@@ -324,6 +334,7 @@ describe('App web actions', () => {
           latitude: DEFAULT_REGION.latitude,
           longitude: DEFAULT_REGION.longitude,
           name: 'Codex place gamma',
+          tag: 'Late night study',
         })
       );
     });
@@ -331,7 +342,44 @@ describe('App web actions', () => {
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: 'Codex place gamma' })).toBeTruthy();
     });
+    expect(within(screen.getByLabelText('Place details panel')).getByText('Late night study')).toBeTruthy();
     expect(window.location.pathname).toBe('/places/place-3');
     expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('filters visible places by tag and keeps the map live under the panel', async () => {
+    backendState.appData = {
+      ...backendState.appData,
+      places: [
+        {
+          id: 'place-2',
+          name: 'Zaza Research Spot',
+          description: 'Tag-filter target',
+          tag: 'Zaza spot',
+          latitude: 27.718,
+          longitude: 85.325,
+          authorName: 'Action Seeder',
+          createdAt: '2026-03-24T00:00:00.000Z',
+          createdBy: 'user-2',
+        },
+        ...backendState.appData.places,
+      ],
+    };
+
+    render(<App />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('account-button').textContent).toBe('Profile');
+    });
+
+    fireEvent.change(screen.getByTestId('tag-filter-select'), {
+      target: { value: 'Zaza spot' },
+    });
+    fireEvent.click(screen.getByTestId('desktop-map-open-place'));
+
+    expect(await screen.findByRole('heading', { name: 'Zaza Research Spot' })).toBeTruthy();
+    expect(within(screen.getByLabelText('Place details panel')).getByText('Zaza spot')).toBeTruthy();
+    expect(window.location.pathname).toBe('/places/place-2');
+    expect(screen.getByTestId('desktop-map-open-place')).toBeTruthy();
   });
 });

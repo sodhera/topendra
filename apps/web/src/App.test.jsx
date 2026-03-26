@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
 
@@ -9,6 +9,7 @@ const appData = {
       id: 'place-1',
       name: 'Shell Test Place',
       description: 'A routeable place from the live dataset.',
+      tag: 'General',
       latitude: 27.7172,
       longitude: 85.324,
       authorName: 'quiet_reader',
@@ -95,10 +96,13 @@ describe('App web shell', () => {
 
     fireEvent.click(screen.getByLabelText('Select first place'));
 
+    const placePanel = await screen.findByLabelText('Place details panel');
     expect(await screen.findByRole('heading', { name: 'Shell Test Place' })).toBeTruthy();
     expect(screen.getByText('Open location')).toBeTruthy();
     expect(screen.getByText(/\+1 points/i)).toBeTruthy();
+    expect(within(placePanel).getByText('General')).toBeTruthy();
     expect(window.location.pathname).toBe('/places/place-1');
+    expect(screen.getByTestId('map-mode').textContent).toBe('browse');
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 

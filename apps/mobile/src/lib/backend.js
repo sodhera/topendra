@@ -1,4 +1,5 @@
 import { getAnonymousHandle, normalizeAnonymousUsername } from '@topey/shared/lib/auth';
+import { getPlaceTagLabel, normalizePlaceTag } from '@topey/shared/lib/placeTags';
 import { supabase } from './supabase';
 
 function normalizeText(value) {
@@ -15,6 +16,7 @@ function mapPlace(row) {
     authorName: row.author_name,
     createdAt: row.created_at,
     createdBy: row.created_by,
+    tag: getPlaceTagLabel(row.tag),
     threadCount: row.thread_count,
   };
 }
@@ -233,18 +235,20 @@ export async function claimAnonymousHandle({ user, handle }) {
   return normalizedHandle;
 }
 
-export async function createPlace({ user, name, description, latitude, longitude }) {
+export async function createPlace({ user, name, description, latitude, longitude, tag }) {
   const normalizedName = normalizeText(name);
   const normalizedDescription = normalizeText(description);
+  const normalizedTag = normalizePlaceTag(tag);
 
-  if (!user?.id || !normalizedName || !normalizedDescription) {
-    throw new Error('A logged-in user, place name, and description are required.');
+  if (!user?.id || !normalizedName || !normalizedDescription || !normalizedTag) {
+    throw new Error('A logged-in user, place name, description, and tag are required.');
   }
 
   const authorHandle = await getAuthorHandle(user);
   const { error } = await supabase.from('places').insert({
     name: normalizedName,
     description: normalizedDescription,
+    tag: normalizedTag,
     latitude,
     longitude,
     created_by: user.id,

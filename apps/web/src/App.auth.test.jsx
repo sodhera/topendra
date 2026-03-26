@@ -9,6 +9,7 @@ const appData = {
       id: 'place-1',
       name: 'Auth Test Place',
       description: 'Test description',
+      tag: 'General',
       latitude: 27.7172,
       longitude: 85.324,
       authorName: 'Auth Seeder',

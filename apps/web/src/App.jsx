@@ -13,6 +13,14 @@ import {
   VIEWER_SESSION_KEY,
 } from '@topey/shared/lib/constants';
 import {
+  doesPlaceMatchTagFilter,
+  getPlaceTagLabel,
+  isCustomPlaceTagOption,
+  PLACE_TAG_FILTER_ALL,
+  PLACE_TAG_PRESET_OPTIONS,
+  resolvePlaceTagValue,
+} from '@topey/shared/lib/placeTags';
+import {
   createRegionFromLocation,
   getCommentThreadsForPlace,
   getCommentsForPlace,
@@ -234,10 +242,15 @@ export default function App() {
   const [isAddSheetVisible, setIsAddSheetVisible] = React.useState(false);
   const [newPlaceName, setNewPlaceName] = React.useState('');
   const [newPlaceDescription, setNewPlaceDescription] = React.useState('');
+  const [newPlaceTagOption, setNewPlaceTagOption] = React.useState(
+    PLACE_TAG_PRESET_OPTIONS[0]?.value ?? 'zaza_spot'
+  );
+  const [newPlaceCustomTag, setNewPlaceCustomTag] = React.useState('');
   const [addPinCoordinates, setAddPinCoordinates] = React.useState({
     latitude: DEFAULT_REGION.latitude,
     longitude: DEFAULT_REGION.longitude,
   });
+  const [activeTagFilter, setActiveTagFilter] = React.useState(PLACE_TAG_FILTER_ALL);
   const [isSavingPlace, setIsSavingPlace] = React.useState(false);
   const placeVoteRequestVersionRef = React.useRef({});
   const commentVoteRequestVersionRef = React.useRef({});
@@ -250,6 +263,7 @@ export default function App() {
   const isAuthenticated = isLoggedIn(session);
   const canPostAnonymously = hasAnonymousHandle(session?.user);
   const isPlaceRoute = appRoute.view === 'place';
+  const isPlacePanelVisible = isPlaceRoute || Boolean(selectedPlaceId);
 
   React.useEffect(() => {
     if (typeof window === 'undefined') {
@@ -272,6 +286,12 @@ export default function App() {
       setSelectedPlaceId(appRoute.placeId);
     }
   }, [appRoute.placeId, appRoute.view, selectedPlaceId]);
+
+  React.useEffect(() => {
+    if (appRoute.view !== 'place' && selectedPlaceId) {
+      setSelectedPlaceId('');
+    }
+  }, [appRoute.view, selectedPlaceId]);
 
   const navigateToRoute = React.useCallback((nextRoute, { replace = false } = {}) => {
     const nextPath = nextRoute.view === 'place' ? getPlacePath(nextRoute.placeId) : '/';
@@ -488,14 +508,24 @@ export default function App() {
     () => applyOptimisticVotes(commentVotes, optimisticCommentVotes, 'commentId'),
     [commentVotes, optimisticCommentVotes]
   );
+  const filteredPlaces = React.useMemo(
+    () =>
+      places.filter((place) => doesPlaceMatchTagFilter(place.tag, activeTagFilter)),
+    [activeTagFilter, places]
+  );
   const visiblePlaces = React.useMemo(
     () =>
-      getMapPlacesForRegion(places, mapRegion, effectiveVotes, selectedPlaceId).map((place) => ({
+      getMapPlacesForRegion(filteredPlaces, mapRegion, effectiveVotes, selectedPlaceId).map((place) => ({
         ...place,
         voteBreakdown: getVoteBreakdown(effectiveVotes, place.id),
       })),
-    [effectiveVotes, mapRegion, places, selectedPlaceId]
+    [effectiveVotes, filteredPlaces, mapRegion, selectedPlaceId]
   );
+  const availableTagFilters = React.useMemo(() => {
+    return Array.from(new Set(places.map((place) => getPlaceTagLabel(place.tag)))).sort((left, right) =>
+      left.localeCompare(right)
+    );
+  }, [places]);
   const comments = React.useMemo(
     () => getCommentsForPlace(allComments, selectedPlace?.id),
     [allComments, selectedPlace]
@@ -577,6 +607,12 @@ export default function App() {
     },
     [navigateToRoute, places, trackPlaceOpen]
   );
+
+  const closePlacePanel = React.useCallback(() => {
+    setSelectedPlaceId('');
+    setFocusedPlaceId('');
+    navigateToRoute({ placeId: '', view: 'map' });
+  }, [navigateToRoute]);
 
   const selectPlace = React.useCallback(
     (placeId, options = {}) => {
@@ -955,11 +991,18 @@ export default function App() {
     setIsAddSheetVisible(false);
     setNewPlaceName('');
     setNewPlaceDescription('');
+    setNewPlaceTagOption(PLACE_TAG_PRESET_OPTIONS[0]?.value ?? 'zaza_spot');
+    setNewPlaceCustomTag('');
   }, []);
 
   const handleCreatePlace = React.useCallback(async () => {
-    if (!newPlaceName.trim() || !newPlaceDescription.trim()) {
-      setErrorMessage('Add a name and description before saving the place.');
+    const resolvedTag = resolvePlaceTagValue({
+      customTag: newPlaceCustomTag,
+      selectedOption: newPlaceTagOption,
+    });
+
+    if (!newPlaceName.trim() || !newPlaceDescription.trim() || !resolvedTag) {
+      setErrorMessage('Add a name, description, and tag before saving the place.');
       return;
     }
 
@@ -984,12 +1027,15 @@ export default function App() {
         description: newPlaceDescription,
         latitude: addPinCoordinates.latitude,
         longitude: addPinCoordinates.longitude,
+        tag: resolvedTag,
       });
 
       const nextData = await refreshData(session);
       const newestPlace = nextData.places[0];
       setNewPlaceName('');
       setNewPlaceDescription('');
+      setNewPlaceTagOption(PLACE_TAG_PRESET_OPTIONS[0]?.value ?? 'zaza_spot');
+      setNewPlaceCustomTag('');
       setIsAddSheetVisible(false);
       setIsAddMode(false);
       setErrorMessage('');
@@ -1014,6 +1060,8 @@ export default function App() {
     isAuthenticated,
     newPlaceDescription,
     newPlaceName,
+    newPlaceCustomTag,
+    newPlaceTagOption,
     openAuthModal,
     openPlacePage,
     refreshData,
@@ -1026,6 +1074,22 @@ export default function App() {
     </div>
   ) : (
     <div className="hud-row hud-row-end">
+      <label className="tag-filter-control">
+        <span className="sr-only">Filter places by tag</span>
+        <select
+          className="tag-filter-select"
+          data-testid="tag-filter-select"
+          value={activeTagFilter}
+          onChange={(event) => setActiveTagFilter(event.target.value)}
+        >
+          <option value={PLACE_TAG_FILTER_ALL}>All tags</option>
+          {availableTagFilters.map((tagLabel) => (
+            <option key={tagLabel} value={tagLabel}>
+              {tagLabel}
+            </option>
+          ))}
+        </select>
+      </label>
       <AppButton
         label={isAuthenticated ? 'Profile' : 'Sign in'}
         variant="secondary"
@@ -1069,8 +1133,26 @@ export default function App() {
         keys work when the map is focused, and Page Up / Page Down move between visible places.
       </div>
 
-      {isPlaceRoute ? (
-        <div aria-hidden={hasActiveModal}>
+      <main
+        aria-hidden={hasActiveModal}
+        className={`map-screen${isAddMode ? ' is-add-mode' : ''}${
+          isPlacePanelVisible ? ' has-place-panel' : ''
+        }`}
+      >
+        <DesktopMap
+          addMode={isAddMode}
+          addPinCoordinates={addPinCoordinates}
+          focusedPlace={focusedPlace}
+          onAddPinChange={setAddPinCoordinates}
+          onOpenSelected={handleOpenSelected}
+          onRegionChange={setMapRegion}
+          onSelectPlace={selectPlace}
+          selectedPlaceId={selectedPlaceId}
+          userRegion={userRegion}
+          visiblePlaces={visiblePlaces}
+        />
+
+        {isPlacePanelVisible ? (
           <PlacePage
             accountLabel={isAuthenticated ? 'Profile' : 'Sign in'}
             commentThreads={commentThreads}
@@ -1078,64 +1160,47 @@ export default function App() {
             commentVoteState={commentVoteState}
             currentVote={currentVote}
             onAccount={openAuthModal}
-            onBackToMap={() => navigateToRoute({ placeId: '', view: 'map' })}
+            onBackToMap={closePlacePanel}
             onCommentVote={handleCommentVote}
             onCompose={openComposer}
             onOpenLocation={handleOpenLocation}
             onVote={handleVote}
+            overlay
             place={selectedPlace}
             voteBreakdown={voteBreakdown}
           />
-        </div>
-      ) : (
-        <main
-          aria-hidden={hasActiveModal}
-          className={`map-screen${isAddMode ? ' is-add-mode' : ''}`}
-        >
-          <DesktopMap
-            addMode={isAddMode}
-            addPinCoordinates={addPinCoordinates}
-            focusedPlace={focusedPlace}
-            onAddPinChange={setAddPinCoordinates}
-            onOpenSelected={handleOpenSelected}
-            onRegionChange={setMapRegion}
-            onSelectPlace={selectPlace}
-            selectedPlaceId={selectedPlaceId}
-            userRegion={userRegion}
-            visiblePlaces={visiblePlaces}
-          />
+        ) : null}
 
-          <div className="map-hud map-hud-top">{topControls}</div>
+        <div className="map-hud map-hud-top">{topControls}</div>
 
-          {isAddMode ? (
-            <div className="map-hud map-hud-bottom">
-              <div className="bottom-add-action">
-                <AppButton
-                  label="Add Place"
-                  size="default"
-                  onClick={() => setIsAddSheetVisible(true)}
-                  styleClassName="bottom-add-action-button"
-                  testId="add-place-bottom-button"
-                />
-              </div>
+        {isAddMode ? (
+          <div className="map-hud map-hud-bottom">
+            <div className="bottom-add-action">
+              <AppButton
+                label="Add Place"
+                size="default"
+                onClick={() => setIsAddSheetVisible(true)}
+                styleClassName="bottom-add-action-button"
+                testId="add-place-bottom-button"
+              />
             </div>
-          ) : (
-            <div className="map-hud map-hud-bottom">
-              <button
-                className="fab-button"
-                type="button"
-                onClick={beginAddPlace}
-                aria-label="Add a place"
-                data-testid="add-place-button"
-              >
-                +
-              </button>
-            </div>
-          )}
+          </div>
+        ) : (
+          <div className="map-hud map-hud-bottom">
+            <button
+              className="fab-button"
+              type="button"
+              onClick={beginAddPlace}
+              aria-label="Add a place"
+              data-testid="add-place-button"
+            >
+              +
+            </button>
+          </div>
+        )}
 
-          {errorMessage && !isAuthModalVisible ? <div className="status-banner">{errorMessage}</div> : null}
-        </main>
-      )}
+        {errorMessage && !isAuthModalVisible ? <div className="status-banner">{errorMessage}</div> : null}
+      </main>
 
       {isAuthModalVisible ? (
         <SheetModal
@@ -1248,6 +1313,29 @@ export default function App() {
             value={newPlaceDescription}
             onChange={(event) => setNewPlaceDescription(event.target.value)}
           />
+          <label className="sheet-field">
+            <span className="sheet-field-label">Tag</span>
+            <select
+              className="sheet-input sheet-select"
+              data-testid="place-tag-select"
+              value={newPlaceTagOption}
+              onChange={(event) => setNewPlaceTagOption(event.target.value)}
+            >
+              {PLACE_TAG_PRESET_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          {isCustomPlaceTagOption(newPlaceTagOption) ? (
+            <input
+              className="sheet-input"
+              placeholder="Custom tag"
+              value={newPlaceCustomTag}
+              onChange={(event) => setNewPlaceCustomTag(event.target.value)}
+            />
+          ) : null}
 
           <div className="coords-card">
             <div className="coords-label">Adding at</div>
@@ -1318,14 +1406,20 @@ function PlacePage({
   onCompose,
   onOpenLocation,
   onVote,
+  overlay = false,
   place,
   voteBreakdown,
 }) {
   const commentCount = place?.threadCount ?? comments.length;
+  const RootTag = overlay ? 'aside' : 'main';
+  const rootClassName = `place-page${overlay ? ' is-overlay' : ''}`;
 
   if (!place) {
     return (
-      <main className="place-page">
+      <RootTag
+        className={rootClassName}
+        {...(overlay ? { 'aria-label': 'Place details panel' } : {})}
+      >
         <div className="place-page-shell">
           <div className="place-page-nav">
             <button className="page-nav-button" type="button" onClick={onBackToMap}>
@@ -1344,12 +1438,15 @@ function PlacePage({
             </p>
           </section>
         </div>
-      </main>
+      </RootTag>
     );
   }
 
   return (
-    <main className="place-page">
+    <RootTag
+      className={rootClassName}
+      {...(overlay ? { 'aria-label': 'Place details panel' } : {})}
+    >
       <div className="place-page-shell">
         <div className="place-page-nav">
           <button className="page-nav-button" type="button" onClick={onBackToMap}>
@@ -1373,6 +1470,9 @@ function PlacePage({
                 <span className="place-page-meta-inline">{formatRelativeTime(place.createdAt)}</span>
               </div>
               <h1 className="place-page-title">{place.name}</h1>
+              <div className="place-page-tag-row">
+                <PlaceTagChip tag={place.tag} />
+              </div>
 
               <div className="place-page-summary-line">
                 <span>{formatSignedValue(voteBreakdown.score)} points</span>
@@ -1437,8 +1537,12 @@ function PlacePage({
           </section>
         </div>
       </div>
-    </main>
+    </RootTag>
   );
+}
+
+function PlaceTagChip({ tag }) {
+  return <span className="place-tag-chip">{getPlaceTagLabel(tag)}</span>;
 }
 
 function VoteControls({
