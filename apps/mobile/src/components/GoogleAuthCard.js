@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { LOCATION_DISCLOSURE_COPY } from '@topey/shared/lib/constants';
-import { colors, radius, spacing, typography } from '@topey/shared/lib/theme';
+import { colors, radius, shadows, spacing, typography } from '@topey/shared/lib/theme';
 import { ShadButton } from './ShadButton';
 
 export function GoogleAuthCard({
@@ -85,9 +85,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.secondary,
     borderColor: colors.border,
     borderRadius: radius.md,
-    borderWidth: 1,
+    borderWidth: 2,
     marginTop: spacing.md,
     padding: spacing.md,
+    ...shadows.floating,
   },
   title: {
     color: colors.text,
@@ -109,11 +110,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.elevatedCard,
     borderColor: colors.border,
     borderRadius: radius.md,
-    borderWidth: 0.75,
+    borderWidth: 2,
     color: colors.text,
     fontFamily: typography.body,
     marginTop: spacing.sm,
-    minHeight: 48,
+    minHeight: 52,
     paddingHorizontal: spacing.md,
   },
   button: {

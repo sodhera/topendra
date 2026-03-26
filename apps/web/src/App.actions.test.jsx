@@ -300,7 +300,7 @@ describe('App web actions', () => {
     });
   });
 
-  it('adds a place and opens the new place page', async () => {
+  it('adds a place, returns to the main map, and shows success feedback', async () => {
     render(<App />);
 
     await waitFor(() => {
@@ -340,10 +340,9 @@ describe('App web actions', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: 'Codex place gamma' })).toBeTruthy();
+      expect(screen.getByText('Place added successfully.')).toBeTruthy();
     });
-    expect(within(screen.getByLabelText('Place details panel')).getByText('Late night study')).toBeTruthy();
-    expect(window.location.pathname).toBe('/places/place-3');
+    expect(window.location.pathname).toBe('/');
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 

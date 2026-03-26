@@ -12,10 +12,13 @@ import {
   VIEWER_SESSION_KEY,
 } from '@topey/shared/lib/constants';
 import {
+  claimAnonymousHandle,
   createComment,
   createPlace,
+  fetchAppData,
   deletePlace,
   createPlaceOpenEvent,
+  voteForComment,
   voteForPlace,
   savePlace as backendSavePlace,
   unsavePlace as backendUnsavePlace,
@@ -373,6 +376,38 @@ export function AppProvider({ children }) {
     [refreshData, session]
   );
 
+  const savePlace = useCallback(
+    async ({ placeId }) => {
+      if (!session?.user) {
+        throw new Error('Login required before saving a place.');
+      }
+
+      await backendSavePlace({
+        user: session.user,
+        placeId,
+      });
+
+      await refreshData(session);
+    },
+    [refreshData, session]
+  );
+
+  const unsavePlace = useCallback(
+    async ({ placeId }) => {
+      if (!session?.user) {
+        throw new Error('Login required before unsaving a place.');
+      }
+
+      await backendUnsavePlace({
+        user: session.user,
+        placeId,
+      });
+
+      await refreshData(session);
+    },
+    [refreshData, session]
+  );
+
   const votePlace = useCallback(
     async ({ placeId, value }) => {
       if (!session?.user) {
@@ -457,6 +492,7 @@ export function AppProvider({ children }) {
         session,
         currentUser,
         places,
+        savedPlaces,
         votes,
         comments,
         commentVotes,
@@ -474,6 +510,8 @@ export function AppProvider({ children }) {
       signOut,
       addPlace,
       removePlace,
+      savePlace,
+      unsavePlace,
       votePlace,
       addComment,
       voteComment,
@@ -499,6 +537,8 @@ export function AppProvider({ children }) {
       signOut,
       addPlace,
       removePlace,
+      savePlace,
+      unsavePlace,
       votePlace,
       addComment,
       voteComment,

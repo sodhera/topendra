@@ -24,18 +24,18 @@ export const MapUserLocationMarker = React.memo(function MapUserLocationMarker({
 const styles = StyleSheet.create({
   outerBubble: {
     alignItems: 'center',
-    backgroundColor: colors.primary,
-    borderColor: colors.primaryText,
-    borderRadius: radius.pill,
-    borderWidth: 2,
-    height: 24,
+    backgroundColor: colors.card,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    borderWidth: 3,
+    height: 28,
     justifyContent: 'center',
-    width: 24,
+    width: 28,
   },
   core: {
-    backgroundColor: colors.primaryText,
-    borderRadius: radius.pill,
-    height: 8,
-    width: 8,
+    backgroundColor: colors.primary,
+    borderRadius: radius.sm,
+    height: 10,
+    width: 10,
   },
 });

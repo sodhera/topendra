@@ -26,25 +26,20 @@ const appData = {
 const {
   authState,
   claimAnonymousHandle,
-  signInWithOtp,
+  signInWithOAuth,
   signOut,
 } = vi.hoisted(() => {
   const state = {
     callback: null,
     session: null,
+    nextSession: null,
   };
 
   return {
     authState: state,
     claimAnonymousHandle: vi.fn(async ({ handle }) => handle),
-    signInWithOtp: vi.fn(async ({ email, options }) => {
-      state.session = {
-        user: {
-          id: options?.data?.preferred_username ? 'user-signup' : 'user-123',
-          email,
-          user_metadata: options?.data ?? {},
-        },
-      };
+    signInWithOAuth: vi.fn(async () => {
+      state.session = state.nextSession;
       state.callback?.('SIGNED_IN', state.session);
       return { error: null };
     }),
@@ -84,7 +79,7 @@ vi.mock('./lib/supabase', () => ({
           },
         };
       }),
-      signInWithOtp,
+      signInWithOAuth,
       signOut,
     },
   },
@@ -101,37 +96,38 @@ describe('App web auth', () => {
     window.history.replaceState({}, '', '/');
     authState.callback = null;
     authState.session = null;
+    authState.nextSession = null;
     claimAnonymousHandle.mockClear();
-    signInWithOtp.mockClear();
+    signInWithOAuth.mockClear();
     signOut.mockClear();
   });
 
-  it('requests an email sign-in link, lands in profile, and signs out', async () => {
+  it('requests Google sign-in, lands in profile, and signs out', async () => {
+    authState.nextSession = {
+      user: {
+        id: 'user-123',
+        email: 'testuser@topey.app',
+        user_metadata: {
+          preferred_username: 'quiet_reader',
+        },
+      },
+    };
+
     render(<App />);
 
     fireEvent.click(await screen.findByTestId('account-button'));
     const dialog = await screen.findByRole('dialog');
 
-    fireEvent.change(screen.getByPlaceholderText('Email'), {
-      target: { value: 'testuser@topey.app' },
-    });
-    fireEvent.change(screen.getByPlaceholderText('Anonymous name (optional for returning users)'), {
-      target: { value: 'quiet_reader' },
-    });
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Email me a sign-in link' }));
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Sign in with Google' }));
 
     await waitFor(() => {
       expect(screen.getByTestId('account-button').textContent).toBe('Profile');
     });
 
-    expect(signInWithOtp).toHaveBeenCalledWith({
-      email: 'testuser@topey.app',
+    expect(signInWithOAuth).toHaveBeenCalledWith({
+      provider: 'google',
       options: {
-        shouldCreateUser: true,
-        emailRedirectTo: 'http://localhost:3000/',
-        data: {
-          preferred_username: 'quiet_reader',
-        },
+        redirectTo: 'http://localhost:3000/',
       },
     });
     expect(claimAnonymousHandle).toHaveBeenCalledWith({
@@ -152,19 +148,28 @@ describe('App web auth', () => {
   });
 
   it('keeps the auth sheet open to claim a handle when email sign-in returns without one', async () => {
+    authState.nextSession = {
+      user: {
+        id: 'user-signup',
+        email: 'signup@topey.app',
+        user_metadata: {},
+      },
+    };
+
     render(<App />);
 
     fireEvent.click(await screen.findByTestId('account-button'));
     const dialog = await screen.findByRole('dialog');
 
-    fireEvent.change(screen.getByPlaceholderText('Email'), {
-      target: { value: 'signup@topey.app' },
-    });
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Email me a sign-in link' }));
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Sign in with Google' }));
 
     expect(
       await screen.findByRole('heading', { name: 'Choose your anonymous name' })
     ).toBeTruthy();
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Save anonymous name' })).toBeTruthy();
+    });
 
     fireEvent.change(screen.getByPlaceholderText('Anonymous name'), {
       target: { value: 'Quiet Reader' },

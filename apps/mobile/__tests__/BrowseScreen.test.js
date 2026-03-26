@@ -85,16 +85,14 @@ jest.mock('react-native-safe-area-context', () => {
   };
 });
 
-jest.mock('../src/components/EmailAuthCard', () => ({
-  EmailAuthCard: ({ email, username }) => {
+jest.mock('../src/components/GoogleAuthCard', () => ({
+  GoogleAuthCard: () => {
     const React = require('react');
     const { Text, View } = require('react-native');
 
     return (
       <View>
-        <Text>Email</Text>
-        <Text>{email}</Text>
-        <Text>{username}</Text>
+        <Text>Google Auth</Text>
       </View>
     );
   },
@@ -243,7 +241,7 @@ describe('BrowseScreen', () => {
 
     fireEvent.press(screen.getByTestId('browse-discussion-open-button'));
 
-    expect(screen.getByText('Email')).toBeTruthy();
+    expect(screen.getByText('Google Auth')).toBeTruthy();
   });
 
   test('opens add place from the current browse viewport', () => {

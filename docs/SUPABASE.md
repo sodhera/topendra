@@ -38,6 +38,9 @@ Migration files:
 
 - [supabase/migrations/20260322114500_init_topey.sql](/Users/sirishjoshi/Desktop/Topey/supabase/migrations/20260322114500_init_topey.sql)
 - [supabase/migrations/20260325093000_add_handles_and_comment_votes.sql](/Users/sirishjoshi/Desktop/Topey/supabase/migrations/20260325093000_add_handles_and_comment_votes.sql)
+- [supabase/migrations/20260322173000_add_place_open_events.sql](/Users/sirishjoshi/Desktop/Topey/supabase/migrations/20260322173000_add_place_open_events.sql)
+- [supabase/migrations/20260323074500_add_place_comment_threads.sql](/Users/sirishjoshi/Desktop/Topey/supabase/migrations/20260323074500_add_place_comment_threads.sql)
+- [supabase/migrations/20260326110500_add_place_tags.sql](/Users/sirishjoshi/Desktop/Topey/supabase/migrations/20260326110500_add_place_tags.sql)
 
 Primary tables:
 
@@ -48,11 +51,18 @@ Important columns:
 - `id`
 - `name`
 - `description`
+- `tag`
 - `latitude`
 - `longitude`
 - `created_by`
 - `author_name`
 - `created_at`
+
+Tag rules:
+
+- `tag` defaults to `General`
+- `tag` is `NOT NULL`
+- blank tags are rejected by a table constraint
 
 ### `public.place_votes`
 
@@ -142,6 +152,23 @@ Write helpers expose:
 - `claimAnonymousHandle`
 - `createPlaceOpenEvent`
 
+### Place Creation Compatibility
+
+The shipped clients now treat `tag` as an optional write field for compatibility.
+
+Why:
+
+- mobile does not yet collect a custom tag during place creation
+- Supabase/PostgREST can temporarily reject the `tag` column if the schema cache is stale immediately after the migration is added
+
+Current behavior:
+
+1. client tries to insert the requested tag when a non-default tag is present
+2. if Supabase reports that `places.tag` is missing from the schema cache, the client retries without `tag`
+3. the insert succeeds and the database default applies
+
+This keeps place creation working while the backend cache catches up, but custom tags are only persisted once the tag migration is fully visible to the API layer.
+
 ## Seed And Admin Scripts
 
 Files:
@@ -154,6 +181,10 @@ Current behavior:
 
 - `npm run supabase:migrate` applies every `.sql` file in `supabase/migrations`
 - `npm run supabase:seed` removes placeholder `Topey demo` / `Topey team` rows and their dependent votes/comments/comment-votes
+
+Operational note:
+
+- if the live API still reports `Could not find the 'tag' column of 'places' in the schema cache`, re-run the migrations and refresh the Supabase API schema cache before expecting custom tags to persist
 
 ## Test User Script
 

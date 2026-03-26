@@ -2,88 +2,100 @@
 
 ## Intent
 
-Topey should feel simple, calm, and modern. The visual reference is Apple’s current iOS interface guidance:
+Topey now uses a **neo-brutalist green-and-white** system across mobile and web.
 
-- clear content hierarchy
-- touch-first controls with obvious hit areas
-- softly layered materials instead of flat blocks
-- generous corner radii on sheets and cards
-- restrained typography with strong title emphasis
-- very little decorative noise
+The product should feel:
 
-This repo is an Expo native app, so the goal is **Apple-like**, not a literal clone of Apple Maps.
-Use Apple’s HIG as the directional guide and preserve the current product structure while translating the chrome, spacing, and hierarchy to feel more native.
+- loud and clear instead of soft and glassy
+- tactile instead of delicate
+- map-first, but with UI chrome that looks intentionally designed
+- high-contrast and readable in motion
 
-## Reference Docs
+This is not an iOS-native aesthetic anymore. The UI should use hard outlines, chunky controls, offset shadows, uppercase micro-labels where useful, and a bright green/white palette anchored by black borders.
 
-- Apple Human Interface Guidelines: [developer.apple.com/design/human-interface-guidelines](https://developer.apple.com/design/human-interface-guidelines/)
-- Apple UI Design Dos and Don’ts: [developer.apple.com/design/tips](https://developer.apple.com/design/tips/)
+## Core Visual System
 
-## Core UI Rules
+Source of truth:
 
-- The home screen is the product pitch:
-  - `Profile` or `Sign in` near the top right
-  - one large `+` add button near the bottom
-  - live map behind everything
-- The browse screen should feel like a straightforward map app with a clean bottom sheet.
-- The add-place screen should feel like a simple form over a map, not a multi-step wizard.
+- shared runtime tokens live in [packages/shared/lib/theme.js](/Users/sirishjoshi/Desktop/Topey/packages/shared/lib/theme.js)
+- web-specific layout and component rules live in [apps/web/src/styles.css](/Users/sirishjoshi/Desktop/Topey/apps/web/src/styles.css)
 
-## Color
+### Palette
 
-- Background: iOS grouped-light neutral
-- Cards: solid white
-- Borders: very light separators, not hard outlines
-- Primary button: black
-- Primary button text: white
-- Accent: black and dark grey only
+- Background: `#E8FFC2`
+- Card: `#FFFFFF`
+- Elevated card: `#F6FFDF`
+- Primary green: `#149647`
+- Accent lime: `#A7FF65`
+- Border/text: `#111111`
+- Muted text: dark green, not grey
 
-Use the tokens in [theme.js](/Users/sirishjoshi/Desktop/Topey/packages/shared/lib/theme.js) as the source of truth.
+Rules:
 
-## Typography
+- use white for surfaces
+- use black for all structural outlines
+- use green for primary actions and emphasis
+- use accent lime for selected and celebratory moments
+- avoid blue, purple, glassmorphism, and low-contrast greys
 
-- Default system typography only
-- Strong, compact headings with tight tracking
-- Semibold for important labels
-- Regular/system for body copy
-- No decorative display fonts
+### Shape
 
-## Spacing
+- moderate corner radius only
+- no soft pills by default unless the component truly needs it
+- 2px to 3px borders on interactive and card surfaces
+- offset shadows instead of blur-heavy shadows
 
-- Base spacing unit: `8`
-- Prefer generous padding on cards and sheets
-- Avoid cramped map overlays
+### Type
 
-## Components
+- bold display type for titles
+- uppercase labels for controls, tags, and small metadata when helpful
+- body copy stays readable and direct
+- avoid overly neutral “default app” typography choices
 
-- Buttons should feel like native iOS controls:
-  - filled primary actions in black
-  - white secondary pills for map chrome
-  - minimum 44pt tappable compact controls
-  - only one dominant CTA per sheet; supporting actions should step down in size and emphasis
-  - the home `+` control is the one exception: keep the large plus glyph, but use a black rounded-square silhouette instead of a pill
-- Keep the entire palette monochrome:
-  - white
-  - black
-  - light and dark greys
-  - no blue or saturated accent color
-- Place thread previews should feel Reddit-like:
-  - metadata sits in one line, not boxed KPI cards
-  - place-level voting uses plain arrows under the main location action
-  - the vote row also carries `Added by: <Username>` on the right in a smaller muted style
-  - the place sheet only previews the top of the thread
-  - a separate discussion modal handles the full comment stack
-- Cards and sheets should have:
-  - large radii
-  - thin separators
-  - soft depth
-  - solid white materials with subtle depth
-- Inputs should be plain, bordered, and legible
-- Stats should read like grouped inset cards rather than dashboard tiles
+### Motion And Feedback
+
+- interactions should feel immediate
+- pressed states should visibly shift
+- success states should be obvious and short-lived
+- add-place completion must clearly confirm success
+
+## Product Rules
+
+### Home
+
+- live map remains the main canvas
+- floating actions should read like physical controls dropped on the map
+- the add button is a major affordance and should stay visually dominant
+
+### Browse
+
+- preview cards should feel like pinned paper cards over the map
+- selected state should be obvious without relying on subtle color shifts
+
+### Add Place
+
+- the pin-on-map interaction stays simple
+- after a successful add:
+  - confirm to the user that the place was added
+  - return them to the main screen
+- if tag persistence falls back because the backend schema cache is stale, copy may mention the fallback without blocking success
+
+### Discussion
+
+- comments should feel structured and punchy, not floaty
+- vote controls should look like real controls, not plain text glyphs
+
+## Engineering Notes
+
+- mobile and web should share palette intent even if component implementations differ
+- do not introduce one-off colors without updating shared tokens first
+- when resizing controls, preserve tap targets and keyboard accessibility
+- visual changes should ship with documentation updates when the design direction changes materially
 
 ## Anti-Goals
 
-- No fantasy styling
-- No heavy textures or ornamental patterns
-- No fake dashboard complexity
-- No overdone fake glass or exaggerated liquid effects
-- No moderation-heavy or trust-score-heavy UI unless the user asks for it again
+- no soft Apple-style translucency
+- no thin grey borders on light grey cards
+- no blue primary actions
+- no generic dashboard look
+- no decorative clutter that competes with the map

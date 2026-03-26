@@ -40,21 +40,9 @@ import {
   unsavePlace,
 } from './lib/backend';
 import { getSafeSession, hasSupabaseConfig, supabase } from './lib/supabase';
+import { colors as sharedColors } from '@topey/shared/lib/theme';
 import DesktopMap from './components/DesktopMap';
-const WEB_SHELL_COLORS = {
-  background: '#F4F4F5',
-  card: '#FFFFFF',
-  elevatedCard: '#FAFAFA',
-  border: '#D4D4D8',
-  separator: '#E4E4E7',
-  text: '#18181B',
-  mutedText: '#71717A',
-  primary: '#18181B',
-  primaryText: '#FFFFFF',
-  accent: '#2563EB',
-  sheetBackdrop: 'rgba(24, 24, 27, 0.16)',
-  handle: '#A1A1AA',
-};
+const WEB_SHELL_COLORS = sharedColors;
 const RELATIVE_TIME_FORMATTER = new Intl.RelativeTimeFormat('en', {
   numeric: 'auto',
 });
@@ -231,6 +219,7 @@ export default function App() {
   const [isAuthBusy, setIsAuthBusy] = React.useState(false);
   const [authNoticeMessage, setAuthNoticeMessage] = React.useState('');
   const [errorMessage, setErrorMessage] = React.useState('');
+  const [successMessage, setSuccessMessage] = React.useState('');
   const [selectedPlaceId, setSelectedPlaceId] = React.useState('');
   const [focusedPlaceId, setFocusedPlaceId] = React.useState('');
   const [mapRegion, setMapRegion] = React.useState(KATHMANDU_EXPLORE_REGION);
@@ -296,6 +285,20 @@ export default function App() {
       setSelectedPlaceId('');
     }
   }, [appRoute.view, selectedPlaceId]);
+
+  React.useEffect(() => {
+    if (!successMessage) {
+      return undefined;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setSuccessMessage('');
+    }, 2200);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [successMessage]);
 
   const navigateToRoute = React.useCallback((nextRoute, { replace = false } = {}) => {
     const nextPath = nextRoute.view === 'place' ? getPlacePath(nextRoute.placeId) : '/';
@@ -413,6 +416,7 @@ export default function App() {
       }
 
       await refreshData(resolvedSession);
+      setIsAuthBusy(false);
       return resolvedSession;
     },
     [maybeClaimPendingHandle, refreshData]
@@ -1003,7 +1007,7 @@ export default function App() {
 
     try {
       setIsSavingPlace(true);
-      await createPlace({
+      const result = await createPlace({
         user: session.user,
         name: newPlaceName,
         description: newPlaceDescription,
@@ -1021,10 +1025,11 @@ export default function App() {
       setIsAddSheetVisible(false);
       setIsAddMode(false);
       setErrorMessage('');
-
-      window.setTimeout(() => {
-        window.alert('Place added successfully!');
-      }, 100);
+      setSuccessMessage(
+        result?.tagFallbackApplied
+          ? 'Place added. The backend tag schema is still catching up, so it was saved with the default tag.'
+          : 'Place added successfully.'
+      );
     } catch (error) {
       setErrorMessage(error?.message ?? 'Save failed.');
     } finally {
@@ -1218,6 +1223,9 @@ export default function App() {
         )}
 
         {errorMessage && !isAuthModalVisible ? <div className="status-banner">{errorMessage}</div> : null}
+        {successMessage && !isAuthModalVisible ? (
+          <div className="status-banner is-success">{successMessage}</div>
+        ) : null}
       </main>
 
       {isAuthModalVisible ? (

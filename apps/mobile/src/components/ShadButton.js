@@ -1,6 +1,6 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors, radius, spacing, typography } from '@topey/shared/lib/theme';
+import { colors, radius, shadows, spacing, typography } from '@topey/shared/lib/theme';
 
 export function ShadButton({
   label,
@@ -46,31 +46,31 @@ export function ShadButton({
 const styles = StyleSheet.create({
   base: {
     alignItems: 'center',
-    borderWidth: 1,
+    borderColor: colors.border,
+    borderWidth: 2,
     flexDirection: 'row',
     justifyContent: 'center',
+    ...shadows.floating,
   },
   primary: {
     backgroundColor: colors.primary,
-    borderColor: colors.primary,
   },
   secondary: {
     backgroundColor: colors.secondary,
-    borderColor: colors.border,
   },
   default: {
-    minHeight: 44,
-    paddingHorizontal: 16,
+    minHeight: 52,
+    paddingHorizontal: 18,
     paddingVertical: spacing.sm,
   },
   compact: {
-    minHeight: 40,
-    paddingHorizontal: 12,
+    minHeight: 46,
+    paddingHorizontal: 14,
     paddingVertical: spacing.xs,
   },
   large: {
-    minHeight: 52,
-    paddingHorizontal: spacing.md,
+    minHeight: 62,
+    paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
   },
   rounded: {
@@ -83,7 +83,9 @@ const styles = StyleSheet.create({
     opacity: 0.48,
   },
   pressed: {
-    opacity: 0.84,
+    shadowOpacity: 0,
+    elevation: 0,
+    transform: [{ translateX: 4 }, { translateY: 4 }],
   },
   iconContainer: {
     marginRight: spacing.sm,
@@ -91,8 +93,8 @@ const styles = StyleSheet.create({
   label: {
     fontFamily: typography.semibold,
     fontSize: 16,
-    fontWeight: '600',
-    letterSpacing: -0.2,
+    fontWeight: '700',
+    letterSpacing: 0.1,
   },
   primaryLabel: {
     color: colors.primaryText,

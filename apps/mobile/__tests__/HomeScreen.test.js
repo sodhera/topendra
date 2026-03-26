@@ -85,16 +85,14 @@ jest.mock('react-native-safe-area-context', () => {
   };
 });
 
-jest.mock('../src/components/EmailAuthCard', () => ({
-  EmailAuthCard: ({ email, username }) => {
+jest.mock('../src/components/GoogleAuthCard', () => ({
+  GoogleAuthCard: () => {
     const React = require('react');
     const { Text, View } = require('react-native');
 
     return (
       <View>
-        <Text>Email</Text>
-        <Text>{email}</Text>
-        <Text>{username}</Text>
+        <Text>Google Auth</Text>
       </View>
     );
   },

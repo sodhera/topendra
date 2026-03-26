@@ -18,7 +18,7 @@ export function CompactVoteControls({
       <Pressable
         accessibilityRole="button"
         onPress={onUpvote}
-        style={styles.arrowButton}
+        style={[styles.arrowButton, currentVote === 1 && styles.arrowButtonActive]}
         testID={`${testIDPrefix}-up-button`}
       >
         <Text style={[styles.arrowLabel, currentVote === 1 && styles.arrowLabelActive]}>↑</Text>
@@ -27,7 +27,7 @@ export function CompactVoteControls({
       <Pressable
         accessibilityRole="button"
         onPress={onDownvote}
-        style={styles.arrowButton}
+        style={[styles.arrowButton, currentVote === -1 && styles.arrowButtonActive]}
         testID={`${testIDPrefix}-down-button`}
       >
         <Text style={[styles.arrowLabel, currentVote === -1 && styles.arrowLabelActive]}>↓</Text>
@@ -50,18 +50,26 @@ const styles = StyleSheet.create({
   },
   arrowButton: {
     alignItems: 'center',
+    backgroundColor: colors.card,
+    borderColor: colors.border,
+    borderRadius: 4,
+    borderWidth: 2,
     justifyContent: 'center',
-    minWidth: 18,
+    minHeight: 36,
+    minWidth: 36,
+  },
+  arrowButtonActive: {
+    backgroundColor: colors.accent,
   },
   arrowLabel: {
-    color: colors.mutedText,
+    color: colors.text,
     fontFamily: typography.semibold,
     fontSize: 20,
     fontWeight: '700',
     lineHeight: 20,
   },
   arrowLabelActive: {
-    color: colors.primary,
+    color: colors.text,
   },
   scoreLabel: {
     color: colors.text,

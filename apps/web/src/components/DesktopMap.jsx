@@ -27,36 +27,36 @@ const ADD_MODE_PLACE_MARKER_RADIUS = 5;
 const ADD_MODE_SELECTED_PLACE_MARKER_RADIUS = 7;
 const USER_LOCATION_MARKER_RADIUS = 8;
 const PLACE_MARKER_STYLE = Object.freeze({
-  color: '#FFFFFF',
-  fillColor: '#FF4500',
+  color: '#111111',
+  fillColor: '#149647',
   fillOpacity: 1,
   opacity: 1,
-  weight: 2,
+  weight: 3,
 });
 const SELECTED_PLACE_MARKER_STYLE = Object.freeze({
-  color: '#1A1A1B',
-  fillColor: '#FF4500',
+  color: '#111111',
+  fillColor: '#A7FF65',
   fillOpacity: 1,
   opacity: 1,
   weight: 3,
 });
 const ADD_MODE_PLACE_MARKER_STYLE = Object.freeze({
-  color: '#FFFFFF',
-  fillColor: '#FF4500',
-  fillOpacity: 0.38,
-  opacity: 0.42,
-  weight: 1,
-});
-const ADD_MODE_SELECTED_PLACE_MARKER_STYLE = Object.freeze({
-  color: '#1A1A1B',
-  fillColor: '#FF4500',
-  fillOpacity: 0.48,
-  opacity: 0.58,
+  color: '#111111',
+  fillColor: '#149647',
+  fillOpacity: 0.34,
+  opacity: 0.5,
   weight: 2,
 });
+const ADD_MODE_SELECTED_PLACE_MARKER_STYLE = Object.freeze({
+  color: '#111111',
+  fillColor: '#A7FF65',
+  fillOpacity: 0.72,
+  opacity: 0.8,
+  weight: 3,
+});
 const USER_LOCATION_MARKER_STYLE = Object.freeze({
-  color: '#FFFFFF',
-  fillColor: '#0079D3',
+  color: '#111111',
+  fillColor: '#FFFFFF',
   fillOpacity: 1,
   opacity: 1,
   weight: 3,
@@ -65,8 +65,8 @@ const ADD_PLACE_MARKER_ICON = L.divIcon({
   className: 'add-place-marker-shell',
   html: `
     <svg aria-hidden="true" class="add-place-marker-svg" viewBox="0 0 48 60" xmlns="http://www.w3.org/2000/svg">
-      <path d="M24 58C24 58 42 38.936 42 23.5C42 13.835 33.941 6 24 6C14.059 6 6 13.835 6 23.5C6 38.936 24 58 24 58Z" fill="#E53935" stroke="#FFFFFF" stroke-width="4"/>
-      <circle cx="24" cy="24" r="7" fill="#FFFFFF"/>
+      <path d="M24 58C24 58 42 38.936 42 23.5C42 13.835 33.941 6 24 6C14.059 6 6 13.835 6 23.5C6 38.936 24 58 24 58Z" fill="#149647" stroke="#111111" stroke-width="4"/>
+      <circle cx="24" cy="24" r="7" fill="#FFFFFF" stroke="#111111" stroke-width="2"/>
     </svg>
   `,
   iconAnchor: [24, 58],

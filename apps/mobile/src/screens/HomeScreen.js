@@ -24,7 +24,7 @@ import { KATHMANDU_EXPLORE_REGION } from '@topey/shared/lib/constants';
 import { getCommentsForPlace, getMapPlacesForRegion, getVoteBreakdown } from '@topey/shared/lib/geo';
 import { CLEAN_MOBILE_MAP_PROPS } from '@topey/shared/lib/mobileMap';
 import { openPlaceInMaps } from '../lib/locationLinks';
-import { colors, radius, spacing, typography } from '@topey/shared/lib/theme';
+import { colors, radius, shadows, spacing, typography } from '@topey/shared/lib/theme';
 import { useLiveLocation } from '../hooks/useLiveLocation';
 
 export function HomeScreen({ navigation }) {
@@ -532,9 +532,9 @@ const styles = StyleSheet.create({
   overlayRoot: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'space-between',
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing.lg,
     paddingBottom: spacing.lg,
-    paddingTop: spacing.xs,
+    paddingTop: spacing.sm,
   },
   topRow: {
     alignItems: 'flex-end',
@@ -547,19 +547,20 @@ const styles = StyleSheet.create({
   },
   addButton: {
     alignItems: 'center',
-    backgroundColor: colors.text,
-    borderColor: colors.text,
+    backgroundColor: colors.primary,
+    borderColor: colors.border,
     borderRadius: radius.md,
-    borderWidth: 1,
-    height: 64,
+    borderWidth: 2,
+    height: 72,
     justifyContent: 'center',
-    width: 64,
+    width: 72,
+    ...shadows.floating,
   },
   addButtonLabel: {
-    fontSize: 30,
-    fontWeight: '500',
-    letterSpacing: -0.8,
-    lineHeight: 30,
+    fontSize: 34,
+    fontWeight: '700',
+    letterSpacing: -1.2,
+    lineHeight: 34,
   },
   modalRoot: {
     flex: 1,
@@ -574,19 +575,19 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     borderTopLeftRadius: radius.xl,
     borderTopRightRadius: radius.xl,
-    borderWidth: 0.75,
+    borderWidth: 2,
     borderBottomWidth: 0,
     maxHeight: '80%',
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.sm,
+    paddingTop: spacing.md,
   },
   sheetHandle: {
     alignSelf: 'center',
     backgroundColor: colors.handle,
-    borderRadius: radius.pill,
-    height: 5,
+    borderRadius: radius.sm,
+    height: 8,
     marginBottom: spacing.md,
-    width: 38,
+    width: 56,
   },
   sheetScrollContent: {
     paddingBottom: spacing.xxl,
@@ -594,9 +595,9 @@ const styles = StyleSheet.create({
   sheetTitle: {
     color: colors.text,
     fontFamily: typography.semibold,
-    fontSize: 28,
+    fontSize: 30,
     fontWeight: '700',
-    letterSpacing: -0.8,
+    letterSpacing: -1,
   },
   sheetCopy: {
     color: colors.mutedText,
