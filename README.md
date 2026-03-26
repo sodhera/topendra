@@ -19,11 +19,11 @@ The live product is backed by Supabase for:
 
 ## Repo
 
-GitHub: [SurazKhati/topey](https://github.com/SurazKhati/topey)
+GitHub: [sodhera/topendra](https://github.com/sodhera/topendra)
 
 ```bash
-git clone https://github.com/SurazKhati/topey.git
-cd topey
+git clone https://github.com/sodhera/topendra.git
+cd topendra
 ```
 
 ## Current Product Shape
