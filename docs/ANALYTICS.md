@@ -4,13 +4,15 @@
 
 This document covers browser analytics for `apps/web`.
 
-Current storage path:
+Current layers:
 
+- Vercel Web Analytics in [apps/web/src/main.jsx](/Users/sirishjoshi/Desktop/Topey/apps/web/src/main.jsx) for deployed traffic and pageviews
 - first-party Supabase table `public.analytics_events` written through [apps/web/src/lib/analytics.js](/Users/sirishjoshi/Desktop/Topey/apps/web/src/lib/analytics.js)
 
 Current goals:
 
 - measure unique visitors and routed screen views
+- let Vercel populate its built-in traffic dashboard after deploy
 - track where people click in the browser shell
 - measure conversion through sign-in, anonymous-handle completion, add-place, save, comment, and voting flows
 - keep analytics first-party in the existing backend
@@ -22,11 +24,12 @@ Analytics depends on the Supabase schema migration in [supabase/migrations/20260
 ## Runtime Mechanism
 
 1. `App.jsx` calls `initializeAnalytics()` once on mount
-2. the analytics helper stores browser context in memory: `viewer_session_id`, `page_path`, `screen_name`, and optional `user_id`
-3. `App.jsx` emits a `screen viewed` row on SPA route changes
-4. a delegated document click listener records button, link, and role-button clicks as `ui element clicked`
-5. `App.jsx` calls `identifyAnalyticsUser()` when Supabase has a logged-in user and `resetAnalyticsUser()` on sign-out
-6. explicit funnel events are emitted after successful writes, not before
+2. [apps/web/src/main.jsx](/Users/sirishjoshi/Desktop/Topey/apps/web/src/main.jsx) mounts `<Analytics />` from `@vercel/analytics/react`
+3. the Supabase analytics helper stores browser context in memory: `viewer_session_id`, `page_path`, `screen_name`, and optional `user_id`
+4. `App.jsx` emits a `screen viewed` row on SPA route changes
+5. a delegated document click listener records button, link, and role-button clicks as `ui element clicked`
+6. `App.jsx` calls `identifyAnalyticsUser()` when Supabase has a logged-in user and `resetAnalyticsUser()` on sign-out
+7. explicit funnel events are emitted after successful writes, not before
 
 ## Event Contract
 

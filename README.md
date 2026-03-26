@@ -17,9 +17,10 @@ The live product is backed by Supabase for:
 - Google auth
 - place-open tracking
 
-The web app is also instrumented through Supabase for:
+The web app is also instrumented for analytics through:
 
-- unique visitors and routed screen views
+- Vercel Web Analytics for visitors and page views on the deployed site
+- Supabase for product-event tracking inside the app
 - autocaptured clicks and button interactions
 - custom funnel events for auth, handle claim, add-place, save, comment, and vote flows
 - first-party event storage in SQL

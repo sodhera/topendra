@@ -44,12 +44,14 @@ Responsibilities:
 ### Web
 
 The browser shell lives in [apps/web/src/App.jsx](/Users/sirishjoshi/Desktop/Topey/apps/web/src/App.jsx).
+The browser entrypoint lives in [apps/web/src/main.jsx](/Users/sirishjoshi/Desktop/Topey/apps/web/src/main.jsx).
 
 Responsibilities:
 
 - restore the browser Supabase session
 - restore or create a browser viewer session id
 - initialize first-party web analytics once the browser viewer session is ready
+- mount Vercel Web Analytics once at the browser root for deployed traffic/pageview reporting
 - fetch places, place votes, comments, and comment votes
 - hydrate the shell before the first data refresh finishes so the loading screen clears faster
 - keep `/places/:id` in sync with the selected place
@@ -138,11 +140,11 @@ Web analytics lives in [apps/web/src/lib/analytics.js](/Users/sirishjoshi/Deskto
 
 Mechanism:
 
-1. `App.jsx` initializes analytics once and attaches the browser viewer session id
-2. `App.jsx` sends routed screen views plus delegated button/link click events into `public.analytics_events`
-3. `App.jsx` identifies logged-in users by Supabase `user.id`, never by email
-4. explicit business events are emitted after successful writes so funnels line up with committed actions
-5. analytics storage stays first-party inside Supabase instead of depending on an external analytics vendor
+1. [apps/web/src/main.jsx](/Users/sirishjoshi/Desktop/Topey/apps/web/src/main.jsx) mounts Vercel Web Analytics for deployment-level visitor and pageview reporting
+2. `App.jsx` initializes first-party analytics once and attaches the browser viewer session id
+3. `App.jsx` sends routed screen views plus delegated button/link click events into `public.analytics_events`
+4. `App.jsx` identifies logged-in users by Supabase `user.id`, never by email
+5. explicit business events are emitted after successful writes so funnels line up with committed actions
 
 ## Data Model
 
