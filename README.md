@@ -17,12 +17,12 @@ The live product is backed by Supabase for:
 - Google auth
 - place-open tracking
 
-The web app is also instrumented with PostHog for:
+The web app is also instrumented through Supabase for:
 
 - unique visitors and routed screen views
 - autocaptured clicks and button interactions
 - custom funnel events for auth, handle claim, add-place, save, comment, and vote flows
-- optional masked session replay
+- first-party event storage in SQL
 
 ## Repo
 
@@ -43,7 +43,7 @@ cd topendra
 - Places now store a single tag. Add-place uses `Zaza Spots`, `Zaza Friendly Restaurants`, or `Custom`, and the home map can filter visible places by those tag families.
 - Web add-place also supports image uploads backed by Supabase Storage.
 - The web shell includes an instant light/dark toggle and keeps the loading copy on the splash state instead of the live map HUD.
-- The web shell now emits PostHog analytics for routed screen views, auth funnels, place detail opens, adds, saves, comments, votes, and tag-filter usage.
+- The web shell now emits Supabase-backed analytics for routed screen views, auth funnels, place detail opens, adds, saves, comments, votes, tag-filter usage, and button/link clicks.
 - Place discussions support:
   - top-level comments
   - replies through `parent_comment_id`
@@ -97,23 +97,12 @@ Optional variables:
 
 - `WEB_AUTH_REDIRECT_URLS`
 - `WEB_SITE_URL`
-- `VITE_POSTHOG_KEY`
-- `VITE_POSTHOG_HOST`
-- `VITE_POSTHOG_UI_HOST`
-- `VITE_POSTHOG_ENABLE_SESSION_REPLAY`
 
 Production web auth note:
 
 - set `WEB_SITE_URL` to the canonical browser origin, for example `https://zazaspot.com`
 - set `WEB_AUTH_REDIRECT_URLS` to every browser callback origin you serve, for example `https://zazaspot.com/**,https://www.zazaspot.com/**`
 - `npm run supabase:auth` pushes those values into Supabase Auth allow-lists
-
-Production web analytics note:
-
-- set `VITE_POSTHOG_KEY` to the PostHog project API key for the browser app
-- set `VITE_POSTHOG_HOST` to the matching PostHog ingest host for your region, for example `https://us.i.posthog.com`
-- set `VITE_POSTHOG_UI_HOST` to the matching PostHog app host, for example `https://us.posthog.com`
-- set `VITE_POSTHOG_ENABLE_SESSION_REPLAY=false` if you want product analytics without replay capture
 
 3. Sync the Supabase project
 

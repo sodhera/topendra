@@ -4,40 +4,33 @@
 
 This document covers browser analytics for `apps/web`.
 
-Current provider:
+Current storage path:
 
-- PostHog browser SDK through [apps/web/src/lib/analytics.js](/Users/sirishjoshi/Desktop/Topey/apps/web/src/lib/analytics.js)
+- first-party Supabase table `public.analytics_events` written through [apps/web/src/lib/analytics.js](/Users/sirishjoshi/Desktop/Topey/apps/web/src/lib/analytics.js)
 
 Current goals:
 
 - measure unique visitors and routed screen views
-- autocapture where people click in the browser shell
+- track where people click in the browser shell
 - measure conversion through sign-in, anonymous-handle completion, add-place, save, comment, and voting flows
-- support replay-driven debugging without storing raw text input in the replay stream
+- keep analytics first-party in the existing backend
 
-## Environment
+## Storage
 
-Browser analytics is off until `VITE_POSTHOG_KEY` is present.
-
-Supported variables:
-
-- `VITE_POSTHOG_KEY`: required to enable analytics
-- `VITE_POSTHOG_HOST`: optional ingest host, defaults to `https://us.i.posthog.com`
-- `VITE_POSTHOG_UI_HOST`: optional PostHog app host used for linked browser features
-- `VITE_POSTHOG_ENABLE_SESSION_REPLAY`: optional, defaults to `true`
+Analytics depends on the Supabase schema migration in [supabase/migrations/20260326164500_add_analytics_events.sql](/Users/sirishjoshi/Desktop/Topey/supabase/migrations/20260326164500_add_analytics_events.sql).
 
 ## Runtime Mechanism
 
 1. `App.jsx` calls `initializeAnalytics()` once on mount
-2. the analytics helper reads the Vite env and no-ops if the project key is missing
-3. PostHog autocaptures SPA pageview history changes and browser click activity
-4. `App.jsx` calls `identifyAnalyticsUser()` when Supabase has a logged-in user
-5. `App.jsx` calls `resetAnalyticsUser()` after sign-out so anonymous and authenticated activity do not share the same analytics identity
+2. the analytics helper stores browser context in memory: `viewer_session_id`, `page_path`, `screen_name`, and optional `user_id`
+3. `App.jsx` emits a `screen viewed` row on SPA route changes
+4. a delegated document click listener records button, link, and role-button clicks as `ui element clicked`
+5. `App.jsx` calls `identifyAnalyticsUser()` when Supabase has a logged-in user and `resetAnalyticsUser()` on sign-out
 6. explicit funnel events are emitted after successful writes, not before
 
 ## Event Contract
 
-Autocapture covers generic clicks. Custom events exist so dashboards and funnels can rely on stable names.
+Generic click capture covers button, link, and role-button interactions. Custom events exist so dashboards and funnels can rely on stable names.
 
 Current custom events:
 
@@ -61,31 +54,62 @@ Current custom events:
 - `comment vote changed`
 - `tag filter changed`
 - `tag filters cleared`
+- `ui element clicked`
 
 Current event-property rules:
 
 - prefer ids, booleans, lengths, tags, and source labels
 - do not send comment bodies, place descriptions, or raw coordinates as analytics properties
-- do not identify PostHog people by email
+- do not store user email in analytics rows
 
-## Person Properties
+## Table Shape
 
-After login, PostHog identifies the user by Supabase `user.id`.
+Primary columns in `public.analytics_events`:
 
-Current person properties:
+- `event_name`
+- `user_id`
+- `viewer_session_id`
+- `page_path`
+- `place_id`
+- `source_screen`
+- `properties`
+- `created_at`
 
-- `anonymous_handle`
-- `has_anonymous_handle`
+## Query Starters
 
-## Replay Guardrails
+Unique visitors:
 
-Session replay is enabled by default once analytics is configured.
+```sql
+select count(distinct viewer_session_id)
+from public.analytics_events
+where event_name = 'screen viewed'
+  and created_at >= timezone('utc', now()) - interval '7 days';
+```
 
-Current masking rule:
+Top clicked UI targets:
 
-- all input fields are masked client-side through `session_recording.maskAllInputs`
+```sql
+select
+  properties ->> 'element_label' as element_label,
+  count(*) as clicks
+from public.analytics_events
+where event_name = 'ui element clicked'
+group by 1
+order by clicks desc
+limit 20;
+```
 
-If replay cost or privacy requirements change, update:
+Add-place funnel:
+
+```sql
+select event_name, count(distinct viewer_session_id)
+from public.analytics_events
+where event_name in ('place add flow started', 'place created')
+group by event_name
+order by event_name;
+```
+
+If the event contract changes, update:
 
 - [apps/web/src/lib/analytics.js](/Users/sirishjoshi/Desktop/Topey/apps/web/src/lib/analytics.js)
 - [docs/PRIVACY.md](/Users/sirishjoshi/Desktop/Topey/docs/PRIVACY.md)

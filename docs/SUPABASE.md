@@ -36,6 +36,7 @@ Supabase is responsible for:
 - persisting auth sessions
 - handling Google auth
 - storing place-open tracking events
+- storing first-party browser analytics events
 - storing uploaded place photos in Supabase Storage
 
 ## Schema
@@ -48,6 +49,7 @@ Migration files:
 - [supabase/migrations/20260323074500_add_place_comment_threads.sql](/Users/sirishjoshi/Desktop/Topey/supabase/migrations/20260323074500_add_place_comment_threads.sql)
 - [supabase/migrations/20260326110500_add_place_tags.sql](/Users/sirishjoshi/Desktop/Topey/supabase/migrations/20260326110500_add_place_tags.sql)
 - [supabase/migrations/20260326150000_add_place_photos.sql](/Users/sirishjoshi/Desktop/Topey/supabase/migrations/20260326150000_add_place_photos.sql)
+- [supabase/migrations/20260326164500_add_analytics_events.sql](/Users/sirishjoshi/Desktop/Topey/supabase/migrations/20260326164500_add_analytics_events.sql)
 
 Primary tables:
 
@@ -65,6 +67,12 @@ Important columns:
 - `created_by`
 - `author_name`
 - `created_at`
+
+Important rules:
+
+- public read
+- authenticated insert for the signed-in owner
+- authenticated delete for the row owner when `created_by = auth.uid()`
 
 Tag rules:
 
@@ -130,6 +138,26 @@ Important columns:
 - `source_screen`
 - `opened_at`
 
+### `public.analytics_events`
+
+Important columns:
+
+- `event_name`
+- `user_id`
+- `viewer_session_id`
+- `page_path`
+- `place_id`
+- `source_screen`
+- `properties`
+- `created_at`
+
+Important rules:
+
+- anon and authenticated clients can insert rows
+- `viewer_session_id` is always required
+- `user_id` must either be `null` or match `auth.uid()`
+- app dashboards and ad-hoc queries should aggregate off this table instead of adding one-off tracking tables
+
 ## Auth Model
 
 Current shipped flow:
@@ -165,6 +193,7 @@ Write helpers expose:
 - `voteForComment`
 - `claimAnonymousHandle`
 - `createPlaceOpenEvent`
+- `createAnalyticsEvent`
 
 ### Place Creation Compatibility
 
