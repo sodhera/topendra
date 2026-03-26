@@ -46,6 +46,7 @@ import {
   identifyAnalyticsUser,
   initializeAnalytics,
   resetAnalyticsUser,
+  setAnalyticsContext,
 } from './lib/analytics';
 import { getSafeSession, hasSupabaseConfig, supabase } from './lib/supabase';
 import { colors as sharedColors } from '@topey/shared/lib/theme';
@@ -279,6 +280,19 @@ function getPlacePath(placeId) {
   return `/places/${encodeURIComponent(placeId)}`;
 }
 
+function getAnalyticsClickLabel(element) {
+  if (!(element instanceof HTMLElement)) {
+    return '';
+  }
+
+  return (
+    element.getAttribute('aria-label') ||
+    element.dataset.testid ||
+    element.textContent?.replace(/\s+/g, ' ').trim() ||
+    ''
+  ).slice(0, 80);
+}
+
 function getAppRouteFromLocation() {
   if (typeof window === 'undefined') {
     return {
@@ -474,20 +488,24 @@ export default function App() {
     if (nextUserId) {
       identifyAnalyticsUser({
         distinctId: nextUserId,
-        anonymousHandle: currentAnonymousHandle,
-        hasAnonymousHandle: hasAnonymousHandle(session?.user),
       });
     } else if (previousUserId) {
       resetAnalyticsUser();
     }
 
     lastAnalyticsUserIdRef.current = nextUserId;
-  }, [currentAnonymousHandle, isHydrated, session?.user]);
+  }, [isHydrated, session?.user]);
 
   React.useEffect(() => {
     if (!isHydrated) {
       return;
     }
+
+    setAnalyticsContext({
+      pagePath: typeof window === 'undefined' ? '/' : window.location.pathname,
+      screenName: appRoute.view === 'place' ? 'place_detail' : 'map_home',
+      viewerSessionId,
+    });
 
     const trackedPlaceId = appRoute.view === 'place' ? appRoute.placeId : '';
     const routeKey = `${appRoute.view}:${trackedPlaceId}`;
@@ -501,7 +519,41 @@ export default function App() {
       screen_name: appRoute.view === 'place' ? 'place_detail' : 'map_home',
     });
     lastAnalyticsRouteRef.current = routeKey;
-  }, [appRoute.placeId, appRoute.view, isHydrated]);
+  }, [appRoute.placeId, appRoute.view, isHydrated, viewerSessionId]);
+
+  React.useEffect(() => {
+    if (!isHydrated || typeof document === 'undefined') {
+      return undefined;
+    }
+
+    function handleDocumentClick(event) {
+      if (!(event.target instanceof Element)) {
+        return;
+      }
+
+      const target = event.target.closest('button, a, [role="button"]');
+
+      if (!(target instanceof HTMLElement)) {
+        return;
+      }
+
+      captureAnalyticsEvent('ui element clicked', {
+        element_label: getAnalyticsClickLabel(target),
+        element_role: target.getAttribute('role') || target.tagName.toLowerCase(),
+        href_path:
+          target.tagName.toLowerCase() === 'a'
+            ? target.getAttribute('href')?.trim() || null
+            : null,
+        test_id: target.dataset.testid || null,
+      });
+    }
+
+    document.addEventListener('click', handleDocumentClick, true);
+
+    return () => {
+      document.removeEventListener('click', handleDocumentClick, true);
+    };
+  }, [isHydrated]);
 
   const navigateToRoute = React.useCallback((nextRoute, { replace = false } = {}) => {
     const nextPath = nextRoute.view === 'place' ? getPlacePath(nextRoute.placeId) : '/';
@@ -1394,6 +1446,18 @@ export default function App() {
     }
   }, [isAuthenticated, session, openAuthModal, refreshData]);
 
+  const handleOpenFeedback = React.useCallback(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const subject = encodeURIComponent('Zazaspot feedback');
+    const body = encodeURIComponent(
+      `Page: ${window.location.href}\n\nWhat happened?\n\nWhat should change?`
+    );
+    window.location.href = `mailto:feedback@zazaspot.com?subject=${subject}&body=${body}`;
+  }, []);
+
   const topControls = isAddMode ? (
     <div className="hud-row">
       <AppButton label="Back" variant="secondary" size="compact" onClick={cancelAddPlace} />
@@ -1602,6 +1666,17 @@ export default function App() {
                 onClick={() => setColorMode((currentMode) => (currentMode === 'dark' ? 'light' : 'dark'))}
               >
                 <span aria-hidden="true">{colorMode === 'dark' ? '☀' : '☾'}</span>
+              </button>
+            </div>
+            <div className="map-hud map-hud-bottom-right">
+              <button
+                aria-label="Send feedback"
+                className="feedback-icon-button"
+                data-testid="feedback-button"
+                type="button"
+                onClick={handleOpenFeedback}
+              >
+                <span aria-hidden="true">✉</span>
               </button>
             </div>
             <div className="map-hud map-hud-bottom">

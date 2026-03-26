@@ -66,6 +66,7 @@ vi.mock('./lib/analytics', () => ({
   identifyAnalyticsUser: vi.fn(),
   initializeAnalytics: vi.fn(),
   resetAnalyticsUser: vi.fn(),
+  setAnalyticsContext: vi.fn(),
 }));
 
 vi.mock('./components/DesktopMap', () => ({
@@ -103,6 +104,7 @@ describe('App web shell', () => {
     expect((await screen.findByTestId('account-button')).textContent).toBe('Sign in');
     expect(screen.getByTestId('tag-filter-button').textContent).toContain('Tags: All');
     expect(screen.getByTestId('theme-toggle-button')).toBeTruthy();
+    expect(screen.getByTestId('feedback-button')).toBeTruthy();
     expect(screen.getByTestId('add-place-button').textContent).toBe('+');
     expect(screen.getByTestId('map-mode').textContent).toBe('browse');
     expect(screen.getByTestId('map-color-mode').textContent).toBe('light');

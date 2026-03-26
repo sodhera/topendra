@@ -6,6 +6,16 @@ function normalizeText(value) {
   return value?.trim() ?? '';
 }
 
+function normalizeAnalyticsProperties(properties) {
+  if (!properties || typeof properties !== 'object' || Array.isArray(properties)) {
+    return {};
+  }
+
+  return Object.fromEntries(
+    Object.entries(properties).filter(([, value]) => value !== undefined)
+  );
+}
+
 function mapPlace(row) {
   return {
     id: row.id,
@@ -359,10 +369,19 @@ export async function deletePlace({ user, placeId }) {
     throw new Error('A logged-in user and place id are required.');
   }
 
-  const { error } = await client.from('places').delete().eq('id', placeId).eq('created_by', user.id);
+  const { data, error } = await client
+    .from('places')
+    .delete()
+    .eq('id', placeId)
+    .eq('created_by', user.id)
+    .select('id');
 
   if (error) {
     throw error;
+  }
+
+  if (!data?.length) {
+    throw new Error('You can only delete places you created.');
   }
 }
 
@@ -439,6 +458,40 @@ export async function createPlaceOpenEvent({ placeId, userId = null, viewerSessi
     user_id: userId,
     viewer_session_id: viewerSessionId,
     source_screen: normalizedSource,
+  });
+
+  if (error) {
+    throw error;
+  }
+}
+
+export async function createAnalyticsEvent({
+  eventName,
+  userId = null,
+  viewerSessionId,
+  pagePath,
+  placeId = null,
+  properties = {},
+  sourceScreen,
+}) {
+  const client = requireSupabase();
+  const normalizedEventName = normalizeText(eventName);
+  const normalizedViewerSessionId = normalizeText(viewerSessionId);
+  const normalizedPagePath = normalizeText(pagePath) || '/';
+  const normalizedSourceScreen = normalizeText(sourceScreen) || 'unknown';
+
+  if (!normalizedEventName || !normalizedViewerSessionId) {
+    throw new Error('Analytics tracking requires an event name and viewer session id.');
+  }
+
+  const { error } = await client.from('analytics_events').insert({
+    event_name: normalizedEventName,
+    user_id: userId,
+    viewer_session_id: normalizedViewerSessionId,
+    page_path: normalizedPagePath,
+    place_id: placeId,
+    source_screen: normalizedSourceScreen,
+    properties: normalizeAnalyticsProperties(properties),
   });
 
   if (error) {

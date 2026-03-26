@@ -1,83 +1,74 @@
-import posthog from 'posthog-js';
-import { resolveAnalyticsConfig } from './runtimeConfig';
+import { createAnalyticsEvent } from './backend';
+import { hasSupabaseConfig } from './supabase';
 
-const ANALYTICS_STATIC_PROPS = {
-  app_name: 'zazaspot',
-  app_platform: 'web',
+const analyticsContext = {
+  pagePath: '/',
+  screenName: 'unknown',
+  userId: null,
+  viewerSessionId: '',
 };
 
-let analyticsBootstrapped = false;
+let analyticsInitialized = false;
 
-function canUseBrowserAnalytics() {
-  return typeof window !== 'undefined' && typeof document !== 'undefined';
+function normalizeText(value) {
+  return typeof value === 'string' ? value.trim() : '';
 }
 
-export function getAnalyticsConfig() {
-  return resolveAnalyticsConfig();
-}
+function normalizeProperties(properties) {
+  if (!properties || typeof properties !== 'object' || Array.isArray(properties)) {
+    return {};
+  }
 
-export function isAnalyticsEnabled() {
-  return Boolean(getAnalyticsConfig().posthogKey);
+  return Object.fromEntries(
+    Object.entries(properties).filter(([, value]) => value !== undefined)
+  );
 }
 
 export function initializeAnalytics() {
-  if (!canUseBrowserAnalytics() || analyticsBootstrapped || !isAnalyticsEnabled()) {
-    return isAnalyticsEnabled() ? posthog : null;
-  }
-
-  const analyticsConfig = getAnalyticsConfig();
-
-  posthog.init(analyticsConfig.posthogKey, {
-    api_host: analyticsConfig.posthogHost,
-    autocapture: true,
-    capture_pageleave: true,
-    capture_pageview: 'history_change',
-    defaults: '2026-01-30',
-    disable_session_recording: !analyticsConfig.posthogSessionReplayEnabled,
-    mask_personal_data_properties: true,
-    person_profiles: 'identified_only',
-    session_recording: {
-      maskAllInputs: true,
-    },
-    ui_host: analyticsConfig.posthogUIHost ?? undefined,
-  });
-
-  posthog.register({
-    ...ANALYTICS_STATIC_PROPS,
-    app_environment: import.meta.env.MODE,
-  });
-
-  analyticsBootstrapped = true;
-  return posthog;
+  analyticsInitialized = true;
 }
 
-export function captureAnalyticsEvent(eventName, properties = {}) {
-  const analyticsClient = initializeAnalytics();
-
-  if (!analyticsClient) {
-    return;
+export function setAnalyticsContext(nextContext = {}) {
+  if (typeof nextContext.pagePath === 'string') {
+    analyticsContext.pagePath = normalizeText(nextContext.pagePath) || '/';
   }
 
-  analyticsClient.capture(eventName, properties);
+  if (typeof nextContext.screenName === 'string') {
+    analyticsContext.screenName = normalizeText(nextContext.screenName) || 'unknown';
+  }
+
+  if (typeof nextContext.viewerSessionId === 'string') {
+    analyticsContext.viewerSessionId = normalizeText(nextContext.viewerSessionId);
+  }
 }
 
-export function identifyAnalyticsUser({ distinctId, anonymousHandle, hasAnonymousHandle }) {
-  const analyticsClient = initializeAnalytics();
-
-  if (!analyticsClient || !distinctId) {
-    return;
-  }
-
-  analyticsClient.identify(distinctId, {
-    anonymous_handle: anonymousHandle || null,
-    has_anonymous_handle: hasAnonymousHandle,
-  });
+export function identifyAnalyticsUser({ distinctId }) {
+  analyticsContext.userId = normalizeText(distinctId) || null;
 }
 
 export function resetAnalyticsUser() {
-  if (!analyticsBootstrapped) {
+  analyticsContext.userId = null;
+}
+
+export function captureAnalyticsEvent(eventName, properties = {}) {
+  if (!analyticsInitialized || !hasSupabaseConfig || !analyticsContext.viewerSessionId) {
     return;
   }
 
-  posthog.reset();
+  const normalizedProperties = normalizeProperties(properties);
+  const sourceScreen = normalizeText(normalizedProperties.source_screen) || analyticsContext.screenName;
+  const placeId = normalizeText(normalizedProperties.place_id) || null;
+
+  delete normalizedProperties.source_screen;
+  delete normalizedProperties.place_id;
+
+  createAnalyticsEvent({
+    eventName,
+    pagePath: analyticsContext.pagePath,
+    placeId,
+    properties: normalizedProperties,
+    sourceScreen,
+    userId: analyticsContext.userId,
+    viewerSessionId: analyticsContext.viewerSessionId,
+  }).catch(() => undefined);
 }

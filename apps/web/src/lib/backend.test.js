@@ -1,8 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { mockClient, insert, maybeSingle } = vi.hoisted(() => {
+const { mockClient, deleteEqCreatedBy, deleteEqId, deleteSelect, insert, maybeSingle } = vi.hoisted(() => {
   const insert = vi.fn();
   const maybeSingle = vi.fn();
+  const deleteSelect = vi.fn();
+  const deleteEqCreatedBy = vi.fn(() => ({ select: deleteSelect }));
+  const deleteEqId = vi.fn(() => ({ eq: deleteEqCreatedBy }));
+  const deletePlaceRows = vi.fn(() => ({ eq: deleteEqId }));
   const eq = vi.fn(() => ({ maybeSingle }));
   const select = vi.fn(() => ({ eq }));
   const from = vi.fn((table) => {
@@ -11,6 +15,13 @@ const { mockClient, insert, maybeSingle } = vi.hoisted(() => {
     }
 
     if (table === 'places') {
+      return {
+        delete: deletePlaceRows,
+        insert,
+      };
+    }
+
+    if (table === 'analytics_events') {
       return { insert };
     }
 
@@ -18,6 +29,9 @@ const { mockClient, insert, maybeSingle } = vi.hoisted(() => {
   });
 
   return {
+    deleteEqCreatedBy,
+    deleteEqId,
+    deleteSelect,
     insert,
     maybeSingle,
     mockClient: {
@@ -33,7 +47,8 @@ vi.mock('./supabase', () => ({
   supabase: mockClient,
 }));
 
-import { createPlace } from './backend';
+import { createPlace, deletePlace } from './backend';
+import { createAnalyticsEvent } from './backend';
 
 describe('createPlace', () => {
   beforeEach(() => {
@@ -112,6 +127,77 @@ describe('createPlace', () => {
     });
     expect(result).toEqual({
       tagFallbackApplied: true,
+    });
+  });
+});
+
+describe('deletePlace', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('deletes a place when the authenticated user owns it', async () => {
+    deleteSelect.mockResolvedValueOnce({
+      data: [{ id: 'place-1' }],
+      error: null,
+    });
+
+    await deletePlace({
+      user: { id: 'user-1' },
+      placeId: 'place-1',
+    });
+
+    expect(deleteEqId).toHaveBeenCalledWith('id', 'place-1');
+    expect(deleteEqCreatedBy).toHaveBeenCalledWith('created_by', 'user-1');
+    expect(deleteSelect).toHaveBeenCalledWith('id');
+  });
+
+  it('throws when no owned place row was deleted', async () => {
+    deleteSelect.mockResolvedValueOnce({
+      data: [],
+      error: null,
+    });
+
+    await expect(
+      deletePlace({
+        user: { id: 'user-1' },
+        placeId: 'place-1',
+      })
+    ).rejects.toThrow('You can only delete places you created.');
+  });
+});
+
+describe('createAnalyticsEvent', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('writes a normalized analytics row to Supabase', async () => {
+    insert.mockResolvedValueOnce({ error: null });
+
+    await createAnalyticsEvent({
+      eventName: ' place created ',
+      pagePath: ' /places/place-1 ',
+      placeId: 'place-1',
+      properties: {
+        place_tag: 'Late night study',
+        skipped: undefined,
+      },
+      sourceScreen: ' add_sheet ',
+      userId: 'user-1',
+      viewerSessionId: ' viewer-1 ',
+    });
+
+    expect(insert).toHaveBeenCalledWith({
+      event_name: 'place created',
+      page_path: '/places/place-1',
+      place_id: 'place-1',
+      properties: {
+        place_tag: 'Late night study',
+      },
+      source_screen: 'add_sheet',
+      user_id: 'user-1',
+      viewer_session_id: 'viewer-1',
     });
   });
 });

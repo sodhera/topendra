@@ -30,6 +30,7 @@ const {
   identifyAnalyticsUser,
   initializeAnalytics,
   resetAnalyticsUser,
+  setAnalyticsContext,
   signInWithOAuth,
   signOut,
 } = vi.hoisted(() => {
@@ -46,6 +47,7 @@ const {
     identifyAnalyticsUser: vi.fn(),
     initializeAnalytics: vi.fn(),
     resetAnalyticsUser: vi.fn(),
+    setAnalyticsContext: vi.fn(),
     signInWithOAuth: vi.fn(async () => {
       state.session = state.nextSession;
       state.callback?.('SIGNED_IN', state.session);
@@ -64,6 +66,7 @@ vi.mock('./lib/analytics', () => ({
   identifyAnalyticsUser,
   initializeAnalytics,
   resetAnalyticsUser,
+  setAnalyticsContext,
 }));
 
 vi.mock('./lib/backend', () => ({
@@ -118,6 +121,7 @@ describe('App web auth', () => {
     identifyAnalyticsUser.mockClear();
     initializeAnalytics.mockClear();
     resetAnalyticsUser.mockClear();
+    setAnalyticsContext.mockClear();
     signInWithOAuth.mockClear();
     signOut.mockClear();
   });

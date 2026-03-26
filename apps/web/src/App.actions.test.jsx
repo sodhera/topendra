@@ -52,12 +52,16 @@ const {
   backendState,
   captureAnalyticsEvent,
   createComment,
+  deletePlace,
   createPlace,
   createPlaceOpenEvent,
   fetchAppData,
   identifyAnalyticsUser,
   initializeAnalytics,
   resetAnalyticsUser,
+  savePlace,
+  setAnalyticsContext,
+  unsavePlace,
   uploadPlacePhotos,
   voteForComment,
   voteForPlace,
@@ -86,6 +90,14 @@ const {
           },
           ...state.appData.comments,
         ],
+      };
+    }),
+    deletePlace: vi.fn(async ({ placeId, user }) => {
+      state.appData = {
+        ...state.appData,
+        places: state.appData.places.filter(
+          (place) => !(place.id === placeId && place.createdBy === user.id)
+        ),
       };
     }),
     createPlace: vi.fn(async ({ user, name, description, latitude, longitude, tag }) => {
@@ -117,6 +129,9 @@ const {
     identifyAnalyticsUser: vi.fn(),
     initializeAnalytics: vi.fn(),
     resetAnalyticsUser: vi.fn(),
+    savePlace: vi.fn(async () => undefined),
+    setAnalyticsContext: vi.fn(),
+    unsavePlace: vi.fn(async () => undefined),
     uploadPlacePhotos: vi.fn(async () => []),
     voteForComment: vi.fn(async () => undefined),
     voteForPlace: vi.fn(async () => undefined),
@@ -128,14 +143,18 @@ vi.mock('./lib/analytics', () => ({
   identifyAnalyticsUser,
   initializeAnalytics,
   resetAnalyticsUser,
+  setAnalyticsContext,
 }));
 
 vi.mock('./lib/backend', () => ({
   claimAnonymousHandle: vi.fn(async ({ handle }) => handle),
   createComment,
+  deletePlace,
   createPlace,
   createPlaceOpenEvent,
   fetchAppData,
+  savePlace,
+  unsavePlace,
   uploadPlacePhotos,
   voteForComment,
   voteForPlace,
@@ -203,12 +222,16 @@ describe('App web actions', () => {
     backendState.nextPlaceId = 2;
     captureAnalyticsEvent.mockClear();
     createComment.mockClear();
+    deletePlace.mockClear();
     createPlace.mockClear();
     createPlaceOpenEvent.mockClear();
     fetchAppData.mockClear();
     identifyAnalyticsUser.mockClear();
     initializeAnalytics.mockClear();
     resetAnalyticsUser.mockClear();
+    savePlace.mockClear();
+    setAnalyticsContext.mockClear();
+    unsavePlace.mockClear();
     uploadPlacePhotos.mockClear();
     voteForPlace.mockClear();
     signOut.mockClear();
@@ -426,5 +449,40 @@ describe('App web actions', () => {
     expect(window.location.pathname).toBe('/places/place-2');
     expect(screen.getByTestId('desktop-map-open-place')).toBeTruthy();
     expect(screen.getByTestId('tag-filter-button').textContent).toContain('Tags: 1');
+  });
+
+  it('deletes a place owned by the current user', async () => {
+    backendState.appData = {
+      ...backendState.appData,
+      places: backendState.appData.places.map((place) => ({
+        ...place,
+        createdBy: 'user-123',
+      })),
+    };
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+    render(<App />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('account-button').textContent).toBe('Profile');
+    });
+
+    fireEvent.click(screen.getByTestId('desktop-map-open-place'));
+    expect(await screen.findByRole('heading', { name: 'Action Test Place' })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
+
+    await waitFor(() => {
+      expect(deletePlace).toHaveBeenCalledWith({
+        placeId: 'place-1',
+        user: expect.objectContaining({ id: 'user-123' }),
+      });
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByLabelText('Place details panel')).toBeNull();
+    });
+
+    confirmSpy.mockRestore();
   });
 });
