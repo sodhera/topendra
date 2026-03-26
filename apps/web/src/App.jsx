@@ -15,10 +15,6 @@ import {
 import {
   doesPlaceMatchTagFilter,
   getPlaceTagLabel,
-  isCustomPlaceTagOption,
-  PLACE_TAG_FILTER_ALL,
-  PLACE_TAG_PRESET_OPTIONS,
-  resolvePlaceTagValue,
 } from '@topey/shared/lib/placeTags';
 import {
   createRegionFromLocation,
@@ -235,18 +231,17 @@ export default function App() {
   const [isAddSheetVisible, setIsAddSheetVisible] = React.useState(false);
   const [newPlaceName, setNewPlaceName] = React.useState('');
   const [newPlaceDescription, setNewPlaceDescription] = React.useState('');
-  const [newPlaceTagOption, setNewPlaceTagOption] = React.useState(
-    PLACE_TAG_PRESET_OPTIONS[0]?.value ?? 'zaza_spot'
-  );
-  const [newPlaceCustomTag, setNewPlaceCustomTag] = React.useState('');
+  const [newPlaceTag, setNewPlaceTag] = React.useState('');
   const [addPinCoordinates, setAddPinCoordinates] = React.useState({
     latitude: DEFAULT_REGION.latitude,
     longitude: DEFAULT_REGION.longitude,
   });
-  const [activeTagFilter, setActiveTagFilter] = React.useState(PLACE_TAG_FILTER_ALL);
+  const [activeTagFilters, setActiveTagFilters] = React.useState([]);
+  const [isTagMenuOpen, setIsTagMenuOpen] = React.useState(false);
   const [isSavingPlace, setIsSavingPlace] = React.useState(false);
   const placeVoteRequestVersionRef = React.useRef({});
   const commentVoteRequestVersionRef = React.useRef({});
+  const tagMenuRef = React.useRef(null);
 
   const currentUser = React.useMemo(() => getUserIdentity(session?.user), [session]);
   const currentAnonymousHandle = React.useMemo(
@@ -285,6 +280,34 @@ export default function App() {
       setSelectedPlaceId('');
     }
   }, [appRoute.view, selectedPlaceId]);
+
+  React.useEffect(() => {
+    if (!isTagMenuOpen || typeof window === 'undefined') {
+      return undefined;
+    }
+
+    function handlePointerDown(event) {
+      if (tagMenuRef.current?.contains(event.target)) {
+        return;
+      }
+
+      setIsTagMenuOpen(false);
+    }
+
+    function handleEscape(event) {
+      if (event.key === 'Escape') {
+        setIsTagMenuOpen(false);
+      }
+    }
+
+    window.addEventListener('mousedown', handlePointerDown);
+    window.addEventListener('keydown', handleEscape);
+
+    return () => {
+      window.removeEventListener('mousedown', handlePointerDown);
+      window.removeEventListener('keydown', handleEscape);
+    };
+  }, [isTagMenuOpen]);
 
   React.useEffect(() => {
     if (!successMessage) {
@@ -517,9 +540,8 @@ export default function App() {
     [commentVotes, optimisticCommentVotes]
   );
   const filteredPlaces = React.useMemo(
-    () =>
-      places.filter((place) => doesPlaceMatchTagFilter(place.tag, activeTagFilter)),
-    [activeTagFilter, places]
+    () => places.filter((place) => doesPlaceMatchTagFilter(place.tag, activeTagFilters)),
+    [activeTagFilters, places]
   );
   const visiblePlaces = React.useMemo(
     () =>
@@ -977,15 +999,11 @@ export default function App() {
     setIsAddSheetVisible(false);
     setNewPlaceName('');
     setNewPlaceDescription('');
-    setNewPlaceTagOption(PLACE_TAG_PRESET_OPTIONS[0]?.value ?? 'zaza_spot');
-    setNewPlaceCustomTag('');
+    setNewPlaceTag('');
   }, []);
 
   const handleCreatePlace = React.useCallback(async () => {
-    const resolvedTag = resolvePlaceTagValue({
-      customTag: newPlaceCustomTag,
-      selectedOption: newPlaceTagOption,
-    });
+    const resolvedTag = newPlaceTag.trim();
 
     if (!newPlaceName.trim() || !newPlaceDescription.trim() || !resolvedTag) {
       setErrorMessage('Add a name, description, and tag before saving the place.');
@@ -1020,8 +1038,7 @@ export default function App() {
       const newestPlace = nextData.places[0];
       setNewPlaceName('');
       setNewPlaceDescription('');
-      setNewPlaceTagOption(PLACE_TAG_PRESET_OPTIONS[0]?.value ?? 'zaza_spot');
-      setNewPlaceCustomTag('');
+      setNewPlaceTag('');
       setIsAddSheetVisible(false);
       setIsAddMode(false);
       setErrorMessage('');
@@ -1041,13 +1058,24 @@ export default function App() {
     isAuthenticated,
     newPlaceDescription,
     newPlaceName,
-    newPlaceCustomTag,
-    newPlaceTagOption,
+    newPlaceTag,
     openAuthModal,
     openPlacePage,
     refreshData,
     session,
   ]);
+
+  const toggleTagFilter = React.useCallback((tagLabel) => {
+    setActiveTagFilters((currentFilters) =>
+      currentFilters.includes(tagLabel)
+        ? currentFilters.filter((tag) => tag !== tagLabel)
+        : [...currentFilters, tagLabel]
+    );
+  }, []);
+
+  const clearTagFilters = React.useCallback(() => {
+    setActiveTagFilters([]);
+  }, []);
 
   const handleDeletePlace = React.useCallback(async (placeId) => {
     if (!isAuthenticated || !session?.user) {
@@ -1093,22 +1121,52 @@ export default function App() {
     </div>
   ) : (
     <div className="hud-row hud-row-end">
-      <label className="tag-filter-control">
-        <span className="sr-only">Filter places by tag</span>
-        <select
-          className="tag-filter-select"
-          data-testid="tag-filter-select"
-          value={activeTagFilter}
-          onChange={(event) => setActiveTagFilter(event.target.value)}
+      <div
+        className={`tag-filter-control${isTagMenuOpen ? ' is-open' : ''}`}
+        ref={tagMenuRef}
+      >
+        <button
+          className="tag-filter-button"
+          data-testid="tag-filter-button"
+          type="button"
+          aria-expanded={isTagMenuOpen}
+          aria-haspopup="menu"
+          onClick={() => setIsTagMenuOpen((currentValue) => !currentValue)}
         >
-          <option value={PLACE_TAG_FILTER_ALL}>All tags</option>
-          {availableTagFilters.map((tagLabel) => (
-            <option key={tagLabel} value={tagLabel}>
-              {tagLabel}
-            </option>
-          ))}
-        </select>
-      </label>
+          <span>Zaza Spots</span>
+          <span className="tag-filter-count">
+            {activeTagFilters.length ? activeTagFilters.length : 'All'}
+          </span>
+        </button>
+        {isTagMenuOpen ? (
+          <div className="tag-filter-menu" data-testid="tag-filter-menu" role="menu">
+            <div className="tag-filter-menu-header">
+              <p className="tag-filter-title">Zaza Spots</p>
+              <button
+                className="tag-filter-clear"
+                data-testid="tag-filter-clear"
+                type="button"
+                onClick={clearTagFilters}
+              >
+                Show all
+              </button>
+            </div>
+            <div className="tag-filter-options">
+              {availableTagFilters.map((tagLabel) => (
+                <label className="tag-filter-option" key={tagLabel}>
+                  <input
+                    checked={activeTagFilters.includes(tagLabel)}
+                    data-testid={`tag-filter-option-${tagLabel}`}
+                    onChange={() => toggleTagFilter(tagLabel)}
+                    type="checkbox"
+                  />
+                  <span>{tagLabel}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        ) : null}
+      </div>
       <AppButton
         label={isAuthenticated ? 'Profile' : 'Sign in'}
         variant="secondary"
@@ -1370,29 +1428,13 @@ export default function App() {
             value={newPlaceDescription}
             onChange={(event) => setNewPlaceDescription(event.target.value)}
           />
-          <label className="sheet-field">
-            <span className="sheet-field-label">Tag</span>
-            <select
-              className="sheet-input sheet-select"
-              data-testid="place-tag-select"
-              value={newPlaceTagOption}
-              onChange={(event) => setNewPlaceTagOption(event.target.value)}
-            >
-              {PLACE_TAG_PRESET_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          {isCustomPlaceTagOption(newPlaceTagOption) ? (
-            <input
-              className="sheet-input"
-              placeholder="Custom tag"
-              value={newPlaceCustomTag}
-              onChange={(event) => setNewPlaceCustomTag(event.target.value)}
-            />
-          ) : null}
+          <input
+            className="sheet-input"
+            data-testid="place-tag-input"
+            placeholder="Tag"
+            value={newPlaceTag}
+            onChange={(event) => setNewPlaceTag(event.target.value)}
+          />
 
           <div className="coords-card">
             <div className="coords-label">Adding at</div>

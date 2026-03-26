@@ -337,7 +337,7 @@ export function AppProvider({ children }) {
   }, []);
 
   const addPlace = useCallback(
-    async ({ name, description, latitude, longitude }) => {
+    async ({ name, description, latitude, longitude, tag }) => {
       if (!session?.user) {
         throw new Error('Login required before adding a place.');
       }
@@ -352,6 +352,7 @@ export function AppProvider({ children }) {
         description,
         latitude,
         longitude,
+        tag,
       });
 
       await refreshData(session);

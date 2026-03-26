@@ -319,10 +319,7 @@ describe('App web actions', () => {
     fireEvent.change(screen.getByPlaceholderText('Description'), {
       target: { value: 'Codex add-place smoke description' },
     });
-    fireEvent.change(screen.getByTestId('place-tag-select'), {
-      target: { value: 'custom' },
-    });
-    fireEvent.change(screen.getByPlaceholderText('Custom tag'), {
+    fireEvent.change(screen.getByTestId('place-tag-input'), {
       target: { value: 'Late night study' },
     });
     fireEvent.click(within(dialog).getByRole('button', { name: 'Add' }));
@@ -371,9 +368,8 @@ describe('App web actions', () => {
       expect(screen.getByTestId('account-button').textContent).toBe('Profile');
     });
 
-    fireEvent.change(screen.getByTestId('tag-filter-select'), {
-      target: { value: 'Zaza spot' },
-    });
+    fireEvent.click(screen.getByTestId('tag-filter-button'));
+    fireEvent.click(screen.getByTestId('tag-filter-option-Zaza spot'));
     fireEvent.click(screen.getByTestId('desktop-map-open-place'));
 
     expect(await screen.findByRole('heading', { name: 'Zaza Research Spot' })).toBeTruthy();

@@ -170,12 +170,14 @@ describe('AddPlaceScreen', () => {
 
     fireEvent.changeText(screen.getByPlaceholderText('Place name'), 'Corner Cafe');
     fireEvent.changeText(screen.getByPlaceholderText('Description'), 'Late-night coffee and Wi-Fi.');
+    fireEvent.changeText(screen.getByPlaceholderText('Tag'), 'Late night study');
     fireEvent.press(screen.getByText('Add'));
 
     await waitFor(() => {
       expect(addPlace).toHaveBeenCalledWith({
         name: 'Corner Cafe',
         description: 'Late-night coffee and Wi-Fi.',
+        tag: 'Late night study',
         latitude: 40.7188,
         longitude: -74.006,
       });

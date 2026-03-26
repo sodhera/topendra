@@ -58,6 +58,7 @@ export function AddPlaceScreen({ navigation, route }) {
   const [pin, setPin] = useState(getPinnedCoordinate(initialViewportRegion));
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [tag, setTag] = useState('');
   const [isDetailsModalVisible, setIsDetailsModalVisible] = useState(false);
   const [isAuthModalVisible, setIsAuthModalVisible] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -103,8 +104,8 @@ export function AddPlaceScreen({ navigation, route }) {
       return;
     }
 
-    if (!name.trim() || !description.trim()) {
-      Alert.alert('Missing details', 'Add a name and description before saving the place.');
+    if (!name.trim() || !description.trim() || !tag.trim()) {
+      Alert.alert('Missing details', 'Add a name, description, and tag before saving the place.');
       return;
     }
 
@@ -113,12 +114,14 @@ export function AddPlaceScreen({ navigation, route }) {
       const result = await addPlace({
         name,
         description,
+        tag,
         latitude: pin.latitude,
         longitude: pin.longitude,
       });
 
       setName('');
       setDescription('');
+      setTag('');
       setIsDetailsModalVisible(false);
       Alert.alert(
         'Success',
@@ -246,6 +249,13 @@ export function AddPlaceScreen({ navigation, route }) {
                 value={description}
                 onChangeText={setDescription}
                 multiline
+              />
+              <TextInput
+                placeholder="Tag"
+                placeholderTextColor={colors.mutedText}
+                style={styles.input}
+                value={tag}
+                onChangeText={setTag}
               />
 
               <View style={styles.coordsCard}>

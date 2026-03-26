@@ -19,6 +19,11 @@ Optional:
 - `WEB_AUTH_REDIRECT_URLS`
 - `WEB_SITE_URL`
 
+For production browser auth:
+
+- `WEB_SITE_URL` should be the canonical deployed origin, for example `https://zazaspot.com`
+- `WEB_AUTH_REDIRECT_URLS` should include every deployed browser callback origin, for example `https://zazaspot.com/**,https://www.zazaspot.com/**`
+
 ## Runtime Responsibilities
 
 Supabase is responsible for:

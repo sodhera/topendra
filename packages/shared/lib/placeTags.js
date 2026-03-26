@@ -41,9 +41,31 @@ export function getPlaceTagPresetLabel(selectedOption) {
 }
 
 export function doesPlaceMatchTagFilter(placeTag, activeTagFilter) {
+  const normalizedPlaceTag = getPlaceTagLabel(placeTag).toLocaleLowerCase();
+
+  if (Array.isArray(activeTagFilter)) {
+    const normalizedFilters = activeTagFilter
+      .map((tag) => getPlaceTagLabel(tag).toLocaleLowerCase())
+      .filter(Boolean);
+
+    if (!normalizedFilters.length) {
+      return true;
+    }
+
+    return normalizedFilters.includes(normalizedPlaceTag);
+  }
+
+  if (activeTagFilter instanceof Set) {
+    if (!activeTagFilter.size) {
+      return true;
+    }
+
+    return activeTagFilter.has(normalizedPlaceTag);
+  }
+
   if (!activeTagFilter || activeTagFilter === PLACE_TAG_FILTER_ALL) {
     return true;
   }
 
-  return getPlaceTagLabel(placeTag).toLocaleLowerCase() === activeTagFilter.toLocaleLowerCase();
+  return normalizedPlaceTag === activeTagFilter.toLocaleLowerCase();
 }

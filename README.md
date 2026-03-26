@@ -87,6 +87,12 @@ Optional variables:
 - `WEB_AUTH_REDIRECT_URLS`
 - `WEB_SITE_URL`
 
+Production web auth note:
+
+- set `WEB_SITE_URL` to the canonical browser origin, for example `https://zazaspot.com`
+- set `WEB_AUTH_REDIRECT_URLS` to every browser callback origin you serve, for example `https://zazaspot.com/**,https://www.zazaspot.com/**`
+- `npm run supabase:auth` pushes those values into Supabase Auth allow-lists
+
 3. Sync the Supabase project
 
 ```bash
