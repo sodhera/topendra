@@ -213,7 +213,7 @@ button {
   align-items: center;
   display: flex;
   gap: 12px;
-  justify-content: space-between;
+  justify-content: flex-end;
 }
 
 .place-page.is-overlay .place-page-nav {
@@ -238,6 +238,14 @@ button {
   min-height: 46px;
   padding: 0 18px;
   text-transform: uppercase;
+}
+
+.page-nav-button.is-icon {
+  font-size: 28px;
+  height: 48px;
+  line-height: 1;
+  padding: 0;
+  width: 48px;
 }
 
 .place-page-empty-card {
@@ -311,12 +319,12 @@ button {
   border-radius: 999px;
   color: var(--color-accent-text, #111111);
   display: inline-flex;
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.08em;
-  min-height: 34px;
-  padding: 0 14px;
-  box-shadow: 4px 4px 0 var(--color-shadow-contrast, rgba(17, 17, 17, 0.92));
+  letter-spacing: 0.05em;
+  min-height: 28px;
+  padding: 0 10px;
+  box-shadow: 3px 3px 0 var(--color-shadow-contrast, rgba(17, 17, 17, 0.92));
   text-transform: uppercase;
 }
 
@@ -1731,13 +1739,15 @@ button {
   }
 
   .place-page-nav {
-    align-items: stretch;
-    flex-direction: column;
+    justify-content: flex-end;
   }
 
   .page-nav-button {
     justify-content: center;
-    width: 100%;
+  }
+
+  .page-nav-button.is-icon {
+    margin-left: auto;
   }
 
   .place-page-title {

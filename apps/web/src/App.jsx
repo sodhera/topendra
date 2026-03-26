@@ -1432,12 +1432,10 @@ export default function App() {
 
         {isPlacePanelVisible ? (
           <PlacePage
-            accountLabel={isAuthenticated ? 'Profile' : 'Sign in'}
             commentThreads={commentThreads}
             comments={comments}
             commentVoteState={commentVoteState}
             currentVote={currentVote}
-            onAccount={openAuthModal}
             onBackToMap={closePlacePanel}
             onCommentVote={handleCommentVote}
             onCompose={openComposer}
@@ -1745,12 +1743,10 @@ function AppButton({
 }
 
 function PlacePage({
-  accountLabel,
   commentThreads,
   comments,
   commentVoteState,
   currentVote,
-  onAccount,
   onBackToMap,
   onCommentVote,
   onCompose,
@@ -1776,11 +1772,13 @@ function PlacePage({
       >
         <div className="place-page-shell">
           <div className="place-page-nav">
-            <button className="page-nav-button" type="button" onClick={onBackToMap}>
-              Back to map
-            </button>
-            <button className="page-nav-button" type="button" onClick={onAccount}>
-              {accountLabel}
+            <button
+              aria-label="Close place details"
+              className="page-nav-button is-icon"
+              type="button"
+              onClick={onBackToMap}
+            >
+              ×
             </button>
           </div>
 
@@ -1803,11 +1801,13 @@ function PlacePage({
     >
       <div className="place-page-shell">
         <div className="place-page-nav">
-          <button className="page-nav-button" type="button" onClick={onBackToMap}>
-            Back to map
-          </button>
-          <button className="page-nav-button" type="button" onClick={onAccount}>
-            {accountLabel}
+          <button
+            aria-label="Close place details"
+            className="page-nav-button is-icon"
+            type="button"
+            onClick={onBackToMap}
+          >
+            ×
           </button>
         </div>
 
@@ -1826,7 +1826,6 @@ function PlacePage({
             
             <div className="place-page-content place-page-post-content">
               <div className="place-page-meta-row">
-                <span className="place-page-kicker">{APP_NAME}</span>
                 <span className="place-page-meta-dot">•</span>
                 <span className="place-page-meta-inline">
                   Posted by {formatUserHandle(place.authorName)}
@@ -1884,16 +1883,14 @@ function PlacePage({
           </article>
 
           <section className="place-page-comments">
-            <div className="thread-header place-page-thread-header">
-              <div>
-                <div className="thread-kicker">{APP_NAME}</div>
-                <h2 className="thread-title place-page-thread-title">Comments</h2>
+            {commentThreads.length ? (
+              <div className="thread-header place-page-thread-header">
+                <div>
+                  <h2 className="thread-title place-page-thread-title">Comments</h2>
+                </div>
+                <div className="place-page-comment-count">{comments.length} comments</div>
               </div>
-              <div className="place-page-comment-count">
-                {comments.length ? `${comments.length} comments` : 'Start the thread'}
-              </div>
-            </div>
-
+            ) : null}
             <div className="discussion-list place-page-discussion-list">
               {commentThreads.length ? (
                 commentThreads.map((commentThread) => (
